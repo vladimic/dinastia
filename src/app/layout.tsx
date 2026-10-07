@@ -5,6 +5,7 @@ export const metadata: Metadata = {
   title: "Dinastia · Estruturação de Patrimônio",
   description: "Simulação e estruturação patrimonial com consórcio.",
   applicationName: "Dinastia",
+  icons: { icon: "/icon-192.png", apple: "/apple-icon.png" },
   appleWebApp: { capable: true, title: "Dinastia", statusBarStyle: "black-translucent" },
 };
 
