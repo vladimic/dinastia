@@ -1,265 +1,192 @@
 -- Dinastia · Estruturação de Patrimônio
--- 0001: estrutura de tabelas (rodar uma vez no SQL Editor do Supabase)
+-- 0001: estrutura do módulo Grupos e Tabelas (MER aprovado em 07/10/2026)
 
 -- =========================================================
--- Referência
+-- Referência e configuração
 -- =========================================================
 
-create table administradora (
-  id          bigint generated always as identity primary key,
-  nome        text not null unique,
-  cnpj        text,
-  ativo       boolean not null default true
-);
-
-create table familia_produto (
-  id          bigint generated always as identity primary key,
-  slug        text not null unique,          -- imoveis, veiculos, servicos, outros-bens
-  nome        text not null,
-  descricao   text,
-  ordem       int  not null default 0
+-- uma linha só (id = 1)
+create table parametros_gerais (
+  id                 int primary key default 1 check (id = 1),
+  seguro_padrao_pct  numeric(7,4),          -- % ao mês; usado quando o PDF não traz o seguro
+  atualizado_em      timestamptz not null default now()
 );
 
 create table indice_correcao (
-  id          bigint generated always as identity primary key,
-  sigla       text not null unique,          -- INCC, IPCA, IGP-M, INPC, CDI, TR
-  nome        text not null,
-  fonte       text
-);
-
-create table indice_valor (
-  id               bigint generated always as identity primary key,
-  indice_id        bigint not null references indice_correcao(id),
-  competencia      date   not null,          -- primeiro dia do mês
-  variacao_mensal  numeric(9,6),             -- em %, ex.: 0.512300
-  acumulado_12m    numeric(9,6),
-  unique (indice_id, competencia)
+  sigla  text primary key,                  -- INCC, IPCA, IGP-M, INPC, CDI, TR
+  nome   text not null,
+  fonte  text
 );
 
 create table tipo_contemplacao (
-  id          bigint generated always as identity primary key,
-  codigo      text not null unique,
-  nome        text not null,
-  eh_lance    boolean not null default false,
-  ordem       int not null default 0
+  codigo  text primary key,                 -- SORTEIO_ATIVO, LANCE_FIXO...
+  nome    text not null
 );
 
-create table plano_pagamento (
-  id               bigint generated always as identity primary key,
-  codigo           text not null unique,     -- DILUIDA, ANTECIPADO_1, REDUZIDA
-  nome             text not null,
-  pct_antecipacao  numeric(7,4),
-  pct_reducao      numeric(7,4),
-  ordem            int not null default 0
+create table tipo_parcela (
+  codigo     text primary key,              -- NORMAL, RED_85, RED_70...
+  descricao  text not null,
+  pct        numeric(7,4) not null check (pct > 0 and pct <= 100)  -- % da parcela
 );
 
 -- =========================================================
--- Grupo e tabela
+-- Grupo (dados estáveis)
 -- =========================================================
 
 create table grupo (
-  id                      bigint generated always as identity primary key,
-  -- só Ademicon hoje: fica fixo no banco e fora da tela
-  administradora_id       bigint not null references administradora(id),
-  familia_id              bigint not null references familia_produto(id),
-  numero                  text   not null,
-  participantes           int,
-  prazo_grupo_meses       int    not null,
-  dia_vencimento          int    check (dia_vencimento between 1 and 31),
-  indice_id               bigint references indice_correcao(id),
-  mes_reajuste            int    check (mes_reajuste between 1 and 12),
-  taxa_adm_total          numeric(7,4),      -- em %, ex.: 24.0000
-  fundo_reserva           numeric(7,4),      -- em %; null = não informado
-  seguro_opcional_pre     boolean not null default true,
-  seguro_obrigatorio_pos  boolean not null default true,
-  idade_limite_seguro     text,              -- ex.: '74 anos, 11 meses e 29 dias'
-  observacoes             text,
-  notas_internas          text,
-  status                  text not null default 'ativo',
-  criado_em               timestamptz not null default now(),
-  atualizado_em           timestamptz not null default now(),
-  unique (administradora_id, numero)
+  numero             int primary key,       -- número do grupo na Ademicon
+  familia            text not null check (familia in ('imoveis','veiculos','servicos','outros_bens')),
+  prazo_grupo_meses  int  not null,
+  participantes      int,
+  taxa_adm_total     numeric(7,4),          -- %, ex.: 24.0000
+  fundo_reserva      numeric(7,4),          -- %; nulo = não informado
+  seguro_pct_mes     numeric(7,4),          -- % do crédito ao mês; sem no PDF = padrão dos parâmetros
+  indice             text references indice_correcao(sigla) on update cascade,
+  mes_reajuste       int check (mes_reajuste between 1 and 12),
+  primeira_correcao  date,
+  dia_vencimento     int check (dia_vencimento between 1 and 31),
+  criado_em          timestamptz not null default now(),
+  atualizado_em      timestamptz not null default now()
 );
 
 create table arquivo_importado (
-  id                    bigint generated always as identity primary key,
-  nome                  text not null,
-  hash_sha256           text,
-  recebido_em           timestamptz not null default now(),
-  status                text not null default 'recebido',
-  texto_extraido        text,
-  dados_extraidos_json  jsonb
+  id               bigint generated always as identity primary key,
+  nome             text not null,
+  hash_sha256      text,
+  recebido_em      timestamptz not null default now(),
+  status           text not null default 'recebido',
+  dados_extraidos  jsonb
 );
 
--- uma vigência por assembleia (cada PDF novo cria uma; nada é sobrescrito)
-create table tabela_vigencia (
+-- =========================================================
+-- Versão do grupo por assembleia (cada PDF = uma versão; a maior assembleia é a vigente)
+-- =========================================================
+
+create table grupo_assembleia (
   id                 bigint generated always as identity primary key,
-  grupo_id           bigint not null references grupo(id) on delete cascade,
-  assembleia_numero  int    not null,
+  grupo_numero       int not null references grupo(numero) on delete cascade on update cascade,
+  assembleia_numero  int not null,
   data_assembleia    date,
-  prazo_cota_meses   int    not null,
+  prazo_cota_meses   int not null,
+  creditos           numeric(14,2)[] not null default '{}',   -- do maior para o menor
+  observacoes        text,
   arquivo_id         bigint references arquivo_importado(id),
-  aprovada_por       text,
-  aprovada_em        timestamptz,
-  vigente            boolean not null default false,
-  unique (grupo_id, assembleia_numero)
-);
--- só uma vigência ativa por grupo
-create unique index tabela_vigencia_uma_vigente on tabela_vigencia (grupo_id) where vigente;
-
-create table credito (
-  id             bigint generated always as identity primary key,
-  vigencia_id    bigint not null references tabela_vigencia(id) on delete cascade,
-  cod_bem        text   not null,
-  valor_credito  numeric(14,2) not null,
-  seguro_mensal  numeric(12,2),
-  unique (vigencia_id, cod_bem)
+  aprovado_por       text,
+  aprovado_em        timestamptz,
+  unique (grupo_numero, assembleia_numero)
 );
 
-create table credito_parcela (
-  id              bigint generated always as identity primary key,
-  credito_id      bigint not null references credito(id) on delete cascade,
-  plano_id        bigint not null references plano_pagamento(id),
-  pct_parcela     numeric(7,4) not null default 100,
-  valor_primeira  numeric(12,2) not null,
-  valor_demais    numeric(12,2) not null,
-  unique (credito_id, plano_id, pct_parcela)
+-- tipos de parcela oferecidos na versão (n x n)
+create table grupo_assembleia_tipo_parcela (
+  grupo_assembleia_id  bigint not null references grupo_assembleia(id) on delete cascade,
+  tipo_parcela         text   not null references tipo_parcela(codigo) on update cascade,
+  primary key (grupo_assembleia_id, tipo_parcela)
 );
 
--- embutido é atributo da modalidade, não um tipo de contemplação
+-- regras de cada modalidade na versão (embutido é atributo, não modalidade)
 create table grupo_modalidade (
   id                        bigint generated always as identity primary key,
-  grupo_id                  bigint not null references grupo(id) on delete cascade,
-  tipo_contemplacao_id      bigint not null references tipo_contemplacao(id),
-  max_parcelas_lance        int,             -- null = livre
+  grupo_assembleia_id       bigint not null references grupo_assembleia(id) on delete cascade,
+  tipo                      text   not null references tipo_contemplacao(codigo) on update cascade,
+  max_parcelas_lance        int,             -- nulo = livre
   pct_categoria             numeric(7,4),
-  embutido_max_parcelas     int,             -- null = não permite embutido
+  embutido_max_parcelas     int,
   embutido_base             text check (embutido_base in ('ofertado','categoria')),
-  embutido_pct              numeric(7,4),
+  embutido_pct              numeric(7,4),    -- nulo = não permite embutido
   recurso_proprio_obrig     boolean,
   a_partir_assembleia_cota  int not null default 1,
   requisitos                text,
   transferivel              boolean not null default true,
-  unique (grupo_id, tipo_contemplacao_id)
+  embutido_texto            text,            -- regra literal do PDF, para conferência
+  unique (grupo_assembleia_id, tipo)
+);
+
+-- faixas de assembleias e o que vale depois da sequência (demais_tipo nulo = repete a sequência)
+create table grupo_sequencia_faixa (
+  id                   bigint generated always as identity primary key,
+  grupo_assembleia_id  bigint not null references grupo_assembleia(id) on delete cascade,
+  assembleia_de        int not null,
+  assembleia_ate       int not null,
+  demais_tipo          text references tipo_contemplacao(codigo) on update cascade,
+  unique (grupo_assembleia_id, assembleia_de)
 );
 
 create table grupo_sequencia (
-  id                    bigint generated always as identity primary key,
-  grupo_id              bigint not null references grupo(id) on delete cascade,
-  assembleia_de         int not null,
-  assembleia_ate        int not null,
-  ordem                 int not null,
-  tipo_contemplacao_id  bigint not null references tipo_contemplacao(id),
-  quantidade            int not null default 1,
-  unique (grupo_id, assembleia_de, ordem)
+  id          bigint generated always as identity primary key,
+  faixa_id    bigint not null references grupo_sequencia_faixa(id) on delete cascade,
+  ordem       int    not null,
+  tipo        text   not null references tipo_contemplacao(codigo) on update cascade,
+  quantidade  int    not null default 1 check (quantidade > 0),
+  unique (faixa_id, ordem)
 );
 
-create table assembleia_resultado (
-  id                    bigint generated always as identity primary key,
-  grupo_id              bigint not null references grupo(id) on delete cascade,
-  assembleia_numero     int not null,
-  data                  date,
-  tipo_contemplacao_id  bigint references tipo_contemplacao(id),
-  qtd_contemplados      int,
-  pct_lance_vencedor    numeric(7,4),
-  pct_lance_menor       numeric(7,4),
-  fonte                 text
-);
-
-create table importacao_item (
-  id            bigint generated always as identity primary key,
-  arquivo_id    bigint not null references arquivo_importado(id) on delete cascade,
-  grupo_id      bigint references grupo(id),
-  campo         text not null,
-  valor_atual   text,
-  valor_lido    text,
-  decisao       text check (decisao in ('aceitar','manter')),
-  validacao_ok  boolean
-);
+create index on grupo_assembleia (grupo_numero, assembleia_numero desc);
+create index on grupo_assembleia (arquivo_id);
+create index on grupo_assembleia_tipo_parcela (tipo_parcela);
+create index on grupo_modalidade (tipo);
+create index on grupo_sequencia_faixa (demais_tipo);
+create index on grupo_sequencia (tipo);
+create index on grupo (indice);
 
 -- =========================================================
--- Clientes e simulação (estrutura pronta; telas virão depois)
+-- Grupo com a versão vigente (maior assembleia) — é o que o simulador lê
 -- =========================================================
-
-create table cliente (
-  id               bigint generated always as identity primary key,
-  usuario_id       uuid not null default auth.uid() references auth.users(id),
-  nome             text not null,
-  data_nascimento  date,
-  telefone         text,
-  email            text,
-  objetivo         text,
-  origem           text,
-  criado_em        timestamptz not null default now()
-);
-
-create table simulacao (
-  id               bigint generated always as identity primary key,
-  cliente_id       bigint references cliente(id) on delete set null,
-  credito_id       bigint references credito(id),
-  plano_id         bigint references plano_pagamento(id),
-  mes_contemplacao int,
-  tipo_lance_id    bigint references tipo_contemplacao(id),
-  pct_lance        numeric(7,4),
-  pct_embutido     numeric(7,4),
-  premissa_indice  numeric(7,4),
-  parametros_json  jsonb not null default '{}'::jsonb,
-  resultado_json   jsonb,
-  versao_motor     text,
-  origem           text not null default 'manual' check (origem in ('manual','ia')),
-  criado_em        timestamptz not null default now()
-);
-
-create table proposta (
-  id            bigint generated always as identity primary key,
-  simulacao_id  bigint not null references simulacao(id) on delete cascade,
-  versao        int not null default 1,
-  pdf_url       text,
-  gerada_em     timestamptz not null default now(),
-  status        text not null default 'rascunho'
-);
-
-create table prompt_ia (
-  id      bigint generated always as identity primary key,
-  nome    text not null,
-  texto   text not null,
-  versao  int  not null default 1,
-  ativo   boolean not null default true
-);
+create view grupo_atual with (security_invoker = true) as
+select distinct on (g.numero)
+  g.*,
+  ga.id                 as grupo_assembleia_id,
+  ga.assembleia_numero,
+  ga.data_assembleia,
+  ga.prazo_cota_meses,
+  ga.creditos
+from grupo g
+join grupo_assembleia ga on ga.grupo_numero = g.numero
+order by g.numero, ga.assembleia_numero desc;
 
 -- =========================================================
 -- atualizado_em automático
 -- =========================================================
 create or replace function set_atualizado_em() returns trigger
-language plpgsql as $$
+language plpgsql set search_path = '' as $$
 begin
   new.atualizado_em := now();
   return new;
 end $$;
 
 create trigger grupo_atualizado_em before update on grupo
-for each row execute function set_atualizado_em();
+  for each row execute function set_atualizado_em();
+create trigger parametros_atualizado_em before update on parametros_gerais
+  for each row execute function set_atualizado_em();
 
 -- =========================================================
--- Segurança (RLS): só usuários logados acessam
+-- Segurança: só e-mails autorizados acessam os dados
 -- =========================================================
+create table usuario_autorizado (
+  email      text primary key,
+  criado_em  timestamptz not null default now()
+);
+alter table usuario_autorizado enable row level security;  -- sem policy: invisível pela API
+
+create or replace function public.autorizado() returns boolean
+language sql stable security definer set search_path = '' as $$
+  select exists (
+    select 1 from public.usuario_autorizado u
+    where lower(u.email) = lower(coalesce(auth.jwt() ->> 'email', ''))
+  );
+$$;
+revoke all on function public.autorizado() from public, anon;
+grant execute on function public.autorizado() to authenticated;
+
 do $$
 declare t text;
 begin
   foreach t in array array[
-    'administradora','familia_produto','indice_correcao','indice_valor',
-    'tipo_contemplacao','plano_pagamento','grupo','arquivo_importado',
-    'tabela_vigencia','credito','credito_parcela','grupo_modalidade',
-    'grupo_sequencia','assembleia_resultado','importacao_item',
-    'simulacao','proposta','prompt_ia'
+    'parametros_gerais','indice_correcao','tipo_contemplacao','tipo_parcela',
+    'grupo','arquivo_importado','grupo_assembleia','grupo_assembleia_tipo_parcela',
+    'grupo_modalidade','grupo_sequencia_faixa','grupo_sequencia'
   ] loop
     execute format('alter table %I enable row level security', t);
     execute format(
-      'create policy "logado_tudo" on %I for all to authenticated using (true) with check (true)', t);
+      'create policy "autorizado_tudo" on %I for all to authenticated using ((select public.autorizado())) with check ((select public.autorizado()))', t);
   end loop;
 end $$;
-
--- clientes: cada usuário vê só os seus
-alter table cliente enable row level security;
-create policy "cliente_do_usuario" on cliente for all to authenticated
-  using (usuario_id = auth.uid()) with check (usuario_id = auth.uid());
