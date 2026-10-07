@@ -1,26 +1,101 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+@theme {
+  --color-navy: #0d0540;
+  --color-navy-2: #1f1660;
+  --color-navy-3: #2a2070;
+  --color-laranja: #ff751f;
+  --color-laranja-claro: #ffe9db;
+  --color-ouro: #ceaa5b;
+  --color-ouro-claro: #f5ecd6;
+  --color-ouro-texto: #7a5a14;
+  --color-creme: #f5f3ee;
+  --color-campo: #faf9f6;
+  --color-borda: #e4e0d6;
+  --color-borda-campo: #d6d1c4;
+  --color-linha: #f2efe7;
+  --color-tinta: #5b5680;
+  --color-lavanda: #ebe8f7;
+  --color-alerta: #8a4a0e;
+  --color-alerta-fundo: #fff8f0;
+  --color-alerta-borda: #e0a25a;
+  --color-ok: #1d5b2c;
+  --color-ok-fundo: #e3f1e5;
+
+  --font-sans: "Manrope", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Cormorant Garamond", ui-serif, Georgia, serif;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+html,
+body {
+  background: var(--color-creme);
+  color: var(--color-navy);
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-sans);
+}
+
+input,
+select,
+textarea,
+button {
+  font: inherit;
+}
+
+.campo {
+  min-height: 44px;
+  padding: 0 12px;
+  border: 1px solid var(--color-borda-campo);
+  border-radius: 10px;
+  background: var(--color-campo);
+  color: var(--color-navy);
+  font-size: 14px;
+  width: 100%;
+}
+.campo:focus {
+  outline: 2px solid var(--color-laranja);
+  outline-offset: 1px;
+}
+.campo[readonly] {
+  background: var(--color-linha);
+}
+
+.rotulo {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-tinta);
+}
+
+.cartao {
+  background: #fff;
+  border: 1px solid var(--color-borda);
+  border-radius: 16px;
+  padding: 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.tabela th {
+  padding: 10px;
+  border-bottom: 1px solid #ece8de;
+  font-weight: 600;
+  color: var(--color-tinta);
+  text-align: left;
+  font-size: 12px;
+  vertical-align: bottom;
+}
+.tabela td {
+  padding: 11px 10px;
+  border-bottom: 1px solid var(--color-linha);
+  font-size: 13px;
+  vertical-align: top;
+}
+.tabela .num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
 }
