@@ -98,7 +98,7 @@ export async function carregarGrupo(numero: number) {
   if (error) throw error;
   if (!g) return null;
 
-  const [versao, contagem] = await Promise.all([
+  const [versao, contagem, cadastroParcelas] = await Promise.all([
     supabase
       .from("grupo_assembleia")
       .select(
@@ -114,15 +114,24 @@ export async function carregarGrupo(numero: number) {
       .eq("id", g.grupo_assembleia_id)
       .single(),
     supabase.from("grupo_assembleia").select("id", { count: "exact", head: true }).eq("grupo_numero", numero),
+    supabase.from("tipo_parcela").select("codigo, descricao, pct").order("pct", { ascending: false }),
   ]);
   if (versao.error) throw versao.error;
+  if (cadastroParcelas.error) throw cadastroParcelas.error;
   const v = versao.data;
 
-  const tiposParcela = (
-    (v.grupo_assembleia_tipo_parcela ?? []) as unknown as { tipo_parcela: { codigo: string; descricao: string; pct: number } }[]
-  )
-    .map((t) => ({ ...t.tipo_parcela, pct: Number(t.tipo_parcela.pct) }))
-    .sort((a, b) => b.pct - a.pct);
+  // todos os tipos do cadastro, marcando os oferecidos pelo grupo na versão vigente
+  const oferecidos = new Set(
+    ((v.grupo_assembleia_tipo_parcela ?? []) as unknown as { tipo_parcela: { codigo: string } }[]).map(
+      (t) => t.tipo_parcela.codigo,
+    ),
+  );
+  const tiposParcela = (cadastroParcelas.data ?? []).map((t) => ({
+    codigo: t.codigo as string,
+    descricao: t.descricao as string,
+    pct: Number(t.pct),
+    disponivel: oferecidos.has(t.codigo),
+  }));
 
   const modalidades = ((v.grupo_modalidade ?? []) as unknown as Modalidade[]).sort(
     (a, b) => ORDEM_TIPO.indexOf(a.tipo) - ORDEM_TIPO.indexOf(b.tipo),

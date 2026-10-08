@@ -188,6 +188,33 @@ export function GrupoDetalheView({ grupo, indices, hoje, salvo, erro }: Props) {
           </ul>
         </section>
 
+        <section className="flex w-[13rem] flex-col gap-2 rounded-2xl border border-borda bg-white p-3.5">
+          <h3 className="text-sm font-bold">Tipos de parcela</h3>
+          <ul className="flex flex-col gap-1">
+            {grupo.tiposParcela.map((t) => (
+              <li
+                key={t.codigo}
+                className={
+                  "flex items-center gap-2 rounded-md border px-2.5 py-1 text-[13px] " +
+                  (t.disponivel ? "border-[#cfe3d3] bg-ok-fundo font-semibold text-ok" : "border-[#ece8de] text-tinta/70")
+                }
+              >
+                <span
+                  aria-hidden="true"
+                  className={
+                    "flex h-4 w-4 shrink-0 items-center justify-center rounded border text-[11px] leading-none " +
+                    (t.disponivel ? "border-ok bg-ok text-white" : "border-borda-campo bg-white")
+                  }
+                >
+                  {t.disponivel ? "✓" : ""}
+                </span>
+                <span className="flex-1">{t.descricao}</span>
+                <span className="sr-only">{t.disponivel ? "disponível" : "não disponível"}</span>
+              </li>
+            ))}
+          </ul>
+        </section>
+
         <section className="flex w-fit max-w-[230px] flex-col gap-3 rounded-2xl border border-borda bg-white p-3.5">
           <h3 className="text-sm font-bold">Sequência de contemplação</h3>
           {grupo.sequencia.map((f) => (
