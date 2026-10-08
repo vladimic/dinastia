@@ -3,6 +3,9 @@
 A versão aparece abaixo do e-mail no menu lateral e na tela de login.
 Cada mudança entregue incrementa o número em `src/lib/version.ts` e ganha uma linha aqui.
 
+## 0004 · 07/10/2026
+- Correção: imagens PNG do ícone (192 px e iPhone) que faltaram na 0003.
+
 ## 0003 · 07/10/2026
 - Ícone oficial do app: "Elos" (dois anéis entrelaçados, ouro e laranja sobre navy) — aba do Chrome, app instalado e iPhone.
 - Publicado em https://dinastia-five.vercel.app.
