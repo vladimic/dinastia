@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+<defs>
+  <linearGradient id="ouro" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#e6cf8f"/><stop offset="1" stop-color="#ceaa5b"/></linearGradient>
+  <radialGradient id="brilho" cx="0.5" cy="0.35" r="0.75"><stop offset="0" stop-color="#1f1660"/><stop offset="1" stop-color="#0d0540"/></radialGradient>
+  <clipPath id="escudo"><path d="M256 168 L374 196 V282 C374 346 328 388 256 414 C184 388 138 346 138 282 V196 Z"/></clipPath>
+</defs>
+<rect width="512" height="512" fill="url(#brilho)"/>
+
+<path d="M190 150 L180 96 L218 124 L256 84 L294 124 L332 96 L322 150 Z" fill="url(#ouro)"/>
+<circle cx="256" cy="80" r="9" fill="#ff751f"/>
+<path d="M256 168 L374 196 V282 C374 346 328 388 256 414 C184 388 138 346 138 282 V196 Z" fill="#1f1660" stroke="url(#ouro)" stroke-width="14" stroke-linejoin="round"/>
+<path d="M190 330 L256 270 L322 330" fill="none" stroke="#ff751f" stroke-width="24" stroke-linecap="round" stroke-linejoin="round"/>
+
+</svg>

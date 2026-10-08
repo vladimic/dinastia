@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+<defs>
+  <linearGradient id="ouro" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#e6cf8f"/><stop offset="1" stop-color="#ceaa5b"/></linearGradient>
+  <radialGradient id="brilho" cx="0.5" cy="0.35" r="0.75"><stop offset="0" stop-color="#1f1660"/><stop offset="1" stop-color="#0d0540"/></radialGradient>
+  <clipPath id="escudo"><path d="M256 104 L384 140 V258 C384 336 332 386 256 414 C180 386 128 336 128 258 V140 Z"/></clipPath>
+</defs>
+<rect width="512" height="512" fill="url(#brilho)"/>
+
+<g clip-path="url(#escudo)">
+  <rect x="100" y="90" width="156" height="340" fill="url(#ouro)"/>
+  <rect x="256" y="90" width="156" height="340" fill="#1f1660"/>
+  <path d="M150 320 L256 222 L362 320" fill="none" stroke="#ff751f" stroke-width="34" stroke-linejoin="round"/>
+</g>
+<path d="M256 104 L384 140 V258 C384 336 332 386 256 414 C180 386 128 336 128 258 V140 Z" fill="none" stroke="url(#ouro)" stroke-width="14" stroke-linejoin="round"/>
+
+</svg>

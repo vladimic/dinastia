@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+<defs>
+  <linearGradient id="ouro" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#e6cf8f"/><stop offset="1" stop-color="#ceaa5b"/></linearGradient>
+  <radialGradient id="brilho" cx="0.5" cy="0.35" r="0.75"><stop offset="0" stop-color="#1f1660"/><stop offset="1" stop-color="#0d0540"/></radialGradient>
+  <clipPath id="ceu"><rect x="0" y="0" width="512" height="300"/></clipPath>
+</defs>
+<rect width="512" height="512" fill="url(#brilho)"/>
+<g stroke="#ceaa5b" stroke-width="12" stroke-linecap="round"><line x1="256" y1="386" x2="176" y2="280"/><line x1="256" y1="386" x2="336" y2="280"/><line x1="176" y1="280" x2="130" y2="170"/><line x1="176" y1="280" x2="222" y2="170"/><line x1="336" y1="280" x2="290" y2="170"/><line x1="336" y1="280" x2="382" y2="170"/></g><circle cx="256" cy="386" r="30" fill="#ff751f"/><circle cx="176" cy="280" r="24" fill="url(#ouro)"/><circle cx="336" cy="280" r="24" fill="url(#ouro)"/><circle cx="130" cy="170" r="19" fill="#e6cf8f"/><circle cx="222" cy="170" r="19" fill="#e6cf8f"/><circle cx="290" cy="170" r="19" fill="#e6cf8f"/><circle cx="382" cy="170" r="19" fill="#e6cf8f"/>
+</svg>

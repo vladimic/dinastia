@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+<defs>
+  <linearGradient id="ouro" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0" stop-color="#e6cf8f"/><stop offset="1" stop-color="#ceaa5b"/>
+  </linearGradient>
+  <radialGradient id="brilho" cx="0.5" cy="0.35" r="0.75">
+    <stop offset="0" stop-color="#1f1660"/><stop offset="1" stop-color="#0d0540"/>
+  </radialGradient>
+</defs>
+<rect width="512" height="512" fill="url(#brilho)"/>
+
+<rect x="140" y="270" width="56" height="110" rx="6" fill="url(#ouro)" opacity="0.75"/>
+<rect x="228" y="210" width="56" height="170" rx="6" fill="url(#ouro)" opacity="0.88"/>
+<rect x="316" y="140" width="56" height="240" rx="6" fill="url(#ouro)"/>
+<rect x="120" y="392" width="272" height="14" rx="7" fill="#ff751f"/>
+
+</svg>

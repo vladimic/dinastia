@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+<defs>
+  <linearGradient id="ouro" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#e6cf8f"/><stop offset="1" stop-color="#ceaa5b"/></linearGradient>
+  <radialGradient id="brilho" cx="0.5" cy="0.35" r="0.75"><stop offset="0" stop-color="#1f1660"/><stop offset="1" stop-color="#0d0540"/></radialGradient>
+  <clipPath id="ceu"><rect x="0" y="0" width="512" height="300"/></clipPath>
+</defs>
+<rect width="512" height="512" fill="url(#brilho)"/>
+<path d="M106.0 300.0 A150 150 0 0 1 123.5 229.8 L171.2 255.1 A96 96 0 0 0 160.0 300.0 Z" fill="url(#ouro)"/><path d="M118.5 240.2 A150 150 0 0 1 167.0 179.2 L199.1 222.7 A96 96 0 0 0 168.0 261.7 Z" fill="url(#ouro)"/><path d="M158.0 186.4 A150 150 0 0 1 228.3 152.6 L238.2 205.7 A96 96 0 0 0 193.3 227.3 Z" fill="url(#ouro)"/><path d="M213.4 141.6 A164 164 0 0 1 298.6 141.6 L280.9 207.3 A96 96 0 0 0 231.1 207.3 Z" fill="#ff751f"/><path d="M283.7 152.6 A150 150 0 0 1 354.0 186.4 L318.7 227.3 A96 96 0 0 0 273.8 205.7 Z" fill="url(#ouro)"/><path d="M345.0 179.2 A150 150 0 0 1 393.5 240.2 L344.0 261.7 A96 96 0 0 0 312.9 222.7 Z" fill="url(#ouro)"/><path d="M388.5 229.8 A150 150 0 0 1 406.0 300.0 L352.0 300.0 A96 96 0 0 0 340.8 255.1 Z" fill="url(#ouro)"/>
+<rect x="106" y="306" width="54" height="94" fill="url(#ouro)"/>
+<rect x="352" y="306" width="54" height="94" fill="url(#ouro)"/>
+<rect x="90" y="408" width="332" height="14" rx="4" fill="url(#ouro)" opacity="0.8"/>
+</svg>

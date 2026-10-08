@@ -3,6 +3,10 @@
 A versão aparece abaixo do e-mail no menu lateral e na tela de login.
 Cada mudança entregue incrementa o número em `src/lib/version.ts` e ganha uma linha aqui.
 
+## 0003 · 07/10/2026
+- Ícone oficial do app: "Elos" (dois anéis entrelaçados, ouro e laranja sobre navy) — aba do Chrome, app instalado e iPhone.
+- Publicado em https://dinastia-five.vercel.app.
+
 ## 0002 · 07/10/2026
 - Banco reestruturado pelo MER aprovado: grupo (chave = número), versão por assembleia (grupo_assembleia), tipos de parcela, modalidades, sequência, parâmetros gerais.
 - Cálculos sempre pela maior assembleia do grupo (consulta grupo_atual).

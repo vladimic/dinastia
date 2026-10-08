@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+<defs>
+  <linearGradient id="ouro" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0" stop-color="#e6cf8f"/><stop offset="1" stop-color="#ceaa5b"/>
+  </linearGradient>
+  <radialGradient id="brilho" cx="0.5" cy="0.35" r="0.75">
+    <stop offset="0" stop-color="#1f1660"/><stop offset="1" stop-color="#0d0540"/>
+  </radialGradient>
+</defs>
+<rect width="512" height="512" fill="url(#brilho)"/>
+
+<path d="M256 112 L380 152 V262 C380 334 330 382 256 412 C182 382 132 334 132 262 V152 Z"
+  fill="none" stroke="url(#ouro)" stroke-width="22" stroke-linejoin="round"/>
+<path d="M186 300 L256 232 L326 300" fill="none" stroke="#ff751f" stroke-width="24"
+  stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M200 220 L256 168 L312 220" fill="none" stroke="url(#ouro)" stroke-width="16"
+  stroke-linecap="round" stroke-linejoin="round"/>
+
+</svg>
