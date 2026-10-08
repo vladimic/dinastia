@@ -13,12 +13,12 @@ export async function UsuarioRodape() {
 
 export function RodapeConteudo({ email }: { email: string }) {
   return (
-    <div className="flex items-start justify-between gap-2">
-      <div className="flex min-w-0 flex-col gap-0.5">
-        <div className="break-all text-[13px] font-semibold text-white">{email || " "}</div>
-        <div className="text-xs tabular-nums text-ouro">Versão {APP_VERSION}</div>
+    <div className="flex flex-col gap-0.5">
+      <div className="break-all text-[13px] font-semibold text-white">{email || " "}</div>
+      <div className="flex items-center justify-between gap-2">
+        <span className="text-xs tabular-nums text-ouro">Versão {APP_VERSION}</span>
+        <MenuUsuario />
       </div>
-      <MenuUsuario />
     </div>
   );
 }

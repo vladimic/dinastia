@@ -99,3 +99,22 @@ button {
   text-align: right;
   font-variant-numeric: tabular-nums;
 }
+
+.campo-sm {
+  min-height: 30px;
+  padding: 0 8px;
+  border: 1px solid var(--color-borda-campo);
+  border-radius: 8px;
+  background: var(--color-campo);
+  color: var(--color-navy);
+  font-size: 13px;
+  width: 100%;
+  min-width: 0;
+}
+.campo-sm:focus {
+  outline: 2px solid var(--color-laranja);
+  outline-offset: 1px;
+}
+.campo-sm[readonly] {
+  background: var(--color-linha);
+}

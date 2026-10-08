@@ -42,20 +42,12 @@ export default function GruposPage({ searchParams }: PageProps<"/grupos">) {
         </div>
       </header>
 
-      <div className="flex flex-col gap-5 px-8 pt-6 pb-10">
+      <div className="flex flex-col gap-4 px-8 pt-5 pb-10">
         <Suspense fallback={<div className="py-10 text-sm text-tinta">Carregando…</div>}>
           <Conteudo searchParams={searchParams} />
         </Suspense>
       </div>
     </>
-  );
-}
-
-function Etapa({ n, children }: { n: number; children: React.ReactNode }) {
-  return (
-    <div className="text-xs font-bold uppercase tracking-[0.12em] text-tinta">
-      {n} · {children}
-    </div>
   );
 }
 
@@ -71,64 +63,53 @@ async function Conteudo({ searchParams }: { searchParams: PageProps<"/grupos">["
     numeroGrupo ? carregarGrupo(numeroGrupo) : Promise.resolve(null),
     numeroGrupo ? listarIndices() : Promise.resolve([]),
   ]);
+  const hoje = new Date().toISOString().slice(0, 10);
 
   return (
     <>
-      <section aria-label="Família de produto" className="flex flex-col gap-3">
-        <Etapa n={1}>Família de produto</Etapa>
-        <div className="grid grid-cols-[repeat(auto-fit,minmax(180px,1fr))] gap-3">
-          {FAMILIAS.map((f) => {
-            const ativo = f.slug === familia.slug;
-            const qtd = contagem[f.slug] ?? 0;
-            return (
-              <Link
-                key={f.slug}
-                href={`/grupos?familia=${f.slug}`}
-                aria-current={ativo ? "true" : undefined}
-                className={
-                  "flex min-h-[72px] flex-col items-start justify-center gap-1 rounded-[14px] px-[18px] py-3.5 " +
-                  (ativo
-                    ? "border-2 border-navy bg-navy text-white shadow-[inset_0_-4px_0_var(--color-laranja)]"
-                    : "border border-borda-campo bg-white text-navy hover:border-navy")
-                }
-              >
-                <span className="text-base font-bold">{f.nome}</span>
-                <span className="text-xs opacity-80">{qtd === 0 ? "Nenhum grupo" : qtd === 1 ? "1 grupo" : `${qtd} grupos`}</span>
-              </Link>
-            );
-          })}
-        </div>
-      </section>
+      <nav aria-label="Família de produto" className="flex flex-wrap gap-2">
+        {FAMILIAS.map((f) => {
+          const ativo = f.slug === familia.slug;
+          return (
+            <Link
+              key={f.slug}
+              href={`/grupos?familia=${f.slug}`}
+              aria-current={ativo ? "true" : undefined}
+              className={
+                "flex h-9 items-center rounded-[10px] px-4 text-sm font-bold " +
+                (ativo
+                  ? "bg-navy text-white shadow-[inset_0_-3px_0_var(--color-laranja)]"
+                  : "border border-borda-campo bg-white text-navy hover:border-navy")
+              }
+            >
+              {f.nome} ({contagem[f.slug] ?? 0})
+            </Link>
+          );
+        })}
+      </nav>
 
-      <section aria-label="Grupos" className="flex flex-col gap-3">
-        <Etapa n={2}>Grupo{grupos.length ? ` · ${grupos.length}` : ""}</Etapa>
-        {grupos.length === 0 ? (
-          <div className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-dashed border-borda-campo bg-white p-7">
-            <span className="text-sm text-tinta">Nenhum grupo cadastrado em {familia.nome}.</span>
-            <span className="text-sm font-bold text-tinta" title="Em breve">
-              Importar PDF de tabela
-            </span>
-          </div>
-        ) : (
-          <GrupoChips
-            familia={familia.slug}
-            ativo={detalhe?.numero}
-            hoje={new Date().toISOString().slice(0, 10)}
-            grupos={grupos.map((g) => ({
-              numero: g.numero,
-              prazo: g.prazo_grupo_meses,
-              assembleia: g.assembleia,
-              data: g.data_assembleia,
-              min: g.min,
-              max: g.max,
-              qtdCreditos: g.qtdCreditos,
-            }))}
-          />
-        )}
-      </section>
+      {grupos.length === 0 ? (
+        <p className="rounded-xl border border-dashed border-borda-campo bg-white px-5 py-4 text-sm text-tinta">
+          Nenhum grupo cadastrado em {familia.nome}.
+        </p>
+      ) : (
+        <GrupoChips
+          familia={familia.slug}
+          ativo={detalhe?.numero}
+          hoje={hoje}
+          grupos={grupos.map((g) => ({
+            numero: g.numero,
+            prazo: g.prazo_grupo_meses,
+            assembleia: g.assembleia,
+            data: g.data_assembleia,
+            min: g.min,
+            max: g.max,
+          }))}
+        />
+      )}
 
       {detalhe ? (
-        <GrupoDetalheView grupo={detalhe} indices={indices} salvo={sp.salvo === "1"} erro={sp.erro === "1"} />
+        <GrupoDetalheView grupo={detalhe} indices={indices} hoje={hoje} salvo={sp.salvo === "1"} erro={sp.erro === "1"} />
       ) : numeroGrupo ? (
         <p className="py-2 text-sm font-semibold text-[#9b1c1c]">Grupo {numeroGrupo} não encontrado.</p>
       ) : grupos.length > 0 ? (

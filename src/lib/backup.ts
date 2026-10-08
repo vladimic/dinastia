@@ -75,7 +75,7 @@ const num = (v: unknown) => (v === null || v === undefined ? null : Number(v));
 
 export function validarBackup(b: unknown): asserts b is Backup {
   const x = b as Partial<Backup> | null;
-  if (!x || x.app !== "dinastia") throw new Error("Este arquivo não é um backup do Dinastia.");
+  if (!x || x.app !== "dinastia") throw new Error("Este arquivo não é uma exportação do Dinastia.");
   if (x.formato !== FORMATO_BACKUP) throw new Error(`Formato de backup ${String(x.formato)} não suportado.`);
   if (!x.dados || !Array.isArray(x.dados.grupos) || !Array.isArray(x.dados.versoes))
     throw new Error("Backup incompleto: faltam grupos ou versões.");

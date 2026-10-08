@@ -2,6 +2,17 @@
 // Regra: a cada mudança entregue, acrescentar uma entrada NO TOPO.
 export const VERSOES: { numero: string; data: string; itens: string[] }[] = [
   {
+    numero: "0007",
+    data: "08/10/2026",
+    itens: [
+      "Histórico de versões abre em janela no centro da tela, com rolagem e botão OK.",
+      "Menu ☰ passa para a linha da versão (o e-mail não é mais cortado); \"backup\" passa a se chamar Exportar dados / Importar dados.",
+      "Grupos e Tabelas mais compacto: sem os títulos de etapa, famílias com a quantidade entre parênteses, cards de grupo cerca de 30% menores.",
+      "Pop-up do grupo com assembleia e data no título; sem a linha de rodapé.",
+      "Detalhe do grupo em três colunas: dados do grupo, assembleia (atual, data, realizadas, faltam, prazo da cota, tipos de parcela) e valores de crédito do menor para o maior; origem da versão na linha do título.",
+    ],
+  },
+  {
     numero: "0006",
     data: "07/10/2026",
     itens: [

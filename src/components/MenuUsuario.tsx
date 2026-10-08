@@ -1,8 +1,8 @@
 "use client";
 
-import Link from "next/link";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { sair } from "@/app/login/actions";
+import { VERSOES } from "@/lib/versoes";
 
 type Contagem = { grupos: number; versoes: number };
 type Restauracao = {
@@ -21,7 +21,17 @@ type SavePicker = (o: {
 const hoje = () => new Date().toISOString().slice(0, 10);
 const kb = (n: number) => `${Math.max(1, Math.round(n / 1024)).toLocaleString("pt-BR")} KB`;
 
-function Modal({ titulo, onFechar, children }: { titulo: string; onFechar: () => void; children: ReactNode }) {
+function Modal({
+  titulo,
+  onFechar,
+  children,
+  largo,
+}: {
+  titulo: string;
+  onFechar: () => void;
+  children: ReactNode;
+  largo?: boolean;
+}) {
   return (
     <div
       role="dialog"
@@ -30,7 +40,7 @@ function Modal({ titulo, onFechar, children }: { titulo: string; onFechar: () =>
       className="fixed inset-0 z-50 flex items-center justify-center bg-navy/50 p-4 text-navy"
       onClick={(e) => e.target === e.currentTarget && onFechar()}
     >
-      <div className="flex w-full max-w-md flex-col gap-4 rounded-2xl bg-white p-6 shadow-xl">
+      <div className={`flex max-h-[85vh] w-full flex-col gap-4 rounded-2xl bg-white p-6 shadow-xl ${largo ? "max-w-2xl" : "max-w-md"}`}>
         <div className="flex items-center justify-between gap-3">
           <h2 className="text-lg font-bold">{titulo}</h2>
           <button type="button" onClick={onFechar} aria-label="Fechar" className="rounded-lg px-2 text-xl leading-none text-tinta">
@@ -40,6 +50,34 @@ function Modal({ titulo, onFechar, children }: { titulo: string; onFechar: () =>
         {children}
       </div>
     </div>
+  );
+}
+
+function HistoricoVersoes({ onFechar }: { onFechar: () => void }) {
+  return (
+    <Modal titulo="Histórico de versões" onFechar={onFechar} largo>
+      <div className="-mr-2 flex flex-col gap-4 overflow-y-auto pr-2">
+        {VERSOES.map((v, i) => (
+          <section key={v.numero} className="flex flex-col gap-1.5 border-b border-linha pb-3 last:border-0">
+            <div className="flex items-baseline gap-3">
+              <h3 className="text-base font-bold tabular-nums">{v.numero}</h3>
+              <span className="text-xs text-tinta">{v.data}</span>
+              {i === 0 && (
+                <span className="rounded-full bg-ouro-claro px-2 py-0.5 text-[11px] font-bold text-ouro-texto">atual</span>
+              )}
+            </div>
+            <ul className="flex list-disc flex-col gap-1 pl-5 text-[13px] leading-relaxed">
+              {v.itens.map((t) => (
+                <li key={t}>{t}</li>
+              ))}
+            </ul>
+          </section>
+        ))}
+      </div>
+      <button type="button" onClick={onFechar} className="min-h-11 self-end rounded-[10px] bg-laranja px-8 text-sm font-bold text-navy">
+        OK
+      </button>
+    </Modal>
   );
 }
 
@@ -55,12 +93,12 @@ function ExportarBackup({ onFechar }: { onFechar: () => void }) {
     fetch("/api/backup", { cache: "no-store" })
       .then(async (r) => {
         const texto = await r.text();
-        if (!r.ok) throw new Error(JSON.parse(texto).erro ?? "Falha ao gerar o backup.");
+        if (!r.ok) throw new Error(JSON.parse(texto).erro ?? "Falha ao gerar o arquivo.");
         const j = JSON.parse(texto);
         if (!vivo) return;
         setArquivo({
           blob: new Blob([texto], { type: "application/json" }),
-          nome: `dinastia-backup-${hoje()}.json`,
+          nome: `dinastia-dados-${hoje()}.json`,
           contagem: j.contagem,
         });
         setEstado("pronto");
@@ -78,7 +116,7 @@ function ExportarBackup({ onFechar }: { onFechar: () => void }) {
       if (picker) {
         const h = await picker({
           suggestedName: arquivo.nome,
-          types: [{ description: "Backup Dinastia", accept: { "application/json": [".json"] } }],
+          types: [{ description: "Dados do Dinastia", accept: { "application/json": [".json"] } }],
         });
         const w = await h.createWritable();
         await w.write(arquivo.blob);
@@ -100,13 +138,13 @@ function ExportarBackup({ onFechar }: { onFechar: () => void }) {
   }
 
   return (
-    <Modal titulo="Exportar backup" onFechar={onFechar}>
+    <Modal titulo="Exportar dados" onFechar={onFechar}>
       {estado === "preparando" && <p className="text-sm text-tinta">Preparando o arquivo com todos os dados…</p>}
       {estado === "erro" && <p className="text-sm font-semibold text-[#9b1c1c]">{msg}</p>}
       {arquivo && estado !== "erro" && (
         <>
           <p className="text-sm leading-relaxed">
-            Backup pronto: <strong>{arquivo.contagem.grupos}</strong> grupos, <strong>{arquivo.contagem.versoes}</strong>{" "}
+            Arquivo pronto: <strong>{arquivo.contagem.grupos}</strong> grupos, <strong>{arquivo.contagem.versoes}</strong>{" "}
             versões por assembleia e cadastros de apoio ({kb(arquivo.blob.size)}).
           </p>
           {estado === "salvo" ? (
@@ -137,7 +175,7 @@ function ImportarBackup({ onFechar }: { onFechar: () => void }) {
     try {
       const t = await f.text();
       const j = JSON.parse(t);
-      if (j.app !== "dinastia" || !j.dados) throw new Error("Este arquivo não é um backup do Dinastia.");
+      if (j.app !== "dinastia" || !j.dados) throw new Error("Este arquivo não é uma exportação do Dinastia.");
       setTexto(t);
       setResumo({ gerado_em: j.gerado_em, versao_app: j.versao_app, contagem: j.contagem });
     } catch (e) {
@@ -152,7 +190,7 @@ function ImportarBackup({ onFechar }: { onFechar: () => void }) {
     try {
       const r = await fetch("/api/backup", { method: "POST", headers: { "Content-Type": "application/json" }, body: texto });
       const j = await r.json();
-      if (!r.ok) throw new Error(j.erro ?? "Falha na restauração.");
+      if (!r.ok) throw new Error(j.erro ?? "Falha na importação.");
       setRes(j);
     } catch (e) {
       setErro((e as Error).message);
@@ -162,26 +200,26 @@ function ImportarBackup({ onFechar }: { onFechar: () => void }) {
   }
 
   return (
-    <Modal titulo="Importar backup" onFechar={onFechar}>
+    <Modal titulo="Importar dados" onFechar={onFechar}>
       {!res && (
         <>
           <label className="rotulo text-[13px]">
-            Arquivo de backup (.json)
+            Arquivo exportado pelo Dinastia (.json)
             <input type="file" accept=".json,application/json" onChange={(e) => escolher(e.target.files?.[0])} className="text-sm" />
           </label>
           {resumo && (
             <div className="flex flex-col gap-3 text-sm leading-relaxed">
               <p>
-                Backup de <strong>{new Date(resumo.gerado_em).toLocaleString("pt-BR")}</strong> (versão {resumo.versao_app}):{" "}
+                Exportação de <strong>{new Date(resumo.gerado_em).toLocaleString("pt-BR")}</strong> (versão {resumo.versao_app}):{" "}
                 {resumo.contagem.grupos} grupos e {resumo.contagem.versoes} versões.
               </p>
               <p className="rounded-lg bg-alerta-fundo px-3 py-2 text-[13px] text-alerta">
-                A restauração <strong>não apaga nada</strong>: repõe as versões que faltarem e devolve os dados de cada grupo
+                A importação <strong>não apaga nada</strong>: repõe as versões que faltarem e devolve os dados de cada grupo
                 (participantes, taxa, fundo de reserva, seguro, índice, vencimento) <strong>como estavam no arquivo</strong>,
                 desfazendo edições feitas depois dele.
               </p>
               <button type="button" onClick={restaurar} disabled={enviando} className={`${botao} bg-navy text-white`}>
-                {enviando ? "Restaurando…" : "Restaurar este backup"}
+                {enviando ? "Importando…" : "Importar estes dados"}
               </button>
             </div>
           )}
@@ -212,7 +250,7 @@ function ImportarBackup({ onFechar }: { onFechar: () => void }) {
 
 export function MenuUsuario() {
   const [aberto, setAberto] = useState(false);
-  const [modal, setModal] = useState<"exportar" | "importar" | null>(null);
+  const [modal, setModal] = useState<"exportar" | "importar" | "versoes" | null>(null);
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -228,7 +266,7 @@ export function MenuUsuario() {
   }, [aberto]);
 
   const item = "block w-full rounded-lg px-4 py-2.5 text-left text-[15px] font-semibold text-navy hover:bg-creme";
-  const abrir = (m: "exportar" | "importar") => {
+  const abrir = (m: "exportar" | "importar" | "versoes") => {
     setAberto(false);
     setModal(m);
   };
@@ -241,9 +279,9 @@ export function MenuUsuario() {
         aria-haspopup="menu"
         aria-expanded={aberto}
         onClick={() => setAberto((v) => !v)}
-        className="flex h-9 w-9 items-center justify-center rounded-lg text-[#e9e6f5] hover:bg-navy-2"
+        className="flex h-7 w-7 items-center justify-center rounded-md text-[#e9e6f5] hover:bg-navy-2"
       >
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
           <path d="M4 6h16M4 12h16M4 18h16" />
         </svg>
       </button>
@@ -254,14 +292,14 @@ export function MenuUsuario() {
           className="absolute bottom-full left-0 z-40 mb-2 w-60 rounded-2xl bg-white p-2 shadow-[0_10px_40px_rgba(13,5,64,0.25)]"
         >
           <button role="menuitem" type="button" className={item} onClick={() => abrir("exportar")}>
-            Exportar backup
+            Exportar dados
           </button>
           <button role="menuitem" type="button" className={item} onClick={() => abrir("importar")}>
-            Importar backup
+            Importar dados
           </button>
-          <Link role="menuitem" href="/versoes" className={item} onClick={() => setAberto(false)}>
+          <button role="menuitem" type="button" className={item} onClick={() => abrir("versoes")}>
             Histórico de versões
-          </Link>
+          </button>
           <form action={sair}>
             <button role="menuitem" type="submit" className={item}>
               Sair
@@ -272,6 +310,7 @@ export function MenuUsuario() {
 
       {modal === "exportar" && <ExportarBackup onFechar={() => setModal(null)} />}
       {modal === "importar" && <ImportarBackup onFechar={() => setModal(null)} />}
+      {modal === "versoes" && <HistoricoVersoes onFechar={() => setModal(null)} />}
     </div>
   );
 }

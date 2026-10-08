@@ -161,7 +161,7 @@ export async function carregarGrupo(numero: number) {
     assembleia: g.assembleia_numero as number,
     data_assembleia: g.data_assembleia as string | null,
     prazo_cota_meses: g.prazo_cota_meses as number,
-    creditos: nums(g.creditos).sort((a, b) => b - a),
+    creditos: nums(g.creditos).sort((a, b) => a - b),
     observacoes: v.observacoes as string | null,
     arquivo: (v.arquivo_importado as unknown as { nome: string } | null)?.nome ?? null,
     aprovado_por: v.aprovado_por as string | null,

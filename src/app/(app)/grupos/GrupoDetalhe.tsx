@@ -5,6 +5,7 @@ import { salvarGrupo } from "./actions";
 type Props = {
   grupo: GrupoDetalhe;
   indices: { sigla: string; nome: string }[];
+  hoje: string;
   salvo: boolean;
   erro: boolean;
 };
@@ -34,89 +35,99 @@ function textoDisponivel(m: Modalidade) {
   return partes.join(" · ");
 }
 
-export function GrupoDetalheView({ grupo, indices, salvo, erro }: Props) {
+function Linha({ rotulo, children }: { rotulo: string; children: React.ReactNode }) {
+  return (
+    <label className="grid grid-cols-[1fr_1.15fr] items-center gap-2 text-xs font-semibold text-tinta">
+      {rotulo}
+      {children}
+    </label>
+  );
+}
+
+function Info({ rotulo, valor, destaque }: { rotulo: string; valor: React.ReactNode; destaque?: boolean }) {
+  return (
+    <div className="flex items-center justify-between gap-2 border-b border-linha py-1.5 text-[13px] last:border-0">
+      <span className="text-xs font-semibold text-tinta">{rotulo}</span>
+      <span className={"font-bold tabular-nums " + (destaque ? "text-laranja" : "")}>{valor}</span>
+    </div>
+  );
+}
+
+export function GrupoDetalheView({ grupo, indices, hoje, salvo, erro }: Props) {
   const prazoCalculado = grupo.prazo_grupo_meses - (grupo.assembleia - 1);
   const prazoDiverge = prazoCalculado !== grupo.prazo_cota_meses;
+  // a tabela vigente é da próxima assembleia enquanto a data dela não passou
+  const realizadas = grupo.data_assembleia && grupo.data_assembleia >= hoje ? grupo.assembleia - 1 : grupo.assembleia;
+  const faltam = Math.max(0, grupo.prazo_grupo_meses - realizadas);
 
   return (
-    <form action={salvarGrupo} className="flex flex-col gap-5 border-t border-borda pt-[22px]">
+    <form action={salvarGrupo} className="flex flex-col gap-4 border-t border-borda pt-4">
       <input type="hidden" name="numero" value={grupo.numero} />
       <input type="hidden" name="familia" value={grupo.familia} />
 
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex flex-wrap items-center gap-2.5">
-          <h2 className="text-[22px] font-bold">
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+          <h2 className="text-xl font-bold">
             Grupo {grupo.numero} · {nomeFamilia(grupo.familia)}
           </h2>
-          <span className="rounded-full bg-ouro-claro px-2.5 py-1 text-xs font-semibold text-ouro-texto">
-            Versão vigente: {grupo.assembleia}ª assembleia{grupo.data_assembleia ? ` · ${dataBR(grupo.data_assembleia)}` : ""}
-          </span>
-          <span className="rounded-full bg-lavanda px-2.5 py-1 text-xs font-semibold text-navy-2">
+          <span className="rounded-full bg-lavanda px-2.5 py-0.5 text-xs font-semibold text-navy-2">
             {grupo.totalVersoes} {grupo.totalVersoes === 1 ? "versão" : "versões"}
           </span>
+          {grupo.arquivo && (
+            <span className="text-xs text-tinta">
+              Origem: {grupo.arquivo}
+              {grupo.aprovado_em ? ` · importado em ${dataBR(grupo.aprovado_em)}` : ""}
+            </span>
+          )}
         </div>
-        <button type="submit" className="min-h-11 rounded-[10px] bg-laranja px-5 text-sm font-bold text-navy">
+        <button type="submit" className="min-h-10 rounded-[10px] bg-laranja px-5 text-sm font-bold text-navy">
           Salvar grupo
         </button>
       </div>
 
       {salvo && (
-        <p role="status" className="rounded-lg bg-ok-fundo px-4 py-2.5 text-sm font-semibold text-ok">
+        <p role="status" className="rounded-lg bg-ok-fundo px-4 py-2 text-sm font-semibold text-ok">
           Grupo salvo.
         </p>
       )}
       {erro && (
-        <p role="alert" className="rounded-lg bg-[#fbe4e4] px-4 py-2.5 text-sm font-semibold text-[#9b1c1c]">
+        <p role="alert" className="rounded-lg bg-[#fbe4e4] px-4 py-2 text-sm font-semibold text-[#9b1c1c]">
           Não foi possível salvar. Confira os campos e tente de novo.
         </p>
       )}
-      {grupo.arquivo && (
-        <div className="rounded-lg border border-[#efe4c8] bg-[#fbf7ee] px-4 py-2.5 text-[13px] text-[#5c4510]">
-          <span className="font-bold">Origem da versão:</span> {grupo.arquivo}
-          {grupo.aprovado_em ? ` · importado em ${dataBR(grupo.aprovado_em)}` : ""}
-        </div>
-      )}
 
-      <section className="cartao">
-        <h3 className="text-base font-bold">Dados do grupo</h3>
-        <div className="grid grid-cols-[repeat(auto-fit,minmax(190px,1fr))] gap-3.5">
-          <label className="rotulo">
-            Número do grupo
-            <input className="campo" value={grupo.numero} readOnly />
-          </label>
-          <label className="rotulo">
-            Família
-            <input className="campo" value={nomeFamilia(grupo.familia)} readOnly />
-          </label>
-          <label className="rotulo">
-            Prazo do grupo (meses)
-            <input className="campo" name="prazo_grupo_meses" inputMode="numeric" defaultValue={grupo.prazo_grupo_meses} required />
-          </label>
-          <label className="rotulo">
-            Participantes
-            <input className="campo" name="participantes" inputMode="numeric" defaultValue={milhar(grupo.participantes)} />
-          </label>
-          <label className="rotulo">
-            Taxa de administração total
-            <input className="campo" name="taxa_adm_total" inputMode="decimal" defaultValue={pct(grupo.taxa_adm_total)} />
-          </label>
-          <label className="rotulo">
-            Fundo de reserva
+      <div className="grid items-start gap-4 lg:grid-cols-3">
+        <section className="cartao gap-2 p-4">
+          <h3 className="text-sm font-bold">Dados do grupo</h3>
+          <Linha rotulo="Grupo">
+            <input className="campo-sm" value={grupo.numero} readOnly />
+          </Linha>
+          <Linha rotulo="Família">
+            <input className="campo-sm" value={nomeFamilia(grupo.familia)} readOnly />
+          </Linha>
+          <Linha rotulo="Prazo do grupo (meses)">
+            <input className="campo-sm" name="prazo_grupo_meses" inputMode="numeric" defaultValue={grupo.prazo_grupo_meses} required />
+          </Linha>
+          <Linha rotulo="Participantes">
+            <input className="campo-sm" name="participantes" inputMode="numeric" defaultValue={milhar(grupo.participantes)} />
+          </Linha>
+          <Linha rotulo="Taxa de adm. total">
+            <input className="campo-sm" name="taxa_adm_total" inputMode="decimal" defaultValue={pct(grupo.taxa_adm_total)} />
+          </Linha>
+          <Linha rotulo="Fundo de reserva">
             <input
-              className={"campo " + (grupo.fundo_reserva === null ? "border-alerta-borda bg-alerta-fundo" : "")}
+              className={"campo-sm " + (grupo.fundo_reserva === null ? "border-alerta-borda bg-alerta-fundo" : "")}
               name="fundo_reserva"
               inputMode="decimal"
               defaultValue={pct(grupo.fundo_reserva)}
-              placeholder="Não informado na tabela"
+              placeholder="Não informado"
             />
-          </label>
-          <label className="rotulo">
-            Seguro prestamista (% ao mês)
-            <input className="campo" name="seguro_pct_mes" inputMode="decimal" defaultValue={pct(grupo.seguro_pct_mes, 4)} />
-          </label>
-          <label className="rotulo">
-            Índice de correção
-            <select className="campo" name="indice" defaultValue={grupo.indice ?? ""}>
+          </Linha>
+          <Linha rotulo="Seguro (% ao mês)">
+            <input className="campo-sm" name="seguro_pct_mes" inputMode="decimal" defaultValue={pct(grupo.seguro_pct_mes, 4)} />
+          </Linha>
+          <Linha rotulo="Índice de correção">
+            <select className="campo-sm" name="indice" defaultValue={grupo.indice ?? ""}>
               <option value="">—</option>
               {indices.map((i) => (
                 <option key={i.sigla} value={i.sigla}>
@@ -124,10 +135,9 @@ export function GrupoDetalheView({ grupo, indices, salvo, erro }: Props) {
                 </option>
               ))}
             </select>
-          </label>
-          <label className="rotulo">
-            Reajuste anual em
-            <select className="campo" name="mes_reajuste" defaultValue={grupo.mes_reajuste ?? ""}>
+          </Linha>
+          <Linha rotulo="Reajuste anual em">
+            <select className="campo-sm" name="mes_reajuste" defaultValue={grupo.mes_reajuste ?? ""}>
               <option value="">—</option>
               {MESES.map((m, i) => (
                 <option key={m} value={i + 1}>
@@ -135,80 +145,55 @@ export function GrupoDetalheView({ grupo, indices, salvo, erro }: Props) {
                 </option>
               ))}
             </select>
-          </label>
+          </Linha>
           {grupo.primeira_correcao && (
-            <label className="rotulo">
-              1ª correção
+            <Linha rotulo="1ª correção">
               <input
-                className="campo"
+                className="campo-sm"
                 readOnly
-                value={`${MESES[Number(grupo.primeira_correcao.slice(5, 7)) - 1]} de ${grupo.primeira_correcao.slice(0, 4)}`}
+                value={`${MESES[Number(grupo.primeira_correcao.slice(5, 7)) - 1]}/${grupo.primeira_correcao.slice(0, 4)}`}
               />
-            </label>
+            </Linha>
           )}
-          <label className="rotulo">
-            Dia de vencimento
-            <input className="campo" name="dia_vencimento" inputMode="numeric" defaultValue={grupo.dia_vencimento ?? ""} />
-          </label>
-        </div>
-      </section>
+          <Linha rotulo="Dia de vencimento">
+            <input className="campo-sm" name="dia_vencimento" inputMode="numeric" defaultValue={grupo.dia_vencimento ?? ""} />
+          </Linha>
+        </section>
 
-      <section className="cartao">
-        <div className="flex flex-wrap items-baseline justify-between gap-2">
-          <h3 className="text-base font-bold">Versão vigente · {grupo.assembleia}ª assembleia</h3>
-          <span className="text-xs text-tinta">Dados da tabela importada. Mudam a cada assembleia.</span>
-        </div>
-        <div className="grid grid-cols-[repeat(auto-fit,minmax(190px,1fr))] gap-3.5">
-          <label className="rotulo">
-            Data da assembleia
-            <input className="campo" readOnly value={dataBR(grupo.data_assembleia)} />
-          </label>
-          <label className="rotulo">
-            Prazo da cota (meses)
-            <input className="campo" readOnly value={grupo.prazo_cota_meses} />
-          </label>
-        </div>
-        <p className="text-xs text-tinta">
-          Prazo da cota = prazo do grupo − (assembleia − 1).
+        <section className="cartao gap-1 p-4">
+          <h3 className="mb-1 text-sm font-bold">Assembleia</h3>
+          <Info rotulo="Assembleia da tabela" valor={`${grupo.assembleia}ª`} />
+          <Info rotulo="Data" valor={dataBR(grupo.data_assembleia) || "—"} />
+          <Info rotulo="Total de assembleias" valor={grupo.prazo_grupo_meses} />
+          <Info rotulo="Realizadas" valor={realizadas} />
+          <Info rotulo="Faltam" valor={faltam} destaque />
+          <Info rotulo="Prazo da cota (meses)" valor={grupo.prazo_cota_meses} />
           {prazoDiverge && (
-            <span className="ml-1 font-semibold text-alerta">
-              Atenção: pela regra daria {prazoCalculado} meses, mas a tabela informa {grupo.prazo_cota_meses}.
-            </span>
+            <p className="mt-1 text-xs font-semibold text-alerta">
+              Pela regra (prazo − assembleia + 1) daria {prazoCalculado} meses; a tabela informa {grupo.prazo_cota_meses}.
+            </p>
           )}
-        </p>
-      </section>
-
-      <div className="flex flex-wrap gap-5">
-        <section className="cartao flex-[2_1_480px]">
-          <div className="flex flex-wrap items-baseline justify-between gap-2">
-            <h3 className="text-base font-bold">Valores de crédito</h3>
-            <span className="text-xs text-tinta">
-              {grupo.creditos.length} {grupo.creditos.length === 1 ? "valor" : "valores"}
-            </span>
+          <h3 className="mt-3 mb-1 text-sm font-bold">Tipos de parcela</h3>
+          <div className="flex flex-wrap gap-1.5">
+            {grupo.tiposParcela.map((t) => (
+              <span key={t.codigo} className="rounded-md bg-lavanda px-2 py-1 text-xs font-semibold">
+                {t.descricao} · {pct(t.pct, 0)}
+              </span>
+            ))}
           </div>
-          <ul className="grid grid-cols-[repeat(auto-fill,minmax(160px,1fr))] gap-2.5">
+        </section>
+
+        <section className="cartao gap-2 p-4">
+          <h3 className="text-sm font-bold">
+            Valores de crédito <span className="font-normal text-tinta">({grupo.creditos.length})</span>
+          </h3>
+          <ul className="grid max-h-[360px] grid-cols-2 gap-1.5 overflow-y-auto">
             {grupo.creditos.map((c) => (
-              <li
-                key={c}
-                className="rounded-[10px] border border-[#ece8de] px-3.5 py-3 text-right text-[15px] font-bold tabular-nums"
-              >
+              <li key={c} className="rounded-md border border-[#ece8de] px-2.5 py-1.5 text-right text-[13px] font-bold tabular-nums">
                 {reais(c)}
               </li>
             ))}
           </ul>
-        </section>
-
-        <section className="cartao flex-[1_1_280px]">
-          <h3 className="text-base font-bold">Tipos de parcela</h3>
-          <ul className="flex flex-col gap-2 text-[13px]">
-            {grupo.tiposParcela.map((t) => (
-              <li key={t.codigo} className="flex justify-between gap-3 rounded-[10px] border border-[#ece8de] px-3.5 py-3">
-                <span className="font-bold">{t.descricao}</span>
-                <span className="tabular-nums text-tinta">{pct(t.pct, 0)}</span>
-              </li>
-            ))}
-          </ul>
-          <p className="text-xs text-tinta">Reduzida: fundo comum reduzido até a contemplação; recalculada no prazo restante.</p>
         </section>
       </div>
 
