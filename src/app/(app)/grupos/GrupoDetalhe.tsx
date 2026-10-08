@@ -1,6 +1,7 @@
 import { ehLance, nomeFamilia, type GrupoDetalhe, type Modalidade } from "@/lib/grupos";
 import { dataBR, MESES, milhar, pct, reais } from "@/lib/formato";
 import { salvarGrupo } from "./actions";
+import { PagamentoComFuro, TiposParcela } from "./ParcelasEFuro";
 
 type Props = {
   grupo: GrupoDetalhe;
@@ -188,32 +189,10 @@ export function GrupoDetalheView({ grupo, indices, hoje, salvo, erro }: Props) {
           </ul>
         </section>
 
-        <section className="flex w-[13rem] flex-col gap-2 rounded-2xl border border-borda bg-white p-3.5">
-          <h3 className="text-sm font-bold">Tipos de parcela</h3>
-          <ul className="flex flex-col gap-1">
-            {grupo.tiposParcela.map((t) => (
-              <li
-                key={t.codigo}
-                className={
-                  "flex items-center gap-2 rounded-md border px-2.5 py-1 text-[13px] " +
-                  (t.disponivel ? "border-[#cfe3d3] bg-ok-fundo font-semibold text-ok" : "border-[#ece8de] text-tinta/70")
-                }
-              >
-                <span
-                  aria-hidden="true"
-                  className={
-                    "flex h-4 w-4 shrink-0 items-center justify-center rounded border text-[11px] leading-none " +
-                    (t.disponivel ? "border-ok bg-ok text-white" : "border-borda-campo bg-white")
-                  }
-                >
-                  {t.disponivel ? "✓" : ""}
-                </span>
-                <span className="flex-1">{t.descricao}</span>
-                <span className="sr-only">{t.disponivel ? "disponível" : "não disponível"}</span>
-              </li>
-            ))}
-          </ul>
-        </section>
+        <div className="flex flex-col gap-3">
+          <PagamentoComFuro key={`furo-${grupo.grupo_assembleia_id}`} versaoId={grupo.grupo_assembleia_id} valor={grupo.pagamento_com_furo} />
+          <TiposParcela key={`tipos-${grupo.grupo_assembleia_id}`} versaoId={grupo.grupo_assembleia_id} tipos={grupo.tiposParcela} />
+        </div>
 
         <section className="flex w-fit max-w-[230px] flex-col gap-3 rounded-2xl border border-borda bg-white p-3.5">
           <h3 className="text-sm font-bold">Sequência de contemplação</h3>

@@ -102,7 +102,7 @@ export async function carregarGrupo(numero: number) {
     supabase
       .from("grupo_assembleia")
       .select(
-        `id, aprovado_por, aprovado_em, observacoes,
+        `id, aprovado_por, aprovado_em, observacoes, pagamento_com_furo,
          arquivo_importado(nome),
          grupo_assembleia_tipo_parcela(tipo_parcela(codigo, descricao, pct)),
          grupo_modalidade(tipo, max_parcelas_lance, pct_categoria, embutido_max_parcelas, embutido_base,
@@ -166,6 +166,8 @@ export async function carregarGrupo(numero: number) {
     mes_reajuste: g.mes_reajuste as number | null,
     primeira_correcao: g.primeira_correcao as string | null,
     dia_vencimento: g.dia_vencimento as number | null,
+    grupo_assembleia_id: v.id as number,
+    pagamento_com_furo: v.pagamento_com_furo as boolean | null,
     assembleia: g.assembleia_numero as number,
     data_assembleia: g.data_assembleia as string | null,
     prazo_cota_meses: g.prazo_cota_meses as number,

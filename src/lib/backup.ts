@@ -32,7 +32,7 @@ export async function exportarBackup(supabase: SupabaseClient, email: string) {
       supabase,
       "grupo_assembleia",
       `grupo_numero, assembleia_numero, data_assembleia, prazo_cota_meses, creditos, observacoes,
-       aprovado_por, aprovado_em,
+       aprovado_por, aprovado_em, pagamento_com_furo,
        arquivo:arquivo_importado(nome, hash_sha256, status, recebido_em, dados_extraidos),
        tipos_parcela:grupo_assembleia_tipo_parcela(tipo_parcela),
        modalidades:grupo_modalidade(tipo, max_parcelas_lance, pct_categoria, embutido_max_parcelas,
@@ -81,6 +81,17 @@ export function validarBackup(b: unknown): asserts b is Backup {
     throw new Error("Backup incompleto: faltam grupos ou versões.");
 }
 
+// "Pagamento com furo" é edição manual: volta como estava no backup (nulo = não informado, não sobrescreve)
+async function restaurarFuro(supabase: SupabaseClient, v: Linha, r: ResultadoRestauracao) {
+  if (typeof v.pagamento_com_furo !== "boolean") return;
+  const { error } = await supabase
+    .from("grupo_assembleia")
+    .update({ pagamento_com_furo: v.pagamento_com_furo })
+    .eq("grupo_numero", v.grupo_numero)
+    .eq("assembleia_numero", v.assembleia_numero);
+  if (error) r.erros.push(`versão ${v.grupo_numero}/${v.assembleia_numero}: pagamento com furo: ${error.message}`);
+}
+
 export async function restaurarBackup(supabase: SupabaseClient, b: Backup, email: string): Promise<ResultadoRestauracao> {
   const r: ResultadoRestauracao = {
     versoesRepostas: 0,
@@ -114,6 +125,7 @@ export async function restaurarBackup(supabase: SupabaseClient, b: Backup, email
     const chave = `${v.grupo_numero}/${v.assembleia_numero}`;
     if (tem.has(chave)) {
       r.versoesExistentes++;
+      await restaurarFuro(supabase, v, r);
       continue;
     }
     const g = grupoPorNumero.get(Number(v.grupo_numero));
@@ -166,7 +178,10 @@ export async function restaurarBackup(supabase: SupabaseClient, b: Backup, email
     };
     const { error } = await supabase.rpc("importar_grupo", { p: payload });
     if (error) r.erros.push(`versão ${chave}: ${error.message}`);
-    else r.versoesRepostas++;
+    else {
+      r.versoesRepostas++;
+      await restaurarFuro(supabase, v, r);
+    }
   }
 
   // 3) dados do grupo exatamente como no backup (inclui edições manuais, ex.: fundo de reserva)

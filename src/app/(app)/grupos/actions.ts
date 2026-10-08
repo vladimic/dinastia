@@ -1,5 +1,6 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { lerInt, lerPct } from "@/lib/formato";
@@ -29,4 +30,28 @@ export async function salvarGrupo(formData: FormData) {
 
   const base = `/grupos?familia=${encodeURIComponent(familia)}&grupo=${numero}`;
   redirect(`${base}&${error ? "erro" : "salvo"}=1`);
+}
+
+// Marca ou desmarca um tipo de parcela oferecido pelo grupo na versão (assembleia) vigente.
+export async function alternarTipoParcela(versaoId: number, tipo: string, marcado: boolean): Promise<{ ok: boolean }> {
+  if (!Number.isInteger(versaoId) || !tipo) return { ok: false };
+  const supabase = await createClient();
+  const { error } = marcado
+    ? await supabase
+        .from("grupo_assembleia_tipo_parcela")
+        .upsert({ grupo_assembleia_id: versaoId, tipo_parcela: tipo }, { onConflict: "grupo_assembleia_id,tipo_parcela" })
+    : await supabase.from("grupo_assembleia_tipo_parcela").delete().eq("grupo_assembleia_id", versaoId).eq("tipo_parcela", tipo);
+  if (error) return { ok: false };
+  revalidatePath("/grupos");
+  return { ok: true };
+}
+
+// Pagamento com furo na versão vigente: true = sim, false = não.
+export async function definirPagamentoComFuro(versaoId: number, valor: boolean): Promise<{ ok: boolean }> {
+  if (!Number.isInteger(versaoId)) return { ok: false };
+  const supabase = await createClient();
+  const { error } = await supabase.from("grupo_assembleia").update({ pagamento_com_furo: valor }).eq("id", versaoId);
+  if (error) return { ok: false };
+  revalidatePath("/grupos");
+  return { ok: true };
 }

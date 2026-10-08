@@ -2,6 +2,15 @@
 // Regra: a cada mudança entregue, acrescentar uma entrada NO TOPO.
 export const VERSOES: { numero: string; data: string; itens: string[] }[] = [
   {
+    numero: "0015",
+    data: "08/10/2026",
+    itens: [
+      "Tipos de parcela do grupo agora são editáveis: clicar na caixa marca ou desmarca o tipo e grava na hora no banco (na assembleia vigente do grupo).",
+      "Novo campo \"Pagamento com furo\" (Sim / Não), em box próprio acima de Tipos de parcela. Fica gravado na versão do grupo (grupo_assembleia, coluna nova no final da tabela); grupos existentes ficam como \"ainda não informado\" até você escolher.",
+      "Exportar/Importar dados passam a incluir o pagamento com furo.",
+    ],
+  },
+  {
     numero: "0014",
     data: "08/10/2026",
     itens: [
