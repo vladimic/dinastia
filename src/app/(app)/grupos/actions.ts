@@ -22,7 +22,6 @@ export async function salvarGrupo(formData: FormData) {
       dia_vencimento: lerInt(formData.get("dia_vencimento")),
       taxa_adm_total: lerPct(formData.get("taxa_adm_total")),
       fundo_reserva: lerPct(formData.get("fundo_reserva")),
-      seguro_pct_mes: lerPct(formData.get("seguro_pct_mes")),
       indice: indice || null,
       mes_reajuste: mes ? Number(mes) : null,
     })

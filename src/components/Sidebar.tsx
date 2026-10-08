@@ -27,6 +27,7 @@ const GRUPOS: { titulo?: string; itens: Item[] }[] = [
     titulo: "Cadastros",
     itens: [
       { href: "/grupos", label: "Grupos e Tabelas", pronto: true },
+      { href: "/parametros", label: "Parâmetros globais", pronto: true },
       { href: "/modalidades", label: "Modalidades de contemplação" },
       { href: "/lances", label: "Histórico de lances" },
       { href: "/indices", label: "Índices de correção" },

@@ -2,6 +2,15 @@
 // Regra: a cada mudança entregue, acrescentar uma entrada NO TOPO.
 export const VERSOES: { numero: string; data: string; itens: string[] }[] = [
   {
+    numero: "0011",
+    data: "08/10/2026",
+    itens: [
+      "Seguro prestamista passa a ser um parâmetro único para todos os grupos: sai da tela e da tabela de grupos.",
+      "Nova tela Cadastros › Parâmetros globais, com o % do seguro e botão Salvar.",
+      "\"Dados do grupo\" passa a se chamar \"Informações do grupo\"; Faixa de crédito com a mesma largura.",
+    ],
+  },
+  {
     numero: "0010",
     data: "08/10/2026",
     itens: [

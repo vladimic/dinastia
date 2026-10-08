@@ -153,7 +153,6 @@ export async function carregarGrupo(numero: number) {
     participantes: g.participantes as number | null,
     taxa_adm_total: g.taxa_adm_total as number | null,
     fundo_reserva: g.fundo_reserva as number | null,
-    seguro_pct_mes: g.seguro_pct_mes as number | null,
     indice: g.indice as string | null,
     mes_reajuste: g.mes_reajuste as number | null,
     primeira_correcao: g.primeira_correcao as string | null,

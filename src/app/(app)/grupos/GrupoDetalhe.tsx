@@ -37,7 +37,7 @@ function textoDisponivel(m: Modalidade) {
 
 function Linha({ rotulo, children }: { rotulo: string; children: React.ReactNode }) {
   return (
-    <label className="grid grid-cols-[7rem_6rem] items-center gap-2 text-xs font-semibold text-tinta">
+    <label className="grid grid-cols-[1fr_6rem] items-center gap-2 text-xs font-semibold text-tinta">
       {rotulo}
       {children}
     </label>
@@ -126,8 +126,8 @@ export function GrupoDetalheView({ grupo, indices, hoje, salvo, erro }: Props) {
       )}
 
       <div className="flex flex-wrap items-start gap-3">
-        <section className="flex w-fit flex-col gap-2 rounded-2xl border border-borda bg-white p-3.5">
-          <h3 className="text-sm font-bold">Dados do grupo</h3>
+        <section className="flex w-[15.5rem] flex-col gap-2 rounded-2xl border border-borda bg-white p-3.5">
+          <h3 className="text-sm font-bold">Informações do grupo</h3>
           <Linha rotulo="Participantes">
             <input className="campo-sm" name="participantes" inputMode="numeric" defaultValue={milhar(grupo.participantes)} />
           </Linha>
@@ -142,9 +142,6 @@ export function GrupoDetalheView({ grupo, indices, hoje, salvo, erro }: Props) {
               defaultValue={pct(grupo.fundo_reserva)}
               placeholder="—"
             />
-          </Linha>
-          <Linha rotulo="Seguro (% ao mês)">
-            <input className="campo-sm" name="seguro_pct_mes" inputMode="decimal" defaultValue={pct(grupo.seguro_pct_mes, 4)} />
           </Linha>
           <Linha rotulo="Índice de correção">
             <select className="campo-sm" name="indice" defaultValue={grupo.indice ?? ""}>
@@ -180,10 +177,8 @@ export function GrupoDetalheView({ grupo, indices, hoje, salvo, erro }: Props) {
           )}
         </section>
 
-        <section className="flex w-fit flex-col gap-2 rounded-2xl border border-borda bg-white p-3.5">
-          <h3 className="text-sm font-bold">
-            Faixa de crédito
-          </h3>
+        <section className="flex w-[15.5rem] flex-col gap-2 rounded-2xl border border-borda bg-white p-3.5">
+          <h3 className="text-sm font-bold">Faixa de crédito</h3>
           <ul className="flex max-h-[340px] flex-col gap-1 overflow-y-auto pr-1">
             {grupo.creditos.map((c) => (
               <li key={c} className="rounded-md border border-[#ece8de] px-2.5 py-0.5 text-right text-[13px] font-bold tabular-nums">

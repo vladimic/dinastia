@@ -131,7 +131,6 @@ export async function restaurarBackup(supabase: SupabaseClient, b: Backup, email
       prazo_cota: v.prazo_cota_meses,
       participantes: g.participantes,
       taxa_adm: g.taxa_adm_total,
-      seguro_pct_mes: g.seguro_pct_mes,
       indice: g.indice,
       mes_reajuste: g.mes_reajuste,
       primeira_correcao: g.primeira_correcao,
@@ -171,7 +170,8 @@ export async function restaurarBackup(supabase: SupabaseClient, b: Backup, email
   }
 
   // 3) dados do grupo exatamente como no backup (inclui edições manuais, ex.: fundo de reserva)
-  const grupos = d.grupos.map(({ criado_em: _c, atualizado_em: _a, ...g }) => g);
+  // seguro_pct_mes saiu do grupo (0004): exportações antigas ainda trazem o campo
+  const grupos = d.grupos.map(({ criado_em: _c, atualizado_em: _a, seguro_pct_mes: _s, ...g }) => g);
   for (let i = 0; i < grupos.length; i += 200) {
     const lote = grupos.slice(i, i + 200);
     const { error } = await supabase.from("grupo").upsert(lote, { onConflict: "numero" });
