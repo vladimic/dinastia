@@ -2,6 +2,15 @@
 // Regra: a cada mudança entregue, acrescentar uma entrada NO TOPO.
 export const VERSOES: { numero: string; data: string; itens: string[] }[] = [
   {
+    numero: "0012",
+    data: "08/10/2026",
+    itens: [
+      "Novo cadastro Modalidades de Contemplação (menu Cadastros, abaixo de Grupos e Tabelas): código de até 10 caracteres, nome e cor; incluir, editar nome/cor e excluir (só se não estiver em uso).",
+      "Carga inicial: SOR, SOC, LIV, LIM, FIX e FID, com as cores verde, cinza, vermelho, laranja, azul e rosa. As cores ainda não são usadas em outras telas.",
+      "Os códigos antigos (SORTEIO_ATIVO, LANCE_LIVRE etc.) foram trocados pelos novos nos grupos, na sequência de contemplação, no importador de PDF e nos arquivos de carga.",
+    ],
+  },
+  {
     numero: "0011",
     data: "08/10/2026",
     itens: [

@@ -201,7 +201,7 @@ export function GrupoDetalheView({ grupo, indices, hoje, salvo, erro }: Props) {
                     <span
                       className={
                         "inline-block h-2 w-2 shrink-0 rounded-full " +
-                        (i.codigo === "LANCE_FIDELIDADE" ? "bg-ouro" : ehLance(i.codigo) ? "bg-laranja" : "bg-navy-3")
+                        (i.codigo === "FID" ? "bg-ouro" : ehLance(i.codigo) ? "bg-laranja" : "bg-navy-3")
                       }
                       aria-hidden="true"
                     />

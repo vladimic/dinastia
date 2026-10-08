@@ -28,7 +28,7 @@ const GRUPOS: { titulo?: string; itens: Item[] }[] = [
     itens: [
       { href: "/grupos", label: "Grupos e Tabelas", pronto: true },
       { href: "/parametros", label: "Parâmetros globais", pronto: true },
-      { href: "/modalidades", label: "Modalidades de contemplação" },
+      { href: "/modalidades", label: "Modalidades de Contemplação", pronto: true },
       { href: "/lances", label: "Histórico de lances" },
       { href: "/indices", label: "Índices de correção" },
       { href: "/importar", label: "Importar tabelas (PDF)" },
