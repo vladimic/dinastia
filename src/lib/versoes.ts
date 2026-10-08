@@ -2,6 +2,13 @@
 // Regra: a cada mudança entregue, acrescentar uma entrada NO TOPO.
 export const VERSOES: { numero: string; data: string; itens: string[] }[] = [
   {
+    numero: "0013",
+    data: "08/10/2026",
+    itens: [
+      "Novo cadastro Tipos de Parcela (menu Cadastros, abaixo de Modalidades de Contemplação): mostra os dados atuais (código, descrição, % da parcela e em quantas versões de grupos o tipo é usado) e permite incluir, editar descrição/percentual e excluir (só se não estiver em uso).",
+    ],
+  },
+  {
     numero: "0012",
     data: "08/10/2026",
     itens: [
