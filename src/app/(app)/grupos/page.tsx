@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Suspense } from "react";
 import { FAMILIAS, carregarGrupo, contarPorFamilia, listarGrupos, listarIndices } from "@/lib/grupos";
-import { reaisMil } from "@/lib/formato";
 import { GrupoDetalheView } from "./GrupoDetalhe";
+import { GrupoChips } from "./GrupoChips";
 
 export const metadata: Metadata = { title: "Grupos e Tabelas · Dinastia" };
 
@@ -101,7 +101,7 @@ async function Conteudo({ searchParams }: { searchParams: PageProps<"/grupos">["
       </section>
 
       <section aria-label="Grupos" className="flex flex-col gap-3">
-        <Etapa n={2}>Grupo</Etapa>
+        <Etapa n={2}>Grupo{grupos.length ? ` · ${grupos.length}` : ""}</Etapa>
         {grupos.length === 0 ? (
           <div className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-dashed border-borda-campo bg-white p-7">
             <span className="text-sm text-tinta">Nenhum grupo cadastrado em {familia.nome}.</span>
@@ -110,35 +110,20 @@ async function Conteudo({ searchParams }: { searchParams: PageProps<"/grupos">["
             </span>
           </div>
         ) : (
-          <div className="grid grid-cols-[repeat(auto-fill,minmax(210px,1fr))] gap-3">
-            {grupos.map((g) => {
-              const ativo = g.numero === detalhe?.numero;
-              return (
-                <Link
-                  key={g.numero}
-                  href={`/grupos?familia=${familia.slug}&grupo=${g.numero}`}
-                  aria-current={ativo ? "true" : undefined}
-                  className={
-                    "flex min-h-28 flex-col items-start gap-1.5 rounded-[14px] bg-white p-4 " +
-                    (ativo ? "border-2 border-laranja shadow-[0_0_0_3px_#ffe2cf]" : "border border-borda-campo hover:border-navy")
-                  }
-                >
-                  <span className="flex w-full items-baseline justify-between gap-2">
-                    <span className="text-[22px] font-bold tabular-nums">{g.numero}</span>
-                    <span className="rounded-full bg-ouro-claro px-2 py-0.5 text-[11px] font-bold text-ouro-texto">
-                      {g.assembleia}ª assembleia
-                    </span>
-                  </span>
-                  <span className="text-[13px] font-semibold">
-                    {g.min !== null && g.max !== null ? `${reaisMil(g.min)} a ${reaisMil(g.max)}` : "Sem créditos"}
-                  </span>
-                  <span className="text-xs text-tinta">
-                    {g.prazo_grupo_meses} meses · {g.qtdCreditos} {g.qtdCreditos === 1 ? "crédito" : "créditos"}
-                  </span>
-                </Link>
-              );
-            })}
-          </div>
+          <GrupoChips
+            familia={familia.slug}
+            ativo={detalhe?.numero}
+            hoje={new Date().toISOString().slice(0, 10)}
+            grupos={grupos.map((g) => ({
+              numero: g.numero,
+              prazo: g.prazo_grupo_meses,
+              assembleia: g.assembleia,
+              data: g.data_assembleia,
+              min: g.min,
+              max: g.max,
+              qtdCreditos: g.qtdCreditos,
+            }))}
+          />
         )}
       </section>
 

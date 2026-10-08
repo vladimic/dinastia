@@ -37,6 +37,7 @@ export type GrupoResumo = {
   numero: number;
   prazo_grupo_meses: number;
   assembleia: number;
+  data_assembleia: string | null;
   qtdCreditos: number;
   min: number | null;
   max: number | null;
@@ -46,7 +47,7 @@ export async function listarGrupos(familia: string): Promise<GrupoResumo[]> {
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("grupo_atual")
-    .select("numero, prazo_grupo_meses, assembleia_numero, creditos")
+    .select("numero, prazo_grupo_meses, assembleia_numero, data_assembleia, creditos")
     .eq("familia", familia)
     .order("numero");
   if (error) throw error;
@@ -56,6 +57,7 @@ export async function listarGrupos(familia: string): Promise<GrupoResumo[]> {
       numero: g.numero,
       prazo_grupo_meses: g.prazo_grupo_meses,
       assembleia: g.assembleia_numero,
+      data_assembleia: g.data_assembleia,
       qtdCreditos: v.length,
       min: v.length ? Math.min(...v) : null,
       max: v.length ? Math.max(...v) : null,
