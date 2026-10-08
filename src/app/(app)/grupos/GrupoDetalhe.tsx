@@ -72,25 +72,32 @@ export function GrupoDetalheView({ grupo, indices, hoje, salvo, erro }: Props) {
               {grupo.data_assembleia ? ` – ${dataBR(grupo.data_assembleia)}` : ""}
             </strong>
           </span>
-          <span>
-            <span className="text-tinta">Faltantes: </span>
-            <strong className="text-laranja">{faltam}</strong>
-          </span>
-          <span>
-            <span className="text-tinta">Total: </span>
-            <strong>{grupo.prazo_grupo_meses}</strong>
-          </span>
-          <span
-            className="relative h-2.5 w-36 self-center overflow-hidden rounded-full bg-lavanda"
+          <div
+            className="flex items-end gap-2 self-center"
             title={`${realizadas} de ${grupo.prazo_grupo_meses} assembleias realizadas · faltam ${faltam}`}
-            role="img"
-            aria-label={`${realizadas} de ${grupo.prazo_grupo_meses} assembleias realizadas`}
           >
-            <span
-              className="absolute inset-y-0 left-0 rounded-full bg-laranja"
-              style={{ width: `${Math.min(100, (realizadas / grupo.prazo_grupo_meses) * 100)}%` }}
-            />
-          </span>
+            <div className="w-72">
+              <div className="mb-0.5 flex justify-between text-[11px] leading-none">
+                <span className="font-bold text-laranja">
+                  {realizadas} {realizadas === 1 ? "realizada" : "realizadas"}
+                </span>
+                <span className="text-tinta">
+                  <strong className="text-navy">{faltam}</strong> faltam
+                </span>
+              </div>
+              <div
+                className="relative h-2 overflow-hidden rounded-full bg-lavanda"
+                role="img"
+                aria-label={`${realizadas} de ${grupo.prazo_grupo_meses} assembleias realizadas`}
+              >
+                <div
+                  className="absolute inset-y-0 left-0 min-w-1.5 rounded-full bg-laranja"
+                  style={{ width: `${Math.min(100, (realizadas / grupo.prazo_grupo_meses) * 100)}%` }}
+                />
+              </div>
+            </div>
+            <span className="text-xs font-bold leading-none tabular-nums">{grupo.prazo_grupo_meses}</span>
+          </div>
           {grupo.atualizado_em && (
             <span className="text-xs text-tinta" title={grupo.arquivo ? `Tabela: ${grupo.arquivo}` : undefined}>
               (atualizado em: {dataLocal(grupo.atualizado_em)})
