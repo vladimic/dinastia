@@ -167,7 +167,7 @@ export async function carregarGrupo(numero: number) {
     primeira_correcao: g.primeira_correcao as string | null,
     dia_vencimento: g.dia_vencimento as number | null,
     grupo_assembleia_id: v.id as number,
-    pagamento_com_furo: v.pagamento_com_furo as boolean | null,
+    pagamento_com_furo: Boolean(v.pagamento_com_furo),
     assembleia: g.assembleia_numero as number,
     data_assembleia: g.data_assembleia as string | null,
     prazo_cota_meses: g.prazo_cota_meses as number,

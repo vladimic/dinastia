@@ -2,6 +2,14 @@
 // Regra: a cada mudança entregue, acrescentar uma entrada NO TOPO.
 export const VERSOES: { numero: string; data: string; itens: string[] }[] = [
   {
+    numero: "0016",
+    data: "08/10/2026",
+    itens: [
+      "Pagamento com furo agora é um interruptor compacto (Sim / Não) numa linha só; o box de Tipos de parcela ficou com a mesma largura da Faixa de crédito.",
+      "\"Ainda não informado\" deixa de existir: os grupos sem resposta passam a valer Não, no banco e na tela.",
+    ],
+  },
+  {
     numero: "0015",
     data: "08/10/2026",
     itens: [

@@ -7,48 +7,51 @@ type Tipo = { codigo: string; descricao: string; disponivel: boolean };
 
 const CAIXA = "flex flex-col gap-2 rounded-2xl border border-borda bg-white p-3.5";
 
-export function PagamentoComFuro({ versaoId, valor }: { versaoId: number; valor: boolean | null }) {
+export function PagamentoComFuro({ versaoId, valor }: { versaoId: number; valor: boolean }) {
   const [atual, setAtual] = useState(valor);
   const [erro, setErro] = useState(false);
   const [pendente, iniciar] = useTransition();
 
-  function escolher(novo: boolean) {
-    if (novo === atual) return;
-    const anterior = atual;
+  function alternar() {
+    const novo = !atual;
     setAtual(novo);
     setErro(false);
     iniciar(async () => {
       const r = await definirPagamentoComFuro(versaoId, novo);
       if (!r.ok) {
-        setAtual(anterior);
+        setAtual(!novo);
         setErro(true);
       }
     });
   }
 
   return (
-    <section className={CAIXA + " w-[13rem]"} aria-busy={pendente}>
-      <h3 className="text-sm font-bold">Pagamento com furo</h3>
-      <div role="radiogroup" aria-label="Pagamento com furo" className="grid grid-cols-2 gap-1.5">
-        {([true, false] as const).map((op) => (
-          <button
-            key={String(op)}
-            type="button"
-            role="radio"
-            aria-checked={atual === op}
-            onClick={() => escolher(op)}
-            className={
-              "min-h-8 rounded-md border text-[13px] font-semibold " +
-              (atual === op
-                ? "border-navy bg-navy text-white"
-                : "border-borda-campo bg-white text-tinta hover:bg-linha")
-            }
+    <section className={CAIXA + " w-[15.5rem] py-2.5!"} aria-busy={pendente}>
+      <div className="flex items-center justify-between gap-3">
+        <span id={`furo-${versaoId}`} className="text-[13px] font-bold">
+          Pagamento com furo
+        </span>
+        <button
+          type="button"
+          role="switch"
+          aria-checked={atual}
+          aria-labelledby={`furo-${versaoId}`}
+          onClick={alternar}
+          className="flex items-center gap-1.5"
+        >
+          <span
+            aria-hidden="true"
+            className={"relative h-5 w-9 rounded-full transition-colors " + (atual ? "bg-ok" : "bg-[#cfcbe0]")}
           >
-            {op ? "Sim" : "Não"}
-          </button>
-        ))}
+            <span
+              className={
+                "absolute top-0.5 h-4 w-4 rounded-full bg-white shadow transition-all " + (atual ? "left-[18px]" : "left-0.5")
+              }
+            />
+          </span>
+          <span className={"w-7 text-left text-xs font-bold " + (atual ? "text-ok" : "text-tinta")}>{atual ? "Sim" : "Não"}</span>
+        </button>
       </div>
-      {atual === null && <p className="text-[11px] text-tinta">Ainda não informado.</p>}
       {erro && (
         <p role="alert" className="text-[11px] font-semibold text-[#9b1c1c]">
           Não foi possível salvar. Tente de novo.
@@ -86,7 +89,7 @@ export function TiposParcela({ versaoId, tipos }: { versaoId: number; tipos: Tip
   }
 
   return (
-    <section className={CAIXA + " w-[13rem]"} aria-busy={pendente}>
+    <section className={CAIXA + " w-[15.5rem]"} aria-busy={pendente}>
       <h3 className="text-sm font-bold">Tipos de parcela</h3>
       <ul className="flex flex-col gap-1">
         {tipos.map((t) => {
