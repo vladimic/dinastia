@@ -2,6 +2,13 @@
 // Regra: a cada mudança entregue, acrescentar uma entrada NO TOPO.
 export const VERSOES: { numero: string; data: string; itens: string[] }[] = [
   {
+    numero: "0014",
+    data: "08/10/2026",
+    itens: [
+      "Grupos e Tabelas: nova coluna \"Tipos de parcela\", ao lado da Faixa de crédito. Lista todos os tipos do cadastro e marca (✓, em verde) os que o grupo oferece na assembleia vigente.",
+    ],
+  },
+  {
     numero: "0013",
     data: "08/10/2026",
     itens: [
