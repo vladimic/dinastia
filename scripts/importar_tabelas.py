@@ -35,20 +35,23 @@ def num(s):
     return float(s.replace(".", "").replace(",", "."))
 
 
+LANCES = {"LIV", "LIM", "FIX", "FID"}
+
+
 def tipo_por_nome(nome):
     n = nome.lower()
     if "sorteio" in n and "cancel" in n:
-        return "SORTEIO_COTA_CANCELADA"
+        return "SOC"
     if "sorteio" in n:
-        return "SORTEIO_ATIVO"
+        return "SOR"
     if "livre" in n:
-        return "LANCE_LIVRE"
+        return "LIV"
     if "limitado" in n:
-        return "LANCE_LIMITADO"
+        return "LIM"
     if "fixo" in n:
-        return "LANCE_FIXO"
+        return "FIX"
     if "fidelidade" in n:
-        return "LANCE_FIDELIDADE"
+        return "FID"
     raise ValueError(f"modalidade desconhecida: {nome!r}")
 
 
@@ -153,21 +156,21 @@ def ler_pdf(caminho: Path):
     modal = {t: {"max": None, "pct_cat": None, "emb_parc": None, "emb_base": None,
                  "emb_pct": None, "rec_proprio": None, "a_partir": 1, "req": None,
                  "transf": True, "emb_texto": None}
-             for t in ["SORTEIO_ATIVO", "SORTEIO_COTA_CANCELADA", "LANCE_LIVRE",
-                       "LANCE_LIMITADO", "LANCE_FIXO", "LANCE_FIDELIDADE"] if t in presentes}
-    if "LANCE_LIMITADO" in modal:
+             for t in ["SOR", "SOC", "LIV",
+                       "LIM", "FIX", "FID"] if t in presentes}
+    if "LIM" in modal:
         if lim:
-            modal["LANCE_LIMITADO"].update(max=int(lim.group(1)), pct_cat=float(lim.group(2)))
+            modal["LIM"].update(max=int(lim.group(1)), pct_cat=float(lim.group(2)))
         else:
             erros.append("regra do lance limitado não encontrada")
-    if "LANCE_FIXO" in modal:
+    if "FIX" in modal:
         if fix:
-            modal["LANCE_FIXO"].update(max=int(fix.group(1)), pct_cat=float(fix.group(2)))
+            modal["FIX"].update(max=int(fix.group(1)), pct_cat=float(fix.group(2)))
         else:
             erros.append("regra do lance fixo não encontrada")
-    if "LANCE_FIDELIDADE" in modal:
+    if "FID" in modal:
         if fid:
-            modal["LANCE_FIDELIDADE"].update(
+            modal["FID"].update(
                 max=int(fid.group(1)), pct_cat=float(fid.group(2)),
                 a_partir=fid_ass or 1, transf=not nao_transfere,
                 req=(f"{fid_parc} parcelas pagas (consecutivas ou não) e participação em {fid_parc} assembleias; "
@@ -175,7 +178,7 @@ def ler_pdf(caminho: Path):
         else:
             erros.append("regra do lance fidelidade não encontrada")
 
-    lances = [t for t in modal if t.startswith("LANCE_")]
+    lances = [t for t in modal if t in LANCES]
     todas_proprio = re.search(r"Em todas as modalidades 100% do lance deve ser pago com recursos próprios", plano)
     emb = re.search(r"((?:Lances?|Lance) [\wÀ-ú ,]{0,40}: permitido descontar.*?)(?:Entregas condicionadas|$)", plano)
     if todas_proprio:
@@ -189,8 +192,8 @@ def ler_pdf(caminho: Path):
             if ":" not in seg_txt:
                 continue
             sujeito, regra = seg_txt.split(":", 1)
-            tipos = [t for k, t in [("Livre", "LANCE_LIVRE"), ("Limitado", "LANCE_LIMITADO"),
-                                    ("Fixo", "LANCE_FIXO"), ("Fidelidade", "LANCE_FIDELIDADE")]
+            tipos = [t for k, t in [("Livre", "LIV"), ("Limitado", "LIM"),
+                                    ("Fixo", "FIX"), ("Fidelidade", "FID")]
                      if k in sujeito]
             r1 = re.search(r"embutir\)\s*(aprox\.\s*)?(\d+) parcelas \((\d+)% (do valor ofertado|da categoria)\)", regra)
             r2 = re.search(r"embutir\)\s*(\d+)% do valor ofertado", regra)

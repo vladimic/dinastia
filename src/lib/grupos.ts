@@ -13,14 +13,14 @@ export const nomeFamilia = (slug: string) => FAMILIAS.find((f) => f.slug === slu
 
 // ordem de exibição das modalidades
 const ORDEM_TIPO = [
-  "SORTEIO_ATIVO",
-  "SORTEIO_COTA_CANCELADA",
-  "LANCE_LIVRE",
-  "LANCE_LIMITADO",
-  "LANCE_FIXO",
-  "LANCE_FIDELIDADE",
+  "SOR",
+  "SOC",
+  "LIV",
+  "LIM",
+  "FIX",
+  "FID",
 ];
-export const ehLance = (codigo: string) => codigo.startsWith("LANCE_");
+export const ehLance = (codigo: string) => ["LIV", "LIM", "FIX", "FID"].includes(codigo);
 
 const nums = (v: unknown) => ((v ?? []) as (number | string)[]).map(Number);
 
