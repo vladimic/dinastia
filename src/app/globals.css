@@ -117,6 +117,11 @@ button {
   outline: 2px solid var(--color-laranja);
   outline-offset: 1px;
 }
+/* valores numéricos à direita */
+.campo-sm {
+  text-align: right;
+  text-align-last: right;
+}
 .campo-sm[readonly] {
   background: var(--color-linha);
 }

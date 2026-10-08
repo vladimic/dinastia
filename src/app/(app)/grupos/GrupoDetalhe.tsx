@@ -175,7 +175,7 @@ export function GrupoDetalheView({ grupo, indices, hoje, salvo, erro }: Props) {
 
         <section className="flex w-fit flex-col gap-2 rounded-2xl border border-borda bg-white p-3.5">
           <h3 className="text-sm font-bold">
-            Valores de crédito <span className="font-normal text-tinta">({grupo.creditos.length})</span>
+            Faixa de crédito
           </h3>
           <ul className="flex max-h-[340px] flex-col gap-1 overflow-y-auto pr-1">
             {grupo.creditos.map((c) => (
