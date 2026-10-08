@@ -92,7 +92,9 @@ def ler_pdf(caminho: Path):
     mes_reaj = pega(r"aplicado anualmente no mês de (\w+)", lambda s: MESES[s.lower()], obrig=False)
     pc = re.search(r"1ª Correção (\w+) (\d{4})", plano)
     primeira_correcao = f"{pc.group(2)}-{MESES[pc.group(1).lower()]:02d}-01" if pc else None
-    vencimento = pega(r"Vencimento todo o dia (\d+)", int)
+    vencimento = pega(r"Vencimento todo o dia (\d+)", int, obrig=False)
+    if vencimento is None:
+        avisos.append("dia de vencimento não informado na tabela")
     seg = re.search(r"Seguro Prestamista (opcional|obrigatório) até a Contemplação e após (obrigatório|opcional)", plano)
     limite = pega(r"não pode ultrapassar o limite de (.+?anos, \d+ meses e \d+ dias)", obrig=False)
 
@@ -137,35 +139,49 @@ def ler_pdf(caminho: Path):
     # ---------------- modalidades ----------------
     lim = re.search(r"Lance Limitado até (\d+) parcelas de lance \((\d+)% da categoria\)", plano)
     fix = re.search(r"Lance Fixo (\d+) parcelas de lance \((\d+)% da categoria\)", plano)
-    fid = re.search(r"máximo de (\d+) PARCELAS \((\d+)%\)", plano)
+    fid = (re.search(r"máximo de (\d+) PARCELAS \((\d+)%\)", plano)
+           or re.search(r"Lance Fidelidade até (\d+) parcelas de lance \((\d+)% da categoria\)", plano))
     fid_ass = pega(r"CONCORREM NA (\d+)ª ASSEMBLEIA DA COTA", int, obrig=False)
     fid_parc = pega(r"efetuarem o pagamento de (\d+) parcelas", int, obrig=False)
     nao_transfere = "NÃO TRANSFERE O BENEFÍCIO" in plano
 
+    # modalidades que o grupo oferece = as listadas em "Modalidades de Contemplações: ..."
+    ml = re.search(r"Modalidades de Contemplações: (.*?)\*Categoria", plano)
+    if not ml:
+        raise ErroLeitura("linha 'Modalidades de Contemplações' não encontrada")
+    presentes = {tipo_por_nome(p) for p in re.split(r" - ", ml.group(1).strip()) if p.strip()}
     modal = {t: {"max": None, "pct_cat": None, "emb_parc": None, "emb_base": None,
                  "emb_pct": None, "rec_proprio": None, "a_partir": 1, "req": None,
                  "transf": True, "emb_texto": None}
              for t in ["SORTEIO_ATIVO", "SORTEIO_COTA_CANCELADA", "LANCE_LIVRE",
-                       "LANCE_LIMITADO", "LANCE_FIXO", "LANCE_FIDELIDADE"]}
-    if lim:
-        modal["LANCE_LIMITADO"].update(max=int(lim.group(1)), pct_cat=float(lim.group(2)))
-    else:
-        erros.append("regra do lance limitado não encontrada")
-    if fix:
-        modal["LANCE_FIXO"].update(max=int(fix.group(1)), pct_cat=float(fix.group(2)))
-    else:
-        erros.append("regra do lance fixo não encontrada")
-    if fid:
-        modal["LANCE_FIDELIDADE"].update(
-            max=int(fid.group(1)), pct_cat=float(fid.group(2)),
-            a_partir=fid_ass or 1, transf=not nao_transfere,
-            req=(f"{fid_parc} parcelas pagas (consecutivas ou não) e participação em {fid_parc} assembleias; "
-                 "antecipações não contam") if fid_parc else None)
-    else:
-        erros.append("regra do lance fidelidade não encontrada")
+                       "LANCE_LIMITADO", "LANCE_FIXO", "LANCE_FIDELIDADE"] if t in presentes}
+    if "LANCE_LIMITADO" in modal:
+        if lim:
+            modal["LANCE_LIMITADO"].update(max=int(lim.group(1)), pct_cat=float(lim.group(2)))
+        else:
+            erros.append("regra do lance limitado não encontrada")
+    if "LANCE_FIXO" in modal:
+        if fix:
+            modal["LANCE_FIXO"].update(max=int(fix.group(1)), pct_cat=float(fix.group(2)))
+        else:
+            erros.append("regra do lance fixo não encontrada")
+    if "LANCE_FIDELIDADE" in modal:
+        if fid:
+            modal["LANCE_FIDELIDADE"].update(
+                max=int(fid.group(1)), pct_cat=float(fid.group(2)),
+                a_partir=fid_ass or 1, transf=not nao_transfere,
+                req=(f"{fid_parc} parcelas pagas (consecutivas ou não) e participação em {fid_parc} assembleias; "
+                     "antecipações não contam") if fid_parc else None)
+        else:
+            erros.append("regra do lance fidelidade não encontrada")
 
-    emb = re.search(r"(Lance Fixo: permitido descontar.*?)(?:Entregas condicionadas|$)", plano)
-    if not emb:
+    lances = [t for t in modal if t.startswith("LANCE_")]
+    todas_proprio = re.search(r"Em todas as modalidades 100% do lance deve ser pago com recursos próprios", plano)
+    emb = re.search(r"((?:Lances?|Lance) [\wÀ-ú ,]{0,40}: permitido descontar.*?)(?:Entregas condicionadas|$)", plano)
+    if todas_proprio:
+        for t in lances:
+            modal[t].update(rec_proprio=True, emb_texto="100% do lance com recursos próprios (sem embutido)")
+    elif not emb:
         erros.append("regras de embutido não encontradas")
     else:
         for seg_txt in emb.group(1).split("|"):
@@ -179,6 +195,9 @@ def ler_pdf(caminho: Path):
             r1 = re.search(r"embutir\)\s*(aprox\.\s*)?(\d+) parcelas \((\d+)% (do valor ofertado|da categoria)\)", regra)
             r2 = re.search(r"embutir\)\s*(\d+)% do valor ofertado", regra)
             for t in tipos:
+                if t not in modal:
+                    avisos.append(f"embutido citado para {t}, que o grupo não oferece")
+                    continue
                 d = modal[t]
                 d["emb_texto"] = regra.strip().rstrip(".")
                 if r1:
@@ -187,25 +206,36 @@ def ler_pdf(caminho: Path):
                 elif r2:
                     d.update(emb_pct=float(r2.group(1)), emb_base="ofertado")
                 d["rec_proprio"] = not (d["emb_base"] == "ofertado" and d["emb_pct"] == 100)
-        for t in ["LANCE_LIVRE", "LANCE_LIMITADO", "LANCE_FIXO", "LANCE_FIDELIDADE"]:
+        for t in lances:
             if modal[t]["emb_texto"] is None:
                 avisos.append(f"regra de embutido de {t} não encontrada")
 
     # ---------------- sequência ----------------
     faixas = []
-    for f in re.finditer(r"Da (\d+)ª a (\d+)ª Assembleia: (.*?) - Demais contemplações seguem com (a mesma sequencia|Lance \w+)", plano):
+    demais_multiplo = []
+    for f in re.finditer(r"Da (\d+)ª a (\d+)ª Assembleia: (.*?) - Demais contemplações seguem com "
+                         r"(a mesma sequencia|Lance \w+(?: e Lance \w+)?)", plano):
         itens = []
         for parte in f.group(3).split(" - "):
             r = re.match(r"(\d+) (.+)", parte.strip())
             if not r:
                 raise ErroLeitura(f"item de sequência não reconhecido: {parte!r}")
             itens.append({"qtd": int(r.group(1)), "tipo": tipo_por_nome(r.group(2))})
-        demais = None if f.group(4).startswith("a mesma") else tipo_por_nome(f.group(4))
+        if f.group(4).startswith("a mesma"):
+            demais = None
+        else:
+            tipos_demais = [tipo_por_nome(x) for x in f.group(4).split(" e ")]
+            demais = tipos_demais[0]
+            if len(tipos_demais) > 1:
+                # o modelo guarda um único tipo para "demais"; o texto completo vai para observações
+                demais_multiplo.append(f"Da {f.group(1)}ª a {f.group(2)}ª assembleia, demais contemplações seguem com {f.group(4)}.")
         faixas.append({"de": int(f.group(1)), "ate": int(f.group(2)), "itens": itens, "demais": demais})
+    if demais_multiplo:
+        avisos.append("demais contemplações com mais de uma modalidade (gravado o 1º tipo; texto completo em observações)")
     if not faixas:
         erros.append("sequência de contemplação não encontrada")
 
-    obs = []
+    obs = list(demais_multiplo)
     if "Entregas condicionadas a efetiva arrecadação" in plano:
         obs.append("Entregas condicionadas à efetiva arrecadação do grupo.")
     if "Loteria Federal" in plano:

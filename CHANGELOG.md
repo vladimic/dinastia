@@ -3,6 +3,11 @@
 A versão aparece abaixo do e-mail no menu lateral e na tela de login.
 Cada mudança entregue incrementa o número em `src/lib/version.ts` e ganha uma linha aqui.
 
+## 0005 · 07/10/2026
+- Carga de 131 grupos de imóveis (assembleia de 20/10/2026), lidos de 198 PDFs: fica a tabela mais recente de cada grupo; planos 1%/2% e versões de agosto descartados.
+- Leitor de PDF aceita grupos sem Lance Limitado/Fidelidade, novas regras de embutido, sem dia de vencimento e "demais seguem com" duas modalidades.
+- Tela /importar-carga para gravar a carga com o login do usuário.
+
 ## 0004 · 07/10/2026
 - Correção: imagens PNG do ícone (192 px e iPhone) que faltaram na 0003.
 
