@@ -44,13 +44,8 @@ function Linha({ rotulo, children }: { rotulo: string; children: React.ReactNode
   );
 }
 
-function Info({ rotulo, valor, destaque }: { rotulo: string; valor: React.ReactNode; destaque?: boolean }) {
-  return (
-    <div className="flex items-center justify-between gap-2 border-b border-linha py-1.5 text-[13px] last:border-0">
-      <span className="text-xs font-semibold text-tinta">{rotulo}</span>
-      <span className={"font-bold tabular-nums " + (destaque ? "text-laranja" : "")}>{valor}</span>
-    </div>
-  );
+function dataLocal(ts: string) {
+  return new Date(ts).toLocaleDateString("pt-BR", { timeZone: "America/Sao_Paulo" });
 }
 
 export function GrupoDetalheView({ grupo, indices, hoje, salvo, erro }: Props) {
@@ -66,21 +61,32 @@ export function GrupoDetalheView({ grupo, indices, hoje, salvo, erro }: Props) {
       <input type="hidden" name="familia" value={grupo.familia} />
 
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-          <h2 className="text-xl font-bold">
+        <div className="flex flex-wrap items-baseline gap-x-5 gap-y-1 text-[13px]">
+          <h2 className="text-lg font-bold">
             Grupo {grupo.numero} · {nomeFamilia(grupo.familia)}
           </h2>
-          <span className="rounded-full bg-lavanda px-2.5 py-0.5 text-xs font-semibold text-navy-2">
-            {grupo.totalVersoes} {grupo.totalVersoes === 1 ? "versão" : "versões"}
+          <span>
+            <span className="text-tinta">Assembleia atual: </span>
+            <strong>
+              {grupo.assembleia}
+              {grupo.data_assembleia ? ` – ${dataBR(grupo.data_assembleia)}` : ""}
+            </strong>
           </span>
-          {grupo.arquivo && (
-            <span className="text-xs text-tinta">
-              Origem: {grupo.arquivo}
-              {grupo.aprovado_em ? ` · importado em ${dataBR(grupo.aprovado_em)}` : ""}
+          <span>
+            <span className="text-tinta">Faltantes: </span>
+            <strong className="text-laranja">{faltam}</strong>
+          </span>
+          <span>
+            <span className="text-tinta">Total: </span>
+            <strong>{grupo.prazo_grupo_meses}</strong>
+          </span>
+          {grupo.atualizado_em && (
+            <span className="text-xs text-tinta" title={grupo.arquivo ? `Tabela: ${grupo.arquivo}` : undefined}>
+              (atualizado em: {dataLocal(grupo.atualizado_em)})
             </span>
           )}
         </div>
-        <button type="submit" className="min-h-10 rounded-[10px] bg-laranja px-5 text-sm font-bold text-navy">
+        <button type="submit" className="min-h-9 rounded-[10px] bg-laranja px-5 text-sm font-bold text-navy hover:brightness-95">
           Salvar grupo
         </button>
       </div>
@@ -95,91 +101,75 @@ export function GrupoDetalheView({ grupo, indices, hoje, salvo, erro }: Props) {
           Não foi possível salvar. Confira os campos e tente de novo.
         </p>
       )}
+      {prazoDiverge && (
+        <p className="text-xs font-semibold text-alerta">
+          Atenção: prazo da cota na tabela é {grupo.prazo_cota_meses} meses; pela regra (prazo − assembleia + 1) daria {prazoCalculado}.
+        </p>
+      )}
 
-      <div className="grid items-start gap-4 lg:grid-cols-3">
-        <section className="cartao gap-2 p-4">
+      <div className="grid items-start gap-4 lg:grid-cols-[1.25fr_1fr]">
+        <section className="cartao gap-3 p-4">
           <h3 className="text-sm font-bold">Dados do grupo</h3>
-          <Linha rotulo="Grupo">
-            <input className="campo-sm" value={grupo.numero} readOnly />
-          </Linha>
-          <Linha rotulo="Família">
-            <input className="campo-sm" value={nomeFamilia(grupo.familia)} readOnly />
-          </Linha>
-          <Linha rotulo="Prazo do grupo (meses)">
-            <input className="campo-sm" name="prazo_grupo_meses" inputMode="numeric" defaultValue={grupo.prazo_grupo_meses} required />
-          </Linha>
-          <Linha rotulo="Participantes">
-            <input className="campo-sm" name="participantes" inputMode="numeric" defaultValue={milhar(grupo.participantes)} />
-          </Linha>
-          <Linha rotulo="Taxa de adm. total">
-            <input className="campo-sm" name="taxa_adm_total" inputMode="decimal" defaultValue={pct(grupo.taxa_adm_total)} />
-          </Linha>
-          <Linha rotulo="Fundo de reserva">
-            <input
-              className={"campo-sm " + (grupo.fundo_reserva === null ? "border-alerta-borda bg-alerta-fundo" : "")}
-              name="fundo_reserva"
-              inputMode="decimal"
-              defaultValue={pct(grupo.fundo_reserva)}
-              placeholder="Não informado"
-            />
-          </Linha>
-          <Linha rotulo="Seguro (% ao mês)">
-            <input className="campo-sm" name="seguro_pct_mes" inputMode="decimal" defaultValue={pct(grupo.seguro_pct_mes, 4)} />
-          </Linha>
-          <Linha rotulo="Índice de correção">
-            <select className="campo-sm" name="indice" defaultValue={grupo.indice ?? ""}>
-              <option value="">—</option>
-              {indices.map((i) => (
-                <option key={i.sigla} value={i.sigla}>
-                  {i.sigla}
-                </option>
-              ))}
-            </select>
-          </Linha>
-          <Linha rotulo="Reajuste anual em">
-            <select className="campo-sm" name="mes_reajuste" defaultValue={grupo.mes_reajuste ?? ""}>
-              <option value="">—</option>
-              {MESES.map((m, i) => (
-                <option key={m} value={i + 1}>
-                  {m}
-                </option>
-              ))}
-            </select>
-          </Linha>
-          {grupo.primeira_correcao && (
-            <Linha rotulo="1ª correção">
+          <div className="grid gap-x-5 gap-y-2 sm:grid-cols-2">
+            <Linha rotulo="Participantes">
+              <input className="campo-sm" name="participantes" inputMode="numeric" defaultValue={milhar(grupo.participantes)} />
+            </Linha>
+            <Linha rotulo="Taxa de adm. total">
+              <input className="campo-sm" name="taxa_adm_total" inputMode="decimal" defaultValue={pct(grupo.taxa_adm_total)} />
+            </Linha>
+            <Linha rotulo="Fundo de reserva">
               <input
-                className="campo-sm"
-                readOnly
-                value={`${MESES[Number(grupo.primeira_correcao.slice(5, 7)) - 1]}/${grupo.primeira_correcao.slice(0, 4)}`}
+                className={"campo-sm " + (grupo.fundo_reserva === null ? "border-alerta-borda bg-alerta-fundo" : "")}
+                name="fundo_reserva"
+                inputMode="decimal"
+                defaultValue={pct(grupo.fundo_reserva)}
+                placeholder="Não informado"
               />
             </Linha>
-          )}
-          <Linha rotulo="Dia de vencimento">
-            <input className="campo-sm" name="dia_vencimento" inputMode="numeric" defaultValue={grupo.dia_vencimento ?? ""} />
-          </Linha>
-        </section>
-
-        <section className="cartao gap-1 p-4">
-          <h3 className="mb-1 text-sm font-bold">Assembleia</h3>
-          <Info rotulo="Assembleia da tabela" valor={`${grupo.assembleia}ª`} />
-          <Info rotulo="Data" valor={dataBR(grupo.data_assembleia) || "—"} />
-          <Info rotulo="Total de assembleias" valor={grupo.prazo_grupo_meses} />
-          <Info rotulo="Realizadas" valor={realizadas} />
-          <Info rotulo="Faltam" valor={faltam} destaque />
-          <Info rotulo="Prazo da cota (meses)" valor={grupo.prazo_cota_meses} />
-          {prazoDiverge && (
-            <p className="mt-1 text-xs font-semibold text-alerta">
-              Pela regra (prazo − assembleia + 1) daria {prazoCalculado} meses; a tabela informa {grupo.prazo_cota_meses}.
-            </p>
-          )}
-          <h3 className="mt-3 mb-1 text-sm font-bold">Tipos de parcela</h3>
-          <div className="flex flex-wrap gap-1.5">
+            <Linha rotulo="Seguro (% ao mês)">
+              <input className="campo-sm" name="seguro_pct_mes" inputMode="decimal" defaultValue={pct(grupo.seguro_pct_mes, 4)} />
+            </Linha>
+            <Linha rotulo="Índice de correção">
+              <select className="campo-sm" name="indice" defaultValue={grupo.indice ?? ""}>
+                <option value="">—</option>
+                {indices.map((i) => (
+                  <option key={i.sigla} value={i.sigla}>
+                    {i.sigla}
+                  </option>
+                ))}
+              </select>
+            </Linha>
+            <Linha rotulo="Reajuste anual em">
+              <select className="campo-sm" name="mes_reajuste" defaultValue={grupo.mes_reajuste ?? ""}>
+                <option value="">—</option>
+                {MESES.map((m, i) => (
+                  <option key={m} value={i + 1}>
+                    {m}
+                  </option>
+                ))}
+              </select>
+            </Linha>
+            <Linha rotulo="Dia de vencimento">
+              <input className="campo-sm" name="dia_vencimento" inputMode="numeric" defaultValue={grupo.dia_vencimento ?? ""} />
+            </Linha>
+            {grupo.primeira_correcao && (
+              <Linha rotulo="1ª correção">
+                <input
+                  className="campo-sm"
+                  readOnly
+                  value={`${MESES[Number(grupo.primeira_correcao.slice(5, 7)) - 1]}/${grupo.primeira_correcao.slice(0, 4)}`}
+                />
+              </Linha>
+            )}
+          </div>
+          <div className="flex flex-wrap items-center gap-1.5 border-t border-linha pt-2.5">
+            <span className="mr-1 text-xs font-semibold text-tinta">Tipos de parcela:</span>
             {grupo.tiposParcela.map((t) => (
-              <span key={t.codigo} className="rounded-md bg-lavanda px-2 py-1 text-xs font-semibold">
+              <span key={t.codigo} className="rounded-md bg-lavanda px-2 py-0.5 text-xs font-semibold">
                 {t.descricao} · {pct(t.pct, 0)}
               </span>
             ))}
+            <span className="ml-auto text-xs text-tinta">Prazo da cota: {grupo.prazo_cota_meses} meses</span>
           </div>
         </section>
 
@@ -187,9 +177,9 @@ export function GrupoDetalheView({ grupo, indices, hoje, salvo, erro }: Props) {
           <h3 className="text-sm font-bold">
             Valores de crédito <span className="font-normal text-tinta">({grupo.creditos.length})</span>
           </h3>
-          <ul className="grid max-h-[360px] grid-cols-2 gap-1.5 overflow-y-auto">
+          <ul className="grid max-h-[260px] grid-cols-[repeat(auto-fill,minmax(130px,1fr))] gap-1.5 overflow-y-auto">
             {grupo.creditos.map((c) => (
-              <li key={c} className="rounded-md border border-[#ece8de] px-2.5 py-1.5 text-right text-[13px] font-bold tabular-nums">
+              <li key={c} className="rounded-md border border-[#ece8de] px-2.5 py-1 text-right text-[13px] font-bold tabular-nums">
                 {reais(c)}
               </li>
             ))}

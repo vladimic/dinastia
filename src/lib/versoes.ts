@@ -2,6 +2,16 @@
 // Regra: a cada mudança entregue, acrescentar uma entrada NO TOPO.
 export const VERSOES: { numero: string; data: string; itens: string[] }[] = [
   {
+    numero: "0008",
+    data: "08/10/2026",
+    itens: [
+      "Seletor de família no cabeçalho principal, ao lado de \"Grupos e Tabelas\"; os grupos sobem na tela.",
+      "Cards de grupo ainda menores; título do pop-up enxuto (Grupo 550 · 122ª · 20/10/2026).",
+      "Cabeçalho do grupo numa linha: assembleia atual e data, faltantes, total e data da última atualização (importação ou gravação).",
+      "Coluna Assembleia removida; Dados do grupo sem número, família e prazo (já estão no cabeçalho), em duas colunas compactas, com tipos de parcela e prazo da cota no rodapé.",
+    ],
+  },
+  {
     numero: "0007",
     data: "08/10/2026",
     itens: [

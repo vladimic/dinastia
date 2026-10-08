@@ -166,6 +166,7 @@ export async function carregarGrupo(numero: number) {
     arquivo: (v.arquivo_importado as unknown as { nome: string } | null)?.nome ?? null,
     aprovado_por: v.aprovado_por as string | null,
     aprovado_em: v.aprovado_em as string | null,
+    atualizado_em: g.atualizado_em as string | null,
     totalVersoes: contagem.count ?? 1,
     tiposParcela,
     modalidades,

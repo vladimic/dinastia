@@ -28,7 +28,7 @@ export function GrupoChips({ grupos, familia, ativo, hoje }: { grupos: Chip[]; f
 
   return (
     <>
-      <div className="grid grid-cols-[repeat(auto-fill,minmax(52px,1fr))] gap-1.5">
+      <div className="grid grid-cols-[repeat(auto-fill,minmax(44px,1fr))] gap-1">
         {grupos.map((g) => {
           const sel = g.numero === ativo;
           return (
@@ -41,7 +41,7 @@ export function GrupoChips({ grupos, familia, ativo, hoje }: { grupos: Chip[]; f
               onFocus={(e) => mostrar(g, e.currentTarget)}
               onBlur={() => setPop(null)}
               className={
-                "flex h-7 items-center justify-center rounded-md text-[13px] font-bold tabular-nums " +
+                "flex h-6 items-center justify-center rounded text-xs font-bold tabular-nums " +
                 (sel
                   ? "bg-navy text-white shadow-[inset_0_-3px_0_var(--color-laranja)]"
                   : "border border-borda-campo bg-white text-navy hover:border-navy")
@@ -71,7 +71,7 @@ function Popup({ g, x, y, acima, hoje }: { g: Chip; x: number; y: number; acima:
       className="pointer-events-none fixed z-50 flex flex-col gap-1.5 rounded-xl bg-navy p-3.5 text-[13px] text-[#e9e6f5] shadow-[0_10px_30px_rgba(13,5,64,0.35)]"
     >
       <div className="text-sm font-bold text-ouro">
-        Grupo {g.numero} · {g.assembleia}ª assembleia{g.data ? ` · ${dataBR(g.data)}` : ""}
+        Grupo {g.numero} · {g.assembleia}ª{g.data ? ` · ${dataBR(g.data)}` : ""}
       </div>
       <div className={linha}>
         <span>Crédito</span>
