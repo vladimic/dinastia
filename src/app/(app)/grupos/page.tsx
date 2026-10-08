@@ -11,7 +11,7 @@ export default function GruposPage({ searchParams }: PageProps<"/grupos">) {
   return (
     <>
       <header className="flex flex-wrap items-center justify-between gap-x-6 gap-y-3 border-b border-borda bg-white px-8 py-3">
-        <div className="flex flex-wrap items-center gap-x-6 gap-y-2">
+        <div className="flex flex-wrap items-end gap-x-6 gap-y-2">
           <div className="flex flex-col">
             <div className="text-[11px] text-tinta">Cadastros</div>
             <h1 className="text-xl font-bold leading-tight">Grupos e Tabelas</h1>

@@ -70,14 +70,16 @@ button {
   color: var(--color-tinta);
 }
 
-.cartao {
-  background: #fff;
-  border: 1px solid var(--color-borda);
-  border-radius: 16px;
-  padding: 22px;
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
+@layer components {
+  .cartao {
+    background: #fff;
+    border: 1px solid var(--color-borda);
+    border-radius: 16px;
+    padding: 22px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
 }
 
 .tabela th {
@@ -117,4 +119,23 @@ button {
 }
 .campo-sm[readonly] {
   background: var(--color-linha);
+}
+
+.tabela-sm th {
+  padding: 4px 8px;
+  border-bottom: 1px solid #ece8de;
+  font-weight: 600;
+  color: var(--color-tinta);
+  text-align: left;
+  font-size: 11px;
+}
+.tabela-sm td {
+  padding: 5px 8px;
+  border-bottom: 1px solid var(--color-linha);
+  font-size: 12px;
+  vertical-align: top;
+}
+.tabela-sm .num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
 }

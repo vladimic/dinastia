@@ -37,7 +37,7 @@ function textoDisponivel(m: Modalidade) {
 
 function Linha({ rotulo, children }: { rotulo: string; children: React.ReactNode }) {
   return (
-    <label className="grid grid-cols-[1fr_1.15fr] items-center gap-2 text-xs font-semibold text-tinta">
+    <label className="grid grid-cols-[7rem_6rem] items-center gap-2 text-xs font-semibold text-tinta">
       {rotulo}
       {children}
     </label>
@@ -80,6 +80,17 @@ export function GrupoDetalheView({ grupo, indices, hoje, salvo, erro }: Props) {
             <span className="text-tinta">Total: </span>
             <strong>{grupo.prazo_grupo_meses}</strong>
           </span>
+          <span
+            className="relative h-2.5 w-36 self-center overflow-hidden rounded-full bg-lavanda"
+            title={`${realizadas} de ${grupo.prazo_grupo_meses} assembleias realizadas · faltam ${faltam}`}
+            role="img"
+            aria-label={`${realizadas} de ${grupo.prazo_grupo_meses} assembleias realizadas`}
+          >
+            <span
+              className="absolute inset-y-0 left-0 rounded-full bg-laranja"
+              style={{ width: `${Math.min(100, (realizadas / grupo.prazo_grupo_meses) * 100)}%` }}
+            />
+          </span>
           {grupo.atualizado_em && (
             <span className="text-xs text-tinta" title={grupo.arquivo ? `Tabela: ${grupo.arquivo}` : undefined}>
               (atualizado em: {dataLocal(grupo.atualizado_em)})
@@ -107,161 +118,150 @@ export function GrupoDetalheView({ grupo, indices, hoje, salvo, erro }: Props) {
         </p>
       )}
 
-      <div className="grid items-start gap-4 lg:grid-cols-[1.25fr_1fr]">
-        <section className="cartao gap-3 p-4">
+      <div className="flex flex-wrap items-start gap-3">
+        <section className="flex w-fit flex-col gap-2 rounded-2xl border border-borda bg-white p-3.5">
           <h3 className="text-sm font-bold">Dados do grupo</h3>
-          <div className="grid gap-x-5 gap-y-2 sm:grid-cols-2">
-            <Linha rotulo="Participantes">
-              <input className="campo-sm" name="participantes" inputMode="numeric" defaultValue={milhar(grupo.participantes)} />
-            </Linha>
-            <Linha rotulo="Taxa de adm. total">
-              <input className="campo-sm" name="taxa_adm_total" inputMode="decimal" defaultValue={pct(grupo.taxa_adm_total)} />
-            </Linha>
-            <Linha rotulo="Fundo de reserva">
+          <Linha rotulo="Participantes">
+            <input className="campo-sm" name="participantes" inputMode="numeric" defaultValue={milhar(grupo.participantes)} />
+          </Linha>
+          <Linha rotulo="Taxa de adm. total">
+            <input className="campo-sm" name="taxa_adm_total" inputMode="decimal" defaultValue={pct(grupo.taxa_adm_total)} />
+          </Linha>
+          <Linha rotulo="Fundo de reserva">
+            <input
+              className={"campo-sm " + (grupo.fundo_reserva === null ? "border-alerta-borda bg-alerta-fundo" : "")}
+              name="fundo_reserva"
+              inputMode="decimal"
+              defaultValue={pct(grupo.fundo_reserva)}
+              placeholder="—"
+            />
+          </Linha>
+          <Linha rotulo="Seguro (% ao mês)">
+            <input className="campo-sm" name="seguro_pct_mes" inputMode="decimal" defaultValue={pct(grupo.seguro_pct_mes, 4)} />
+          </Linha>
+          <Linha rotulo="Índice de correção">
+            <select className="campo-sm" name="indice" defaultValue={grupo.indice ?? ""}>
+              <option value="">—</option>
+              {indices.map((i) => (
+                <option key={i.sigla} value={i.sigla}>
+                  {i.sigla}
+                </option>
+              ))}
+            </select>
+          </Linha>
+          <Linha rotulo="Reajuste anual em">
+            <select className="campo-sm" name="mes_reajuste" defaultValue={grupo.mes_reajuste ?? ""}>
+              <option value="">—</option>
+              {MESES.map((m, i) => (
+                <option key={m} value={i + 1}>
+                  {m}
+                </option>
+              ))}
+            </select>
+          </Linha>
+          <Linha rotulo="Dia de vencimento">
+            <input className="campo-sm" name="dia_vencimento" inputMode="numeric" defaultValue={grupo.dia_vencimento ?? ""} />
+          </Linha>
+          {grupo.primeira_correcao && (
+            <Linha rotulo="1ª correção">
               <input
-                className={"campo-sm " + (grupo.fundo_reserva === null ? "border-alerta-borda bg-alerta-fundo" : "")}
-                name="fundo_reserva"
-                inputMode="decimal"
-                defaultValue={pct(grupo.fundo_reserva)}
-                placeholder="Não informado"
+                className="campo-sm"
+                readOnly
+                value={`${MESES[Number(grupo.primeira_correcao.slice(5, 7)) - 1]}/${grupo.primeira_correcao.slice(0, 4)}`}
               />
             </Linha>
-            <Linha rotulo="Seguro (% ao mês)">
-              <input className="campo-sm" name="seguro_pct_mes" inputMode="decimal" defaultValue={pct(grupo.seguro_pct_mes, 4)} />
-            </Linha>
-            <Linha rotulo="Índice de correção">
-              <select className="campo-sm" name="indice" defaultValue={grupo.indice ?? ""}>
-                <option value="">—</option>
-                {indices.map((i) => (
-                  <option key={i.sigla} value={i.sigla}>
-                    {i.sigla}
-                  </option>
-                ))}
-              </select>
-            </Linha>
-            <Linha rotulo="Reajuste anual em">
-              <select className="campo-sm" name="mes_reajuste" defaultValue={grupo.mes_reajuste ?? ""}>
-                <option value="">—</option>
-                {MESES.map((m, i) => (
-                  <option key={m} value={i + 1}>
-                    {m}
-                  </option>
-                ))}
-              </select>
-            </Linha>
-            <Linha rotulo="Dia de vencimento">
-              <input className="campo-sm" name="dia_vencimento" inputMode="numeric" defaultValue={grupo.dia_vencimento ?? ""} />
-            </Linha>
-            {grupo.primeira_correcao && (
-              <Linha rotulo="1ª correção">
-                <input
-                  className="campo-sm"
-                  readOnly
-                  value={`${MESES[Number(grupo.primeira_correcao.slice(5, 7)) - 1]}/${grupo.primeira_correcao.slice(0, 4)}`}
-                />
-              </Linha>
-            )}
-          </div>
-          <div className="flex flex-wrap items-center gap-1.5 border-t border-linha pt-2.5">
-            <span className="mr-1 text-xs font-semibold text-tinta">Tipos de parcela:</span>
-            {grupo.tiposParcela.map((t) => (
-              <span key={t.codigo} className="rounded-md bg-lavanda px-2 py-0.5 text-xs font-semibold">
-                {t.descricao} · {pct(t.pct, 0)}
-              </span>
-            ))}
-            <span className="ml-auto text-xs text-tinta">Prazo da cota: {grupo.prazo_cota_meses} meses</span>
-          </div>
+          )}
         </section>
 
-        <section className="cartao gap-2 p-4">
+        <section className="flex w-fit flex-col gap-2 rounded-2xl border border-borda bg-white p-3.5">
           <h3 className="text-sm font-bold">
             Valores de crédito <span className="font-normal text-tinta">({grupo.creditos.length})</span>
           </h3>
-          <ul className="grid max-h-[260px] grid-cols-[repeat(auto-fill,minmax(130px,1fr))] gap-1.5 overflow-y-auto">
+          <ul className="flex max-h-[340px] flex-col gap-1 overflow-y-auto pr-1">
             {grupo.creditos.map((c) => (
-              <li key={c} className="rounded-md border border-[#ece8de] px-2.5 py-1 text-right text-[13px] font-bold tabular-nums">
+              <li key={c} className="rounded-md border border-[#ece8de] px-2.5 py-0.5 text-right text-[13px] font-bold tabular-nums">
                 {reais(c)}
               </li>
             ))}
           </ul>
         </section>
-      </div>
 
-      <section className="cartao">
-        <h3 className="text-base font-bold">Modalidades de contemplação</h3>
-        <p className="text-xs text-tinta">
-          Categoria = fundo comum + taxa de administração + fundo de reserva. Parcela de lance = categoria ÷ prazo
-          original do grupo ({grupo.prazo_grupo_meses}).
-        </p>
-        <div className="overflow-x-auto">
-          <table className="tabela w-full min-w-[900px] border-collapse">
-            <thead>
-              <tr>
-                <th>Modalidade</th>
-                <th className="num">Máx. lance</th>
-                <th className="num">% categoria</th>
-                <th>Embutido permitido</th>
-                <th>Recursos próprios</th>
-                <th>Disponível</th>
-              </tr>
-            </thead>
-            <tbody>
-              {grupo.modalidades.map((m) => {
-                const lance = ehLance(m.tipo);
-                return (
-                  <tr key={m.tipo} className={m.a_partir_assembleia_cota > 1 ? "bg-[#fbf7ee]" : ""}>
-                    <td className="font-semibold">{m.tipo_contemplacao.nome}</td>
-                    <td className="num">
-                      {!lance ? "—" : m.max_parcelas_lance === null ? "Livre" : `${m.max_parcelas_lance} parcelas`}
-                    </td>
-                    <td className="num">{m.pct_categoria === null ? "—" : pct(m.pct_categoria, 0)}</td>
-                    <td>{textoEmbutido(m)}</td>
-                    <td>{textoRecursoProprio(m)}</td>
-                    <td>{textoDisponivel(m)}</td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
-      </section>
-
-      <div className="flex flex-wrap gap-5">
-        <section className="cartao flex-[2_1_480px]">
-          <h3 className="text-base font-bold">Sequência de contemplação por assembleia</h3>
+        <section className="flex w-fit max-w-[230px] flex-col gap-3 rounded-2xl border border-borda bg-white p-3.5">
+          <h3 className="text-sm font-bold">Sequência de contemplação</h3>
           {grupo.sequencia.map((f) => (
-            <div key={f.de} className="flex flex-col gap-2">
+            <div key={f.de} className="flex flex-col gap-1">
               <div className="text-xs font-bold text-tinta">
                 {f.de}ª a {f.ate}ª assembleia
               </div>
-              <div className="flex flex-wrap gap-1.5 text-xs font-semibold">
+              <ol className="flex flex-col gap-0.5 text-xs">
                 {f.itens.map((i) => (
-                  <span
-                    key={i.ordem}
-                    className={
-                      "rounded-lg px-2.5 py-1.5 " +
-                      (i.codigo === "LANCE_FIDELIDADE" ? "bg-ouro-claro" : ehLance(i.codigo) ? "bg-laranja-claro" : "bg-lavanda")
-                    }
-                  >
-                    {i.ordem} · {i.qtd > 1 ? `${i.qtd}× ` : ""}
-                    {i.nome}
-                  </span>
+                  <li key={i.ordem} className="flex items-center gap-1.5">
+                    <span
+                      className={
+                        "inline-block h-2 w-2 shrink-0 rounded-full " +
+                        (i.codigo === "LANCE_FIDELIDADE" ? "bg-ouro" : ehLance(i.codigo) ? "bg-laranja" : "bg-navy-3")
+                      }
+                      aria-hidden="true"
+                    />
+                    <span className="tabular-nums text-tinta">{i.ordem}.</span>
+                    <span className="font-semibold">
+                      {i.qtd > 1 ? `${i.qtd}× ` : ""}
+                      {i.nome}
+                    </span>
+                  </li>
                 ))}
-              </div>
+              </ol>
               <div className="text-xs text-tinta">
-                Demais contemplações:{" "}
-                {f.demais ? <strong className="text-navy">{f.demais}</strong> : "repetem a mesma sequência"}
+                Demais: {f.demais ? <strong className="text-navy">{f.demais}</strong> : "mesma sequência"}
               </div>
             </div>
           ))}
         </section>
 
-        {grupo.observacoes && (
-          <section className="cartao flex-[1_1_300px]">
-            <h3 className="text-base font-bold">Observações da tabela</h3>
-            <p className="text-[13px] leading-relaxed text-[#2b2550]">{grupo.observacoes}</p>
-          </section>
-        )}
+        <section className="flex w-fit max-w-[430px] flex-col gap-2 rounded-2xl border border-borda bg-white p-3.5">
+          <h3 className="text-sm font-bold">Modalidades de contemplação</h3>
+          <table className="tabela-sm border-collapse">
+            <thead>
+              <tr>
+                <th>Modalidade</th>
+                <th className="num">Lance máx.</th>
+                <th>Embutido</th>
+              </tr>
+            </thead>
+            <tbody>
+              {grupo.modalidades.map((m) => {
+                const lance = ehLance(m.tipo);
+                const rp = textoRecursoProprio(m);
+                return (
+                  <tr key={m.tipo}>
+                    <td>
+                      <div className="font-semibold">{m.tipo_contemplacao.nome}</div>
+                      {(m.a_partir_assembleia_cota > 1 || !m.transferivel) && (
+                        <div className="text-[11px] text-alerta" title={m.requisitos ?? undefined}>
+                          {textoDisponivel(m)}
+                        </div>
+                      )}
+                    </td>
+                    <td className="num whitespace-nowrap">
+                      {!lance
+                        ? "—"
+                        : m.max_parcelas_lance === null
+                          ? "Livre"
+                          : `${m.max_parcelas_lance} parc.${m.pct_categoria !== null ? ` · ${pct(m.pct_categoria, 0)}` : ""}`}
+                    </td>
+                    <td className="max-w-[170px]">
+                      {textoEmbutido(m)}
+                      {lance && rp !== "—" && <div className="text-[11px] text-tinta">+ próprios: {rp}</div>}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+          <p className="text-[11px] leading-snug text-tinta">
+            % sobre a categoria (crédito + taxa + fundo de reserva). Parcela de lance = categoria ÷ {grupo.prazo_grupo_meses}.
+          </p>
+        </section>
       </div>
     </form>
   );
