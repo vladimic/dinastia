@@ -44,6 +44,8 @@ export type GrupoResumo = {
   max: number | null;
   /** códigos das 20 primeiras contemplações do grupo */
   seq: string[];
+  /** participantes do grupo */
+  participantes: number | null;
   /** pagamento com furo ligado na versão vigente */
   furo: boolean;
   /** oferece parcela reduzida de 55% ou menos na versão vigente */
@@ -58,7 +60,7 @@ export async function listarGrupos(familia: string): Promise<GrupoResumo[]> {
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("grupo_atual")
-    .select("numero, prazo_grupo_meses, assembleia_numero, data_assembleia, creditos, grupo_assembleia_id")
+    .select("numero, prazo_grupo_meses, assembleia_numero, data_assembleia, creditos, grupo_assembleia_id, participantes")
     .eq("familia", familia)
     .order("numero");
   if (error) throw error;
@@ -115,6 +117,7 @@ export async function listarGrupos(familia: string): Promise<GrupoResumo[]> {
       min: v.length ? Math.min(...v) : null,
       max: v.length ? Math.max(...v) : null,
       seq: seqPorVersao.get(g.grupo_assembleia_id as number) ?? [],
+      participantes: (g.participantes as number | null) ?? null,
       furo: marcasPorVersao.get(g.grupo_assembleia_id as number)?.furo ?? false,
       reduzida: marcasPorVersao.get(g.grupo_assembleia_id as number)?.reduzida ?? false,
     };

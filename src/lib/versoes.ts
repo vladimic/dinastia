@@ -2,6 +2,14 @@
 // Regra: a cada mudança entregue, acrescentar uma entrada NO TOPO.
 export const VERSOES: { numero: string; data: string; itens: string[] }[] = [
   {
+    numero: "0028",
+    data: "09/10/2026",
+    itens: [
+      "Números dos grupos com uma barrinha na base proporcional ao nº de participantes (1.000 = 10% … 9.999 = 100%; 5.000 = meia barra); a legenda ganhou a entrada \"barra = participantes\".",
+      "Pop-up dos grupos: nova linha \"Participantes\" logo abaixo do Crédito (o box cresceu o equivalente a uma linha).",
+    ],
+  },
+  {
     numero: "0027",
     data: "09/10/2026",
     itens: [

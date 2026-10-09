@@ -11,13 +11,16 @@ export type Chip = {
   min: number | null;
   max: number | null;
   seq: string[]; // códigos das 20 primeiras contemplações
+  participantes: number | null; // tamanho do grupo (a barra na base é proporcional a ele)
   furo: boolean; // pagamento com furo ligado
   reduzida: boolean; // oferece parcela reduzida de 55% ou menos
 };
 
 const LARGURA_MIN = 44; // px, igual ao minmax da grade
 const FOLGA = 4; // px, gap da grade
-const COLUNAS_LEGENDA = 5; // colunas livres necessárias para a legenda caber ao lado do último grupo
+const COLUNAS_LEGENDA = 8; // colunas livres necessárias para a legenda caber ao lado do último grupo
+
+const PARTICIPANTES_MAX = 9999; // barra cheia
 
 const mil = (v: number) => `R$ ${Math.round(v / 1000).toLocaleString("pt-BR")} mil`;
 const dataBR = (iso: string) => iso.slice(0, 10).split("-").reverse().join("/");
@@ -52,6 +55,7 @@ export function GrupoChips({
 
   const temFuro = grupos.some((g) => g.furo);
   const temReduzida = grupos.some((g) => g.reduzida);
+  const temParticipantes = grupos.some((g) => g.participantes);
   const [pop, setPop] = useState<{ g: Chip; x: number; y: number; acima: boolean } | null>(null);
 
   function mostrar(g: Chip, el: HTMLElement) {
@@ -89,13 +93,21 @@ export function GrupoChips({
                   style={g.furo && g.reduzida ? { background: "linear-gradient(to bottom, var(--color-furo) 50%, var(--color-reduzida) 50%)" } : undefined}
                 />
               )}
+              {g.participantes ? (
+                <span
+                  aria-hidden="true"
+                  style={{ width: `${Math.min(100, (g.participantes / PARTICIPANTES_MAX) * 100)}%` }}
+                  className={"absolute bottom-[2px] left-[7px] h-[3px] max-w-[calc(100%-10px)] rounded-full " + (sel ? "bg-[#cfcbe9]" : "bg-[#8b83c9]")}
+                />
+              ) : null}
               {g.numero}
+              {g.participantes ? <span className="sr-only"> · {g.participantes.toLocaleString("pt-BR")} participantes</span> : null}
               {g.furo && <span className="sr-only"> · furo ligado</span>}
               {g.reduzida && <span className="sr-only"> · parcela reduzida até 55%</span>}
             </Link>
           );
         })}
-        {(temFuro || temReduzida) && (
+        {(temFuro || temReduzida || temParticipantes) && (
           <div
             style={{ gridColumn: legendaAoLado ? `span ${resto}` : "1 / -1" }}
             className={"flex min-w-0 flex-wrap items-center gap-x-3 gap-y-0.5 text-[11px] text-tinta " + (colunas ? (legendaAoLado ? "pl-2" : "pt-0.5") : "invisible")}
@@ -104,6 +116,12 @@ export function GrupoChips({
               <span className="flex items-center gap-1.5 whitespace-nowrap">
                 <i aria-hidden="true" className="h-3.5 w-[5px] rounded-sm bg-furo" />
                 furo ligado
+              </span>
+            )}
+            {temParticipantes && (
+              <span className="flex items-center gap-1.5 whitespace-nowrap">
+                <i aria-hidden="true" className="h-[3px] w-5 rounded-full bg-[#8b83c9]" />
+                barra = participantes
               </span>
             )}
             {temReduzida && (
@@ -141,6 +159,10 @@ function Popup({ g, x, y, acima, hoje, cores }: { g: Chip; x: number; y: number;
         <span className="font-semibold text-white">
           {g.min !== null && g.max !== null ? `${mil(g.min)} a ${mil(g.max)}` : "—"}
         </span>
+      </div>
+      <div className={linha}>
+        <span>Participantes</span>
+        <span className="font-semibold text-white tabular-nums">{g.participantes ? g.participantes.toLocaleString("pt-BR") : "—"}</span>
       </div>
       <div className={linha}>
         <span>Assembleias</span>
