@@ -10,12 +10,25 @@ export type Chip = {
   data: string | null; // data da assembleia da tabela vigente (AAAA-MM-DD)
   min: number | null;
   max: number | null;
+  seq: string[]; // códigos das 20 primeiras contemplações; "*" = só entra a partir de certo mês
 };
 
 const mil = (v: number) => `R$ ${Math.round(v / 1000).toLocaleString("pt-BR")} mil`;
 const dataBR = (iso: string) => iso.slice(0, 10).split("-").reverse().join("/");
 
-export function GrupoChips({ grupos, familia, ativo, hoje }: { grupos: Chip[]; familia: string; ativo?: number; hoje: string }) {
+export function GrupoChips({
+  grupos,
+  familia,
+  ativo,
+  hoje,
+  cores,
+}: {
+  grupos: Chip[];
+  familia: string;
+  ativo?: number;
+  hoje: string;
+  cores: Record<string, string>;
+}) {
   const [pop, setPop] = useState<{ g: Chip; x: number; y: number; acima: boolean } | null>(null);
 
   function mostrar(g: Chip, el: HTMLElement) {
@@ -53,12 +66,12 @@ export function GrupoChips({ grupos, familia, ativo, hoje }: { grupos: Chip[]; f
         })}
       </div>
 
-      {pop && <Popup {...pop} hoje={hoje} />}
+      {pop && <Popup {...pop} hoje={hoje} cores={cores} />}
     </>
   );
 }
 
-function Popup({ g, x, y, acima, hoje }: { g: Chip; x: number; y: number; acima: boolean; hoje: string }) {
+function Popup({ g, x, y, acima, hoje, cores }: { g: Chip; x: number; y: number; acima: boolean; hoje: string; cores: Record<string, string> }) {
   // a tabela vigente é da próxima assembleia enquanto a data dela não passou
   const realizadas = g.data && g.data >= hoje ? g.assembleia - 1 : g.assembleia;
   const faltam = Math.max(0, g.prazo - realizadas);
@@ -83,14 +96,30 @@ function Popup({ g, x, y, acima, hoje }: { g: Chip; x: number; y: number; acima:
         <span>Assembleias</span>
         <span className="font-semibold text-white tabular-nums">{g.prazo}</span>
       </div>
-      <div className={linha}>
-        <span>Realizadas</span>
-        <span className="font-semibold text-white tabular-nums">{realizadas}</span>
+      <div className="flex justify-between gap-3">
+        <span>
+          Realizadas <span className="font-semibold text-white tabular-nums">{realizadas}</span>
+        </span>
+        <span>
+          Faltam <span className="font-semibold text-laranja tabular-nums">{faltam}</span>
+        </span>
       </div>
-      <div className={linha}>
-        <span>Faltam</span>
-        <span className="font-semibold text-laranja tabular-nums">{faltam}</span>
-      </div>
+      {g.seq.length > 0 && (
+        <div className="grid grid-cols-[repeat(20,minmax(0,1fr))] gap-[2px] pt-0.5" aria-label={`Sequência: ${g.seq.join(", ").replaceAll("*", "")}`}>
+          {g.seq.map((c, k) => {
+            const cod = c.replace("*", "");
+            const cor = cores[cod] ?? "#b9b3d6";
+            const depois = c.endsWith("*");
+            return (
+              <span
+                key={k}
+                style={depois ? { borderColor: cor } : { background: cor, borderColor: cor }}
+                className="aspect-square rounded-[2px] border-[1.5px]"
+              />
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }

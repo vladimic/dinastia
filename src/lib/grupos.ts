@@ -42,16 +42,54 @@ export type GrupoResumo = {
   qtdCreditos: number;
   min: number | null;
   max: number | null;
+  /** primeiras 20 contemplações do grupo; "*" no fim do código = só entra a partir de certo mês */
+  seq: string[];
 };
+
+const TAMANHO_POPUP = 20;
 
 export async function listarGrupos(familia: string): Promise<GrupoResumo[]> {
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("grupo_atual")
-    .select("numero, prazo_grupo_meses, assembleia_numero, data_assembleia, creditos")
+    .select("numero, prazo_grupo_meses, assembleia_numero, data_assembleia, creditos, grupo_assembleia_id")
     .eq("familia", familia)
     .order("numero");
   if (error) throw error;
+
+  // sequência da versão vigente de cada grupo, numa consulta só
+  const ids = (data ?? []).map((g) => g.grupo_assembleia_id as number);
+  const seqPorVersao = new Map<number, string[]>();
+  if (ids.length) {
+    const { data: versoes, error: e2 } = await supabase
+      .from("grupo_assembleia")
+      .select("id, fidelidade_meses, grupo_sequencia_faixa(assembleia_de, assembleia_ate, demais_tipo, grupo_sequencia(ordem, quantidade, tipo))")
+      .in("id", ids);
+    if (e2) throw e2;
+    for (const ver of versoes ?? []) {
+      const faixas: FaixaSeq[] = (
+        (ver.grupo_sequencia_faixa ?? []) as unknown as {
+          assembleia_de: number;
+          assembleia_ate: number;
+          demais_tipo: string | null;
+          grupo_sequencia: { ordem: number; quantidade: number; tipo: string }[];
+        }[]
+      )
+        .sort((a, b) => a.assembleia_de - b.assembleia_de)
+        .map((f) => ({
+          de: f.assembleia_de,
+          ate: f.assembleia_ate,
+          demais: f.demais_tipo,
+          itens: [...f.grupo_sequencia].sort((a, b) => a.ordem - b.ordem).map((i) => ({ codigo: i.tipo, qtd: i.quantidade })),
+        }));
+      const m = modelar(faixas);
+      let seq: string[] = [];
+      if (m?.simples) seq = linhaDetalhada(m, (ver.fidelidade_meses as number | null) ?? null, TAMANHO_POPUP).map((p) => p.codigo + (p.desde ? "*" : ""));
+      else if (faixas.length) seq = montarOrdem(faixas[faixas.length - 1].itens, faixas[faixas.length - 1].demais, TAMANHO_POPUP);
+      seqPorVersao.set(ver.id as number, seq);
+    }
+  }
+
   return (data ?? []).map((g) => {
     const v = nums(g.creditos);
     return {
@@ -62,8 +100,17 @@ export async function listarGrupos(familia: string): Promise<GrupoResumo[]> {
       qtdCreditos: v.length,
       min: v.length ? Math.min(...v) : null,
       max: v.length ? Math.max(...v) : null,
+      seq: seqPorVersao.get(g.grupo_assembleia_id as number) ?? [],
     };
   });
+}
+
+// cor de cada modalidade, para os desenhos de sequência
+export async function listarCoresContemplacao(): Promise<Record<string, string>> {
+  const supabase = await createClient();
+  const { data, error } = await supabase.from("tipo_contemplacao").select("codigo, cor");
+  if (error) throw error;
+  return Object.fromEntries((data ?? []).map((t) => [t.codigo as string, t.cor as string]));
 }
 
 export async function listarIndices() {
