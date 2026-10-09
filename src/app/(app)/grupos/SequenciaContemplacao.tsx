@@ -1,7 +1,17 @@
 "use client";
 
-import { useMemo, useState, useTransition } from "react";
-import { CANCELADA, linhaDoModelo, notaFidelidade, notaSorteios, SORTEIO, type ModeloSequencia } from "@/lib/sequencia";
+import { useMemo, useRef, useState, useTransition } from "react";
+import {
+  CANCELADA,
+  linhaDoModelo,
+  notaFidelidade,
+  notaSorteios,
+  SORTEIO,
+  validarEdicao,
+  type Edicao,
+  type ModeloSequencia,
+} from "@/lib/sequencia";
+import { BotaoFinalizar, BotaoLapis } from "./Lapis";
 import { salvarSequencia } from "./actions";
 
 type Tipo = { codigo: string; nome: string; cor: string };
@@ -16,7 +26,8 @@ type Props = {
   fidelidadeMeses: number | null;
 };
 
-const CTRL = "h-8 rounded-lg border border-borda-campo bg-campo px-2 text-[13px] text-navy outline-none focus:ring-2 focus:ring-laranja read-only:bg-linha";
+const CTRL =
+  "h-8 rounded-lg border border-borda-campo bg-campo px-2 text-[13px] text-navy outline-none focus:ring-2 focus:ring-laranja read-only:bg-linha";
 const CAIXA = "flex w-fit max-w-full flex-col gap-2 rounded-2xl border border-borda bg-white p-3.5";
 
 function Codigos({ itens }: { itens: Posicao[] }) {
@@ -42,53 +53,108 @@ function Codigos({ itens }: { itens: Posicao[] }) {
   );
 }
 
+type Campos = { sorteios: { de: string; qtd: string }[]; ordem: string[]; demais: string; fid: string };
+type Estado = { tipo: "ocioso" } | { tipo: "salvando" } | { tipo: "salvo" } | { tipo: "erro"; msg: string };
+
+const paraEdicao = (c: Campos): Edicao => ({
+  sorteios: c.sorteios.map((s) => ({ de: Number(s.de), qtd: Number(s.qtd) })),
+  ordem: c.ordem,
+  demais: c.demais || null,
+  fidelidadeMeses: c.fid.trim() ? Number(c.fid) : null,
+});
+
 export function SequenciaContemplacao({ versaoId, modelo, linha, faixas, tipos, fidelidadeMeses }: Props) {
   const [editando, setEditando] = useState(false);
-  const [sorteios, setSorteios] = useState<{ de: string; qtd: string }[]>([]);
-  const [ordem, setOrdem] = useState<string[]>([]);
-  const [demais, setDemais] = useState("");
-  const [fid, setFid] = useState("");
-  const [erro, setErro] = useState<string | null>(null);
-  const [pendente, iniciar] = useTransition();
+  const [campos, setCampos] = useState<Campos>({ sorteios: [], ordem: [], demais: "", fid: "" });
+  const [estado, setEstado] = useState<Estado>({ tipo: "ocioso" });
+  const [descartar, setDescartar] = useState(false);
+  const [, iniciar] = useTransition();
+
+  // cópia síncrona dos campos e controle da fila de gravação (só usados dentro de eventos)
+  const atual = useRef<Campos>(campos);
+  const ultimoGravado = useRef("");
+  const fila = useRef<Edicao | null>(null);
+  const emVoo = useRef(false);
 
   const livres = tipos.filter((t) => t.codigo !== SORTEIO && t.codigo !== CANCELADA);
   const porCodigo = useMemo(() => new Map(tipos.map((t) => [t.codigo, t])), [tipos]);
+  const codigos = useMemo(() => new Set(tipos.map((t) => t.codigo)), [tipos]);
 
   function abrir() {
     if (!modelo) return;
-    setSorteios(modelo.sorteios.map((s) => ({ de: String(s.de), qtd: String(s.qtd) })));
-    setOrdem([...modelo.ordem]);
-    setDemais(modelo.demais ?? "");
-    setFid(fidelidadeMeses ? String(fidelidadeMeses) : "");
-    setErro(null);
+    const c: Campos = {
+      sorteios: modelo.sorteios.map((s) => ({ de: String(s.de), qtd: String(s.qtd) })),
+      ordem: [...modelo.ordem],
+      demais: modelo.demais ?? "",
+      fid: fidelidadeMeses ? String(fidelidadeMeses) : "",
+    };
+    atual.current = c;
+    ultimoGravado.current = JSON.stringify(paraEdicao(c));
+    fila.current = null;
+    setCampos(c);
+    setEstado({ tipo: "ocioso" });
+    setDescartar(false);
     setEditando(true);
   }
 
-  // prévia da linha com o que está digitado
-  const previa: Posicao[] = useMemo(() => {
-    if (!modelo || !editando) return [];
-    const s = sorteios.map((x) => ({ de: Number(x.de) || 1, qtd: Number(x.qtd) || 0 }));
-    const m: ModeloSequencia = { ...modelo, sorteios: s.length ? s : [{ de: 1, qtd: 1 }], ordem, demais: demais || null };
-    return linhaDoModelo(m).map((c) => porCodigo.get(c) ?? { codigo: c, nome: c, cor: "#5b5680" });
-  }, [modelo, editando, sorteios, ordem, demais, porCodigo]);
-
-  function salvar() {
-    setErro(null);
+  // grava o que estiver na fila, uma gravação por vez (a última alteração sempre vence)
+  function gravarFila() {
+    if (emVoo.current) return;
     iniciar(async () => {
-      const r = await salvarSequencia(versaoId, {
-        sorteios: sorteios.map((s) => ({ de: Number(s.de), qtd: Number(s.qtd) })),
-        ordem,
-        demais: demais || null,
-        fidelidadeMeses: fid.trim() ? Number(fid) : null,
-      });
-      if (r.ok) setEditando(false);
-      else setErro(r.erro);
+      while (fila.current) {
+        const e = fila.current;
+        fila.current = null;
+        emVoo.current = true;
+        setEstado({ tipo: "salvando" });
+        const r = await salvarSequencia(versaoId, e);
+        emVoo.current = false;
+        if (r.ok) {
+          ultimoGravado.current = JSON.stringify(e);
+          setEstado({ tipo: "salvo" });
+        } else {
+          setEstado({ tipo: "erro", msg: r.erro });
+          break;
+        }
+      }
     });
   }
 
-  // Enter dentro do editor não pode enviar o formulário do grupo
-  const semEnter = (e: React.KeyboardEvent) => {
-    if (e.key === "Enter" && (e.target as HTMLElement).tagName === "INPUT") e.preventDefault();
+  function persistir(c: Campos) {
+    const e = paraEdicao(c);
+    const erro = validarEdicao(e, codigos);
+    if (erro) return setEstado({ tipo: "erro", msg: erro });
+    if (JSON.stringify(e) === ultimoGravado.current) return setEstado({ tipo: "ocioso" });
+    fila.current = e;
+    gravarFila();
+  }
+
+  // altera os campos; "gravar" = grava já (listas e botões); digitação só grava ao sair do campo
+  function mudar(fn: (c: Campos) => Campos, gravar: boolean) {
+    const prox = fn(atual.current);
+    atual.current = prox;
+    setCampos(prox);
+    if (gravar) persistir(prox);
+  }
+
+  // prévia da linha com o que está nos campos
+  const previa: Posicao[] = useMemo(() => {
+    if (!modelo || !editando) return [];
+    const s = campos.sorteios.map((x) => ({ de: Number(x.de) || 1, qtd: Number(x.qtd) || 0 }));
+    const m: ModeloSequencia = {
+      ...modelo,
+      sorteios: s.length ? s : [{ de: 1, qtd: 1 }],
+      ordem: campos.ordem,
+      demais: campos.demais || null,
+    };
+    return linhaDoModelo(m).map((c) => porCodigo.get(c) ?? { codigo: c, nome: c, cor: "#5b5680" });
+  }, [modelo, editando, campos, porCodigo]);
+
+  // Enter dentro do editor não pode enviar nada; sai do campo (e grava)
+  const aoTeclar = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter" && (e.target as HTMLElement).tagName === "INPUT") {
+      e.preventDefault();
+      (e.target as HTMLElement).blur();
+    }
   };
 
   const notas = modelo?.simples ? [notaSorteios(modelo), notaFidelidade(fidelidadeMeses)].filter(Boolean) : [];
@@ -98,11 +164,7 @@ export function SequenciaContemplacao({ versaoId, modelo, linha, faixas, tipos, 
       <section className={CAIXA}>
         <div className="flex items-center justify-between gap-6">
           <h3 className="text-sm font-bold">Sequência de contemplação</h3>
-          {modelo?.simples && (
-            <button type="button" onClick={abrir} className="text-xs font-semibold text-tinta underline hover:text-navy">
-              Editar
-            </button>
-          )}
+          {modelo?.simples && <BotaoLapis rotulo="Editar sequência de contemplação" onClick={abrir} />}
         </div>
         {modelo?.simples ? (
           <Codigos itens={linha} />
@@ -133,19 +195,30 @@ export function SequenciaContemplacao({ versaoId, modelo, linha, faixas, tipos, 
   }
 
   return (
-    <section className={CAIXA + " w-[34rem]"} onKeyDown={semEnter}>
-      <h3 className="text-sm font-bold">Editar sequência de contemplação</h3>
+    <section className={CAIXA + " w-[34rem]"} onKeyDown={aoTeclar}>
+      <div className="flex items-center justify-between gap-6">
+        <h3 className="text-sm font-bold">Sequência de contemplação</h3>
+        <span
+          role="status"
+          aria-live="polite"
+          className={"text-[11px] font-semibold " + (estado.tipo === "salvo" ? "text-ok" : "text-tinta")}
+        >
+          {estado.tipo === "salvando" ? "Salvando…" : estado.tipo === "salvo" ? "Salvo ✓" : ""}
+        </span>
+      </div>
       <Codigos itens={previa} />
 
       <div className="flex flex-col gap-1.5 border-t border-linha pt-2">
         <div className="text-xs font-bold text-tinta">Sorteios</div>
-        {sorteios.map((s, i) => (
+        {campos.sorteios.map((s, i) => (
           <div key={i} className="flex items-center gap-1.5 whitespace-nowrap text-xs text-tinta">
             <select
               className={CTRL + " w-14"}
               value={s.qtd}
               aria-label="Quantidade de sorteios"
-              onChange={(e) => setSorteios((l) => l.map((x, k) => (k === i ? { ...x, qtd: e.target.value } : x)))}
+              onChange={(e) =>
+                mudar((c) => ({ ...c, sorteios: c.sorteios.map((x, k) => (k === i ? { ...x, qtd: e.target.value } : x)) }), true)
+              }
             >
               {[0, 1, 2, 3, 4, 5, 6, 7, 8, 9].map((n) => (
                 <option key={n}>{n}</option>
@@ -158,10 +231,19 @@ export function SequenciaContemplacao({ versaoId, modelo, linha, faixas, tipos, 
               value={s.de}
               readOnly={i === 0}
               aria-label="A partir do mês"
-              onChange={(e) => setSorteios((l) => l.map((x, k) => (k === i ? { ...x, de: e.target.value.replace(/\D/g, "") } : x)))}
+              onChange={(e) => {
+                const v = e.target.value.replace(/\D/g, "");
+                mudar((c) => ({ ...c, sorteios: c.sorteios.map((x, k) => (k === i ? { ...x, de: v } : x)) }), false);
+              }}
+              onBlur={() => persistir(atual.current)}
             />
             {i > 0 && (
-              <button type="button" aria-label="Remover linha de sorteios" onClick={() => setSorteios((l) => l.filter((_, k) => k !== i))} className="px-1 text-sm font-bold text-tinta hover:text-navy">
+              <button
+                type="button"
+                aria-label="Remover linha de sorteios"
+                onClick={() => mudar((c) => ({ ...c, sorteios: c.sorteios.filter((_, k) => k !== i) }), true)}
+                className="px-1 text-sm font-bold text-tinta hover:text-navy"
+              >
                 ×
               </button>
             )}
@@ -169,7 +251,12 @@ export function SequenciaContemplacao({ versaoId, modelo, linha, faixas, tipos, 
         ))}
         <button
           type="button"
-          onClick={() => setSorteios((l) => [...l, { de: String((Number(l[l.length - 1]?.de) || 1) + 12), qtd: l[l.length - 1]?.qtd ?? "1" }])}
+          onClick={() =>
+            mudar((c) => {
+              const ult = c.sorteios[c.sorteios.length - 1];
+              return { ...c, sorteios: [...c.sorteios, { de: String((Number(ult?.de) || 1) + 12), qtd: ult?.qtd ?? "1" }] };
+            }, true)
+          }
           className="w-fit text-xs font-semibold text-tinta underline hover:text-navy"
         >
           + mudança de sorteios
@@ -179,14 +266,23 @@ export function SequenciaContemplacao({ versaoId, modelo, linha, faixas, tipos, 
       <div className="flex flex-col gap-1.5 border-t border-linha pt-2">
         <div className="text-xs font-bold text-tinta">Ordem depois dos sorteios</div>
         <div className="flex flex-wrap gap-1">
-          {ordem.map((c, i) => (
+          {campos.ordem.map((c, i) => (
             <select
               key={i}
               className={CTRL + " w-[4.6rem] font-bold uppercase"}
               style={{ color: porCodigo.get(c)?.cor }}
               value={c}
               aria-label={`Posição ${i + 1}`}
-              onChange={(e) => (e.target.value === "-" ? setOrdem((l) => l.filter((_, k) => k !== i)) : setOrdem((l) => l.map((x, k) => (k === i ? e.target.value : x))))}
+              onChange={(e) =>
+                mudar(
+                  (x) => ({
+                    ...x,
+                    ordem:
+                      e.target.value === "-" ? x.ordem.filter((_, k) => k !== i) : x.ordem.map((y, k) => (k === i ? e.target.value : y)),
+                  }),
+                  true,
+                )
+              }
             >
               {livres.map((t) => (
                 <option key={t.codigo} value={t.codigo}>
@@ -196,10 +292,10 @@ export function SequenciaContemplacao({ versaoId, modelo, linha, faixas, tipos, 
               <option value="-">✕ remover</option>
             </select>
           ))}
-          {ordem.length < 24 && (
+          {campos.ordem.length < 24 && (
             <button
               type="button"
-              onClick={() => setOrdem((l) => [...l, l[l.length - 1] ?? livres[0]?.codigo ?? "LIV"])}
+              onClick={() => mudar((c) => ({ ...c, ordem: [...c.ordem, c.ordem[c.ordem.length - 1] ?? livres[0]?.codigo ?? "LIV"] }), true)}
               className="min-h-8 rounded-[10px] border border-borda-campo px-2.5 text-xs font-semibold text-tinta hover:bg-linha"
             >
               + posição
@@ -211,7 +307,11 @@ export function SequenciaContemplacao({ versaoId, modelo, linha, faixas, tipos, 
       <div className="grid grid-cols-2 gap-3 border-t border-linha pt-2">
         <label className="flex flex-col gap-1 text-xs font-bold text-tinta">
           Demais contemplações
-          <select className={CTRL + " w-full"} value={demais} onChange={(e) => setDemais(e.target.value)}>
+          <select
+            className={CTRL + " w-full"}
+            value={campos.demais}
+            onChange={(e) => mudar((c) => ({ ...c, demais: e.target.value }), true)}
+          >
             <option value="">repetir a ordem (sem sorteio)</option>
             {livres.map((t) => (
               <option key={t.codigo} value={t.codigo}>
@@ -222,23 +322,37 @@ export function SequenciaContemplacao({ versaoId, modelo, linha, faixas, tipos, 
         </label>
         <label className="flex flex-col gap-1 text-xs font-bold text-tinta">
           Fidelidade libera no mês
-          <input className={CTRL + " w-full"} inputMode="numeric" placeholder="em branco = sem fidelidade" value={fid} onChange={(e) => setFid(e.target.value.replace(/\D/g, ""))} />
+          <input
+            className={CTRL + " w-full"}
+            inputMode="numeric"
+            placeholder="em branco = sem fidelidade"
+            value={campos.fid}
+            onChange={(e) => {
+              const v = e.target.value.replace(/\D/g, "");
+              mudar((c) => ({ ...c, fid: v }), false);
+            }}
+            onBlur={() => persistir(atual.current)}
+          />
         </label>
       </div>
 
-      {erro && (
+      {estado.tipo === "erro" && (
         <p role="alert" className="text-xs font-semibold text-[#9b1c1c]">
-          {erro}
+          {estado.msg}
         </p>
       )}
-      <div className="flex items-center gap-2">
-        <button type="button" disabled={pendente} onClick={salvar} className="min-h-8 rounded-[10px] bg-navy px-4 text-xs font-bold text-white hover:brightness-110 disabled:opacity-60">
-          {pendente ? "Salvando…" : "Salvar sequência"}
-        </button>
-        <button type="button" disabled={pendente} onClick={() => setEditando(false)} className="min-h-8 rounded-[10px] border border-borda-campo px-3 text-xs font-semibold text-tinta hover:bg-linha">
-          Cancelar
-        </button>
-      </div>
+      {descartar && (
+        <p className="text-[11px] font-semibold text-alerta">
+          A última alteração não foi salva. Corrija o campo ou finalize para descartá-la.
+        </p>
+      )}
+      <BotaoFinalizar
+        rotulo={descartar ? "Descartar e finalizar" : undefined}
+        onClick={() => {
+          if (estado.tipo === "erro" && !descartar) return setDescartar(true);
+          setEditando(false);
+        }}
+      />
     </section>
   );
 }
