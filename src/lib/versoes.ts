@@ -2,6 +2,13 @@
 // Regra: a cada mudança entregue, acrescentar uma entrada NO TOPO.
 export const VERSOES: { numero: string; data: string; itens: string[] }[] = [
   {
+    numero: "0025",
+    data: "09/10/2026",
+    itens: [
+      "Pop-up dos grupos: os quadradinhos da sequência de contemplação sempre usam a cor da modalidade (sai o controle de vazado).",
+    ],
+  },
+  {
     numero: "0024",
     data: "09/10/2026",
     itens: [
