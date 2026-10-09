@@ -2,6 +2,16 @@
 // Regra: a cada mudança entregue, acrescentar uma entrada NO TOPO.
 export const VERSOES: { numero: string; data: string; itens: string[] }[] = [
   {
+    numero: "0017",
+    data: "08/10/2026",
+    itens: [
+      "Sequência de contemplação na horizontal, só com os códigos (sor, liv, lim, fix, fid) na cor de cada modalidade, até 20 por faixa de assembleias.",
+      "Sorteio Cancelada deixa de aparecer na sequência.",
+      "Completando as 20 posições: se a faixa indica um tipo para as demais contemplações, repete esse tipo; se segue a mesma ordem, repete a ordem sem o sorteio.",
+      "Mantida a separação por faixa de assembleias (ex.: 1ª a 36ª e 37ª em diante, quando entra o lance fidelidade).",
+    ],
+  },
+  {
     numero: "0016",
     data: "08/10/2026",
     itens: [

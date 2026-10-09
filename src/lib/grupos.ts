@@ -1,5 +1,6 @@
 import "server-only";
 import { createClient } from "@/lib/supabase/server";
+import { montarOrdem } from "@/lib/sequencia";
 
 // família: lista fixa (sem tabela)
 export const FAMILIAS = [
@@ -98,7 +99,7 @@ export async function carregarGrupo(numero: number) {
   if (error) throw error;
   if (!g) return null;
 
-  const [versao, contagem, cadastroParcelas] = await Promise.all([
+  const [versao, contagem, cadastroParcelas, cadastroTipos] = await Promise.all([
     supabase
       .from("grupo_assembleia")
       .select(
@@ -115,9 +116,11 @@ export async function carregarGrupo(numero: number) {
       .single(),
     supabase.from("grupo_assembleia").select("id", { count: "exact", head: true }).eq("grupo_numero", numero),
     supabase.from("tipo_parcela").select("codigo, descricao, pct").order("pct", { ascending: false }),
+    supabase.from("tipo_contemplacao").select("codigo, nome, cor"),
   ]);
   if (versao.error) throw versao.error;
   if (cadastroParcelas.error) throw cadastroParcelas.error;
+  if (cadastroTipos.error) throw cadastroTipos.error;
   const v = versao.data;
 
   // todos os tipos do cadastro, marcando os oferecidos pelo grupo na versão vigente
@@ -144,16 +147,24 @@ export async function carregarGrupo(numero: number) {
     tipo_contemplacao: { nome: string } | null;
     grupo_sequencia: { ordem: number; quantidade: number; tipo: string; tipo_contemplacao: TipoRef }[];
   };
+  const tipos = new Map((cadastroTipos.data ?? []).map((t) => [t.codigo as string, t]));
   const sequencia = ((v.grupo_sequencia_faixa ?? []) as unknown as Faixa[])
     .sort((a, b) => a.assembleia_de - b.assembleia_de)
-    .map((f) => ({
-      de: f.assembleia_de,
-      ate: f.assembleia_ate,
-      demais: f.tipo_contemplacao?.nome ?? null,
-      itens: [...f.grupo_sequencia]
+    .map((f) => {
+      const itens = [...f.grupo_sequencia]
         .sort((a, b) => a.ordem - b.ordem)
-        .map((i) => ({ ordem: i.ordem, qtd: i.quantidade, codigo: i.tipo, nome: i.tipo_contemplacao.nome })),
-    }));
+        .map((i) => ({ codigo: i.tipo, qtd: i.quantidade }));
+      return {
+        de: f.assembleia_de,
+        ate: f.assembleia_ate,
+        // em códigos, sem Sorteio Cancelada, completada até 20 posições
+        ordem: montarOrdem(itens, f.demais_tipo).map((codigo) => ({
+          codigo,
+          nome: (tipos.get(codigo)?.nome as string | undefined) ?? codigo,
+          cor: (tipos.get(codigo)?.cor as string | undefined) ?? "#5b5680",
+        })),
+      };
+    });
 
   return {
     numero: g.numero as number,
