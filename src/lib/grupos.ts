@@ -44,7 +44,13 @@ export type GrupoResumo = {
   max: number | null;
   /** códigos das 20 primeiras contemplações do grupo */
   seq: string[];
+  /** pagamento com furo ligado na versão vigente */
+  furo: boolean;
+  /** oferece parcela reduzida de 55% ou menos na versão vigente */
+  reduzida: boolean;
 };
+
+const PCT_REDUZIDA_MAX = 55;
 
 const TAMANHO_POPUP = 20;
 
@@ -60,10 +66,13 @@ export async function listarGrupos(familia: string): Promise<GrupoResumo[]> {
   // sequência da versão vigente de cada grupo, numa consulta só
   const ids = (data ?? []).map((g) => g.grupo_assembleia_id as number);
   const seqPorVersao = new Map<number, string[]>();
+  const marcasPorVersao = new Map<number, { furo: boolean; reduzida: boolean }>();
   if (ids.length) {
     const { data: versoes, error: e2 } = await supabase
       .from("grupo_assembleia")
-      .select("id, fidelidade_meses, grupo_sequencia_faixa(assembleia_de, assembleia_ate, demais_tipo, grupo_sequencia(ordem, quantidade, tipo))")
+      .select(
+        "id, fidelidade_meses, pagamento_com_furo, grupo_assembleia_tipo_parcela(tipo_parcela(pct)), grupo_sequencia_faixa(assembleia_de, assembleia_ate, demais_tipo, grupo_sequencia(ordem, quantidade, tipo))",
+      )
       .in("id", ids);
     if (e2) throw e2;
     for (const ver of versoes ?? []) {
@@ -87,6 +96,11 @@ export async function listarGrupos(familia: string): Promise<GrupoResumo[]> {
       if (m?.simples) seq = linhaDetalhada(m, (ver.fidelidade_meses as number | null) ?? null, TAMANHO_POPUP).map((p) => p.codigo);
       else if (faixas.length) seq = montarOrdem(faixas[faixas.length - 1].itens, faixas[faixas.length - 1].demais, TAMANHO_POPUP);
       seqPorVersao.set(ver.id as number, seq);
+      const pcts = ((ver.grupo_assembleia_tipo_parcela ?? []) as unknown as { tipo_parcela: { pct: number | string } | null }[]).map((t) => Number(t.tipo_parcela?.pct));
+      marcasPorVersao.set(ver.id as number, {
+        furo: ver.pagamento_com_furo === true,
+        reduzida: pcts.some((p) => p <= PCT_REDUZIDA_MAX),
+      });
     }
   }
 
@@ -101,6 +115,8 @@ export async function listarGrupos(familia: string): Promise<GrupoResumo[]> {
       min: v.length ? Math.min(...v) : null,
       max: v.length ? Math.max(...v) : null,
       seq: seqPorVersao.get(g.grupo_assembleia_id as number) ?? [],
+      furo: marcasPorVersao.get(g.grupo_assembleia_id as number)?.furo ?? false,
+      reduzida: marcasPorVersao.get(g.grupo_assembleia_id as number)?.reduzida ?? false,
     };
   });
 }

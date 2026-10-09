@@ -2,6 +2,14 @@
 // Regra: a cada mudança entregue, acrescentar uma entrada NO TOPO.
 export const VERSOES: { numero: string; data: string; itens: string[] }[] = [
   {
+    numero: "0026",
+    data: "09/10/2026",
+    itens: [
+      "Números dos grupos (topo) com marcação por faixa colorida na lateral esquerda: dourada = pagamento com furo ligado; verde-água = oferece parcela reduzida de 55% ou menos; as duas = faixa dividida ao meio.",
+      "Legenda das cores ao lado do último grupo, na mesma linha (só aparece o que existe na família).",
+    ],
+  },
+  {
     numero: "0025",
     data: "09/10/2026",
     itens: [
