@@ -10,7 +10,7 @@ export type Chip = {
   data: string | null; // data da assembleia da tabela vigente (AAAA-MM-DD)
   min: number | null;
   max: number | null;
-  seq: string[]; // códigos das 20 primeiras contemplações; "*" = só entra a partir de certo mês
+  seq: string[]; // códigos das 20 primeiras contemplações
 };
 
 const mil = (v: number) => `R$ ${Math.round(v / 1000).toLocaleString("pt-BR")} mil`;
@@ -105,19 +105,10 @@ function Popup({ g, x, y, acima, hoje, cores }: { g: Chip; x: number; y: number;
         </span>
       </div>
       {g.seq.length > 0 && (
-        <div className="grid grid-cols-[repeat(20,minmax(0,1fr))] gap-[2px] pt-0.5" aria-label={`Sequência: ${g.seq.join(", ").replaceAll("*", "")}`}>
-          {g.seq.map((c, k) => {
-            const cod = c.replace("*", "");
-            const cor = cores[cod] ?? "#b9b3d6";
-            const depois = c.endsWith("*");
-            return (
-              <span
-                key={k}
-                style={depois ? { borderColor: cor } : { background: cor, borderColor: cor }}
-                className="aspect-square rounded-[2px] border-[1.5px]"
-              />
-            );
-          })}
+        <div className="grid grid-cols-[repeat(20,minmax(0,1fr))] gap-[2px] pt-0.5" aria-label={`Sequência: ${g.seq.join(", ")}`}>
+          {g.seq.map((c, k) => (
+            <span key={k} style={{ background: cores[c] ?? "#b9b3d6" }} className="aspect-square rounded-[2px]" />
+          ))}
         </div>
       )}
     </div>

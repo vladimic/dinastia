@@ -42,7 +42,7 @@ export type GrupoResumo = {
   qtdCreditos: number;
   min: number | null;
   max: number | null;
-  /** primeiras 20 contemplações do grupo; "*" no fim do código = só entra a partir de certo mês */
+  /** códigos das 20 primeiras contemplações do grupo */
   seq: string[];
 };
 
@@ -84,7 +84,7 @@ export async function listarGrupos(familia: string): Promise<GrupoResumo[]> {
         }));
       const m = modelar(faixas);
       let seq: string[] = [];
-      if (m?.simples) seq = linhaDetalhada(m, (ver.fidelidade_meses as number | null) ?? null, TAMANHO_POPUP).map((p) => p.codigo + (p.desde ? "*" : ""));
+      if (m?.simples) seq = linhaDetalhada(m, (ver.fidelidade_meses as number | null) ?? null, TAMANHO_POPUP).map((p) => p.codigo);
       else if (faixas.length) seq = montarOrdem(faixas[faixas.length - 1].itens, faixas[faixas.length - 1].demais, TAMANHO_POPUP);
       seqPorVersao.set(ver.id as number, seq);
     }
