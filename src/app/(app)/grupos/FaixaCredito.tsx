@@ -1,6 +1,8 @@
 "use client";
 
 import { useRef, useState, useTransition } from "react";
+import { reais } from "@/lib/formato";
+import { BotaoFinalizar, BotaoLapis } from "./Lapis";
 import { salvarCreditos } from "./actions";
 
 const numero = new Intl.NumberFormat("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -19,6 +21,7 @@ const porValor = (a: Linha, b: Linha) => (a.valor ?? Infinity) - (b.valor ?? Inf
 // Cada valor é um campo: ao sair dele (ou Enter) grava; campo vazio remove o valor.
 export function FaixaCredito({ versaoId, creditos }: { versaoId: number; creditos: number[] }) {
   const proximoId = useRef(creditos.length);
+  const [editando, setEditando] = useState(false);
   const [linhas, setLinhas] = useState<Linha[]>(() => creditos.map((c, id) => ({ id, texto: numero.format(c), valor: c })));
   const [estado, setEstado] = useState<Estado>({ tipo: "ocioso" });
   const [, iniciar] = useTransition();
@@ -76,75 +79,113 @@ export function FaixaCredito({ versaoId, creditos }: { versaoId: number; credito
       setEstado({ tipo: "erro", msg: "A faixa precisa ter ao menos um valor." });
       return setLinhas((l) => l.map((x) => (x.id === id ? { ...x, texto: numero.format(x.valor as number) } : x)));
     }
-    enviar(restantes, () => setLinhas((l) => l.filter((x) => x.id !== id)), () => undefined);
+    enviar(
+      restantes,
+      () => setLinhas((l) => l.filter((x) => x.id !== id)),
+      () => undefined,
+    );
   }
 
   return (
     <section className="flex w-[15.5rem] flex-col gap-2 rounded-2xl border border-borda bg-white p-3.5">
       <div className="flex items-center justify-between">
         <h3 className="text-sm font-bold">Faixa de crédito</h3>
-        <span
-          role="status"
-          aria-live="polite"
-          className={"text-[11px] font-semibold " + (estado.tipo === "salvo" ? "text-ok" : "text-tinta")}
-        >
-          {estado.tipo === "salvando" ? "Salvando…" : estado.tipo === "salvo" ? "Salvo ✓" : ""}
-        </span>
+        {editando ? (
+          <span
+            role="status"
+            aria-live="polite"
+            className={"text-[11px] font-semibold " + (estado.tipo === "salvo" ? "text-ok" : "text-tinta")}
+          >
+            {estado.tipo === "salvando" ? "Salvando…" : estado.tipo === "salvo" ? "Salvo ✓" : ""}
+          </span>
+        ) : (
+          <BotaoLapis
+            rotulo="Editar faixa de crédito"
+            onClick={() => {
+              setEstado({ tipo: "ocioso" });
+              setEditando(true);
+            }}
+          />
+        )}
       </div>
 
-      <ul className="flex max-h-[340px] flex-col gap-1 overflow-y-auto pr-1">
-        {linhas.map((l) => (
-          <li key={l.id} className="flex items-center gap-1">
-            <button
-              type="button"
-              aria-label={`Remover ${l.texto || "valor"}`}
-              onClick={() => remover(l.id)}
-              className="w-4 shrink-0 text-sm leading-none text-[#b9b3d6] hover:text-[#9b1c1c]"
-            >
-              ×
-            </button>
-            <div className="relative flex-1">
-              <span aria-hidden="true" className="pointer-events-none absolute top-1/2 left-2.5 -translate-y-1/2 text-xs font-semibold text-tinta">
-                R$
-              </span>
-              <input
-                inputMode="decimal"
-                autoFocus={l.valor === null}
-                value={l.texto}
-                placeholder="0,00"
-                aria-label="Valor do crédito"
-                onChange={(e) => {
-                  const texto = e.target.value;
-                  setLinhas((x) => x.map((y) => (y.id === l.id ? { ...y, texto } : y)));
-                }}
-                onBlur={() => aoSair(l.id)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") e.currentTarget.blur();
-                  if (e.key === "Escape") {
-                    const texto = l.valor === null ? "" : numero.format(l.valor);
-                    setLinhas((x) => x.map((y) => (y.id === l.id ? { ...y, texto } : y)));
-                    e.currentTarget.blur();
-                  }
-                }}
-                className="h-7 w-full rounded-md border border-borda-campo bg-campo pr-2.5 pl-8 text-right text-[13px] font-bold tabular-nums text-navy outline-none focus:border-laranja focus:bg-white focus:ring-2 focus:ring-laranja-claro"
-              />
-            </div>
-          </li>
-        ))}
-      </ul>
+      {!editando ? (
+        <ul className="flex max-h-[340px] flex-col gap-1 overflow-y-auto pr-1">
+          {linhas
+            .filter((l) => l.valor !== null)
+            .map((l) => (
+              <li key={l.id} className="rounded-md border border-[#ece8de] px-2.5 py-0.5 text-right text-[13px] font-bold tabular-nums">
+                {reais(l.valor)}
+              </li>
+            ))}
+        </ul>
+      ) : (
+        <>
+          <ul className="flex max-h-[340px] flex-col gap-1 overflow-y-auto pr-1">
+            {linhas.map((l) => (
+              <li key={l.id} className="flex items-center gap-1">
+                <button
+                  type="button"
+                  aria-label={`Remover ${l.texto || "valor"}`}
+                  onClick={() => remover(l.id)}
+                  className="w-4 shrink-0 text-sm leading-none text-[#b9b3d6] hover:text-[#9b1c1c]"
+                >
+                  ×
+                </button>
+                <div className="relative flex-1">
+                  <span
+                    aria-hidden="true"
+                    className="pointer-events-none absolute top-1/2 left-2.5 -translate-y-1/2 text-xs font-semibold text-tinta"
+                  >
+                    R$
+                  </span>
+                  <input
+                    inputMode="decimal"
+                    autoFocus={l.valor === null}
+                    value={l.texto}
+                    placeholder="0,00"
+                    aria-label="Valor do crédito"
+                    onChange={(e) => {
+                      const texto = e.target.value;
+                      setLinhas((x) => x.map((y) => (y.id === l.id ? { ...y, texto } : y)));
+                    }}
+                    onBlur={() => aoSair(l.id)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") e.currentTarget.blur();
+                      if (e.key === "Escape") {
+                        const texto = l.valor === null ? "" : numero.format(l.valor);
+                        setLinhas((x) => x.map((y) => (y.id === l.id ? { ...y, texto } : y)));
+                        e.currentTarget.blur();
+                      }
+                    }}
+                    className="h-7 w-full rounded-md border border-borda-campo bg-campo pr-2.5 pl-8 text-right text-[13px] font-bold tabular-nums text-navy outline-none focus:border-laranja focus:bg-white focus:ring-2 focus:ring-laranja-claro"
+                  />
+                </div>
+              </li>
+            ))}
+          </ul>
 
-      <button
-        type="button"
-        onClick={() => setLinhas((l) => [...l, { id: proximoId.current++, texto: "", valor: null }])}
-        className="rounded-md border border-dashed border-borda-campo py-1 text-xs font-bold text-tinta hover:bg-linha"
-      >
-        + valor
-      </button>
+          <button
+            type="button"
+            onClick={() => setLinhas((l) => [...l, { id: proximoId.current++, texto: "", valor: null }])}
+            className="rounded-md border border-dashed border-borda-campo py-1 text-xs font-bold text-tinta hover:bg-linha"
+          >
+            + valor
+          </button>
 
-      {estado.tipo === "erro" && (
-        <p role="alert" className="text-[11px] font-semibold text-[#9b1c1c]">
-          {estado.msg}
-        </p>
+          {estado.tipo === "erro" && (
+            <p role="alert" className="text-[11px] font-semibold text-[#9b1c1c]">
+              {estado.msg}
+            </p>
+          )}
+
+          <BotaoFinalizar
+            onClick={() => {
+              setLinhas((l) => l.filter((x) => x.valor !== null));
+              setEditando(false);
+            }}
+          />
+        </>
       )}
     </section>
   );
