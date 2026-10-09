@@ -26,3 +26,24 @@ export function montarOrdem(
   for (let i = 0; ordem.length < limite; i++) ordem.push(ciclo[i % ciclo.length]);
   return ordem;
 }
+
+type ItemOrdem = { codigo: string; qtd: number };
+export type FaixaOrdem = { de: number; ate: number; itens: ItemOrdem[]; demais: string | null };
+
+const FIDELIDADE = "FID";
+const semFidelidade = (f: FaixaOrdem) =>
+  JSON.stringify([f.itens.filter((i) => i.codigo !== FIDELIDADE).map((i) => [i.codigo, i.qtd]), f.demais]);
+const temFidelidade = (f: FaixaOrdem) => f.itens.some((i) => i.codigo === FIDELIDADE);
+
+// Faixas vizinhas que só diferem pelo lance fidelidade viram uma só (a que traz o fidelidade).
+export function unirFaixas(faixas: FaixaOrdem[]): FaixaOrdem[] {
+  const out: FaixaOrdem[] = [];
+  for (const f of faixas) {
+    const ult = out[out.length - 1];
+    if (ult && semFidelidade(ult) === semFidelidade(f)) {
+      const base = temFidelidade(f) || !temFidelidade(ult) ? f : ult;
+      out[out.length - 1] = { ...base, de: ult.de, ate: f.ate };
+    } else out.push(f);
+  }
+  return out;
+}

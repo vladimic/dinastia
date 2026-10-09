@@ -2,6 +2,15 @@
 // Regra: a cada mudança entregue, acrescentar uma entrada NO TOPO.
 export const VERSOES: { numero: string; data: string; itens: string[] }[] = [
   {
+    numero: "0018",
+    data: "09/10/2026",
+    itens: [
+      "Sequência de contemplação: as faixas que só diferem pelo lance fidelidade viram uma única linha, já com o fidelidade; no rodapé, \"Fidelidade libera no mês XX\".",
+      "Novo campo fidelidade_meses em grupo_assembleia (mês em que o fidelidade libera), carregado a partir dos PDFs já lidos e gravado nas próximas importações.",
+      "Tooltip das modalidades refeito: aparece ao passar o mouse ou tocar/focar no código. Removida a mensagem do rodapé sobre as 20 contemplações.",
+    ],
+  },
+  {
     numero: "0017",
     data: "08/10/2026",
     itens: [
