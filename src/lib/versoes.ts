@@ -2,6 +2,17 @@
 // Regra: a cada mudança entregue, acrescentar uma entrada NO TOPO.
 export const VERSOES: { numero: string; data: string; itens: string[] }[] = [
   {
+    numero: "0019",
+    data: "09/10/2026",
+    itens: [
+      "Sequência de contemplação: uma linha por grupo, sem o rótulo de assembleias e com até 25 códigos. Grupos com mais de um sorteio (ex.: 800, com 1, 2 e 3 sorteios) mostram o máximo de sorteios na linha e descrevem no rodapé em que mês a quantidade muda.",
+      "Sorteio Cancelada passa de SOC para CAN (cadastro, grupos, sequências, importador e arquivos de carga).",
+      "Sequência editável (botão Editar): sorteios por mês, ordem das contemplações, tipo das demais e mês de liberação do fidelidade. As faixas são refeitas numa transação só.",
+      "Faixa de crédito editável (botão Editar): um valor por linha.",
+      "Mês de liberação do fidelidade editável no editor da sequência.",
+    ],
+  },
+  {
     numero: "0018",
     data: "09/10/2026",
     itens: [

@@ -1,10 +1,11 @@
 # Dinastia · MER (modelo entidade-relacionamento)
 
-Atualizado em 09/10/2026 · versão 0018 · conferido com o banco em produção (Supabase, schema `public`).
+Atualizado em 09/10/2026 · versão 0019 · conferido com o banco em produção (Supabase, schema `public`).
 
 Mudanças desde o MER de 07/10/2026:
+- Sorteio Cancelada passou de `SOC` para `CAN` (0009); função `salvar_sequencia` refaz as faixas de uma versão (0010).
 - `grupo_assembleia` ganhou `pagamento_com_furo` (0006/0007) e `fidelidade_meses` (0008).
-- `tipo_contemplacao` ganhou `cor` (`#RRGGBB`) e o `codigo` passou a ter no máximo 10 caracteres (`SOR`, `SOC`, `LIV`, `LIM`, `FIX`, `FID`) — migração 0005.
+- `tipo_contemplacao` ganhou `cor` (`#RRGGBB`) e o `codigo` passou a ter no máximo 10 caracteres (`SOR`, `CAN`, `LIV`, `LIM`, `FIX`, `FID`) — migração 0005.
 - `grupo.seguro_pct_mes` saiu; o seguro prestamista é só `parametros_gerais.seguro_padrao_pct` — migração 0004.
 
 ```mermaid
@@ -22,7 +23,7 @@ erDiagram
     }
 
     tipo_contemplacao {
-        text codigo PK "até 10 caracteres: SOR, SOC, LIV, LIM, FIX, FID"
+        text codigo PK "até 10 caracteres: SOR, CAN, LIV, LIM, FIX, FID"
         text nome
         text cor "#RRGGBB"
     }

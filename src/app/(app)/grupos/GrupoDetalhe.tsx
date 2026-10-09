@@ -1,7 +1,9 @@
 import { ehLance, nomeFamilia, type GrupoDetalhe, type Modalidade } from "@/lib/grupos";
-import { dataBR, MESES, milhar, pct, reais } from "@/lib/formato";
+import { dataBR, MESES, milhar, pct } from "@/lib/formato";
 import { salvarGrupo } from "./actions";
 import { PagamentoComFuro, TiposParcela } from "./ParcelasEFuro";
+import { FaixaCredito } from "./FaixaCredito";
+import { SequenciaContemplacao } from "./SequenciaContemplacao";
 
 type Props = {
   grupo: GrupoDetalhe;
@@ -178,53 +180,22 @@ export function GrupoDetalheView({ grupo, indices, hoje, salvo, erro }: Props) {
           )}
         </section>
 
-        <section className="flex w-[15.5rem] flex-col gap-2 rounded-2xl border border-borda bg-white p-3.5">
-          <h3 className="text-sm font-bold">Faixa de crédito</h3>
-          <ul className="flex max-h-[340px] flex-col gap-1 overflow-y-auto pr-1">
-            {grupo.creditos.map((c) => (
-              <li key={c} className="rounded-md border border-[#ece8de] px-2.5 py-0.5 text-right text-[13px] font-bold tabular-nums">
-                {reais(c)}
-              </li>
-            ))}
-          </ul>
-        </section>
+        <FaixaCredito key={`cred-${grupo.grupo_assembleia_id}-${grupo.creditos.join()}`} versaoId={grupo.grupo_assembleia_id} creditos={grupo.creditos} />
 
         <div className="flex flex-col gap-3">
           <PagamentoComFuro key={`furo-${grupo.grupo_assembleia_id}`} versaoId={grupo.grupo_assembleia_id} valor={grupo.pagamento_com_furo} />
           <TiposParcela key={`tipos-${grupo.grupo_assembleia_id}`} versaoId={grupo.grupo_assembleia_id} tipos={grupo.tiposParcela} />
         </div>
 
-        <section className="flex w-fit max-w-full flex-col gap-2 rounded-2xl border border-borda bg-white p-3.5">
-          <h3 className="text-sm font-bold">Sequência de contemplação</h3>
-          {grupo.sequencia.map((f) => (
-            <div key={f.de} className="flex items-center gap-3">
-              <div className="w-[5.5rem] shrink-0 text-xs font-bold text-tinta">
-                {f.de}ª a {f.ate}ª
-              </div>
-              <ol className="flex flex-wrap gap-x-1 gap-y-0.5 text-[13px] font-bold lowercase">
-                {f.ordem.map((o, k) => (
-                  <li
-                    key={k}
-                    tabIndex={0}
-                    style={{ color: o.cor }}
-                    className="group relative w-[1.5rem] cursor-help rounded outline-none focus-visible:ring-1 focus-visible:ring-navy"
-                  >
-                    {o.codigo}
-                    <span
-                      role="tooltip"
-                      className="pointer-events-none absolute bottom-full left-1/2 z-20 mb-1 hidden -translate-x-1/2 whitespace-nowrap rounded-md bg-navy px-2 py-1 text-[11px] font-semibold normal-case text-white shadow-lg group-hover:block group-focus:block"
-                    >
-                      {o.nome}
-                    </span>
-                  </li>
-                ))}
-              </ol>
-            </div>
-          ))}
-          {grupo.fidelidade_meses && (
-            <p className="text-[11px] text-tinta">Fidelidade libera no mês {grupo.fidelidade_meses}.</p>
-          )}
-        </section>
+        <SequenciaContemplacao
+          key={`seq-${grupo.grupo_assembleia_id}`}
+          versaoId={grupo.grupo_assembleia_id}
+          modelo={grupo.sequencia.modelo}
+          linha={grupo.sequencia.linha}
+          faixas={grupo.sequencia.faixas}
+          tipos={grupo.tiposContemplacao}
+          fidelidadeMeses={grupo.fidelidade_meses}
+        />
 
         <section className="flex w-fit max-w-[430px] flex-col gap-2 rounded-2xl border border-borda bg-white p-3.5">
           <h3 className="text-sm font-bold">Modalidades de contemplação</h3>

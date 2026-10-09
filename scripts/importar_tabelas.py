@@ -41,7 +41,7 @@ LANCES = {"LIV", "LIM", "FIX", "FID"}
 def tipo_por_nome(nome):
     n = nome.lower()
     if "sorteio" in n and "cancel" in n:
-        return "SOC"
+        return "CAN"
     if "sorteio" in n:
         return "SOR"
     if "livre" in n:
@@ -156,7 +156,7 @@ def ler_pdf(caminho: Path):
     modal = {t: {"max": None, "pct_cat": None, "emb_parc": None, "emb_base": None,
                  "emb_pct": None, "rec_proprio": None, "a_partir": 1, "req": None,
                  "transf": True, "emb_texto": None}
-             for t in ["SOR", "SOC", "LIV",
+             for t in ["SOR", "CAN", "LIV",
                        "LIM", "FIX", "FID"] if t in presentes}
     if "LIM" in modal:
         if lim:
