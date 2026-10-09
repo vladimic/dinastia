@@ -1,22 +1,69 @@
-// Ordem de contemplação de uma faixa de assembleias, em códigos, para exibição horizontal.
-// - expande as quantidades (2× LIV = LIV LIV);
-// - descarta Sorteio Cancelada (SOC);
-// - completa até o limite: se a faixa diz "demais" com um tipo (ex.: FIX), repete esse tipo;
-//   se diz "mesma ordem", repete a ordem sem o sorteio (SOR).
-export const LIMITE_ORDEM = 20;
-const DESCARTADOS = new Set(["SOC"]);
-const SORTEIO = "SOR";
+// Sequência de contemplação de um grupo, numa linha só.
+//
+// O banco guarda faixas de assembleias (grupo_sequencia_faixa) com itens (grupo_sequencia).
+// Nos grupos lidos até hoje, as faixas só diferem em três coisas: quantos sorteios (SOR) há,
+// o Sorteio Cancelada (CAN, sempre com a mesma quantidade do SOR) e a entrada do fidelidade (FID).
+// Este módulo transforma as faixas num modelo simples (sorteios por mês + ordem + "demais") e de volta.
+export const LIMITE_ORDEM = 25;
+export const SORTEIO = "SOR";
+export const CANCELADA = "CAN"; // não aparece na linha
+export const FIDELIDADE = "FID";
 
-export function montarOrdem(
-  itens: { codigo: string; qtd: number }[],
-  demais: string | null,
-  limite = LIMITE_ORDEM,
-): string[] {
-  const base = itens.flatMap((i) => Array<string>(Math.max(1, i.qtd)).fill(i.codigo)).filter((c) => !DESCARTADOS.has(c));
+export type Item = { codigo: string; qtd: number };
+export type Faixa = { de: number; ate: number; itens: Item[]; demais: string | null };
+
+export type ModeloSequencia = {
+  /** false = as faixas diferem por outro motivo além de SOR/CAN/FID (regra específica) */
+  simples: boolean;
+  /** quantos sorteios a partir de cada mês (o primeiro sempre começa no mês 1) */
+  sorteios: { de: number; qtd: number }[];
+  /** posições depois dos sorteios, uma por contemplação, sem SOR/CAN */
+  ordem: string[];
+  /** tipo das demais contemplações; nulo = repete a ordem, sem o sorteio */
+  demais: string | null;
+  /** mês em que o FID passa a constar na ordem (nulo = não consta) */
+  fidOrdemDe: number | null;
+  /** último mês da sequência (prazo do grupo) */
+  prazo: number;
+};
+
+const soma = (itens: Item[], codigo: string) => itens.filter((i) => i.codigo === codigo).reduce((s, i) => s + i.qtd, 0);
+const expandir = (itens: Item[]) => itens.flatMap((i) => Array<string>(Math.max(1, i.qtd)).fill(i.codigo));
+const assinatura = (f: Faixa) =>
+  JSON.stringify([f.itens.filter((i) => ![SORTEIO, CANCELADA, FIDELIDADE].includes(i.codigo)).map((i) => [i.codigo, i.qtd]), f.demais]);
+
+export function modelar(faixas: Faixa[]): ModeloSequencia | null {
+  if (!faixas.length) return null;
+  const fs = [...faixas].sort((a, b) => a.de - b.de);
+  const ultima = fs[fs.length - 1];
+  const comFid = fs.find((f) => soma(f.itens, FIDELIDADE) > 0) ?? null;
+
+  const sorteios: ModeloSequencia["sorteios"] = [];
+  for (const f of fs) {
+    const qtd = soma(f.itens, SORTEIO);
+    if (!sorteios.length || sorteios[sorteios.length - 1].qtd !== qtd) sorteios.push({ de: f.de, qtd });
+  }
+  sorteios[0].de = 1;
+
+  const base = comFid && comFid.de >= ultima.de ? comFid : ultima;
+  return {
+    simples: fs.every((f) => assinatura(f) === assinatura(ultima)),
+    sorteios,
+    ordem: expandir(base.itens).filter((c) => c !== SORTEIO && c !== CANCELADA),
+    demais: ultima.demais,
+    fidOrdemDe: comFid ? comFid.de : null,
+    prazo: ultima.ate,
+  };
+}
+
+// Completa a ordem até o limite: se há tipo para as demais contemplações, repete esse tipo;
+// se a regra é "mesma ordem", repete a ordem sem o sorteio. Sorteio Cancelada nunca aparece.
+export function montarOrdem(itens: Item[], demais: string | null, limite = LIMITE_ORDEM): string[] {
+  const base = expandir(itens).filter((c) => c !== CANCELADA);
   const ordem = base.slice(0, limite);
   if (ordem.length >= limite) return ordem;
 
-  if (demais && !DESCARTADOS.has(demais)) {
+  if (demais && demais !== CANCELADA) {
     while (ordem.length < limite) ordem.push(demais);
     return ordem;
   }
@@ -27,23 +74,81 @@ export function montarOrdem(
   return ordem;
 }
 
-type ItemOrdem = { codigo: string; qtd: number };
-export type FaixaOrdem = { de: number; ate: number; itens: ItemOrdem[]; demais: string | null };
+// A linha mostrada: o máximo de sorteios + a ordem (com fidelidade) + as demais, até o limite.
+export function linhaDoModelo(m: ModeloSequencia, limite = LIMITE_ORDEM): string[] {
+  const maxSor = Math.max(0, ...m.sorteios.map((s) => s.qtd));
+  const itens: Item[] = [...(maxSor > 0 ? [{ codigo: SORTEIO, qtd: maxSor }] : []), ...m.ordem.map((codigo) => ({ codigo, qtd: 1 }))];
+  return montarOrdem(itens, m.demais, limite);
+}
 
-const FIDELIDADE = "FID";
-const semFidelidade = (f: FaixaOrdem) =>
-  JSON.stringify([f.itens.filter((i) => i.codigo !== FIDELIDADE).map((i) => [i.codigo, i.qtd]), f.demais]);
-const temFidelidade = (f: FaixaOrdem) => f.itens.some((i) => i.codigo === FIDELIDADE);
+// "Sorteios: 1 até o mês 47; 2 do mês 48 ao 71; 3 a partir do mês 72." (só quando a quantidade muda)
+export function notaSorteios(m: ModeloSequencia): string | null {
+  if (m.sorteios.length < 2) return null;
+  const partes = m.sorteios.map((s, i) => {
+    const prox = m.sorteios[i + 1];
+    if (!prox) return `${s.qtd} a partir do mês ${s.de}`;
+    return i === 0 ? `${s.qtd} até o mês ${prox.de - 1}` : `${s.qtd} do mês ${s.de} ao ${prox.de - 1}`;
+  });
+  return `Sorteios: ${partes.join("; ")}.`;
+}
 
-// Faixas vizinhas que só diferem pelo lance fidelidade viram uma só (a que traz o fidelidade).
-export function unirFaixas(faixas: FaixaOrdem[]): FaixaOrdem[] {
-  const out: FaixaOrdem[] = [];
-  for (const f of faixas) {
-    const ult = out[out.length - 1];
-    if (ult && semFidelidade(ult) === semFidelidade(f)) {
-      const base = temFidelidade(f) || !temFidelidade(ult) ? f : ult;
-      out[out.length - 1] = { ...base, de: ult.de, ate: f.ate };
-    } else out.push(f);
+// "Fidelidade libera no mês 19. Na ordem, só entra a partir do mês 48." (a 2ª frase só se divergirem)
+export function notaFidelidade(fidelidadeMeses: number | null, m: ModeloSequencia | null): string | null {
+  if (!fidelidadeMeses) return null;
+  const dif = m?.fidOrdemDe && m.fidOrdemDe !== fidelidadeMeses ? ` Na ordem, só entra a partir do mês ${m.fidOrdemDe}.` : "";
+  return `Fidelidade libera no mês ${fidelidadeMeses}.${dif}`;
+}
+
+export type Edicao = {
+  sorteios: { de: number; qtd: number }[];
+  ordem: string[];
+  demais: string | null;
+  fidelidadeMeses: number | null;
+  /** mês em que o FID entra na ordem; nulo = acompanha fidelidadeMeses */
+  fidOrdemDe?: number | null;
+};
+
+// Valida a edição; devolve a mensagem de erro ou null.
+export function validarEdicao(e: Edicao, codigosValidos: Set<string>): string | null {
+  if (!e.sorteios.length || e.sorteios[0].de !== 1) return "A primeira linha de sorteios começa no mês 1.";
+  for (let i = 0; i < e.sorteios.length; i++) {
+    const s = e.sorteios[i];
+    if (!Number.isInteger(s.qtd) || s.qtd < 0 || s.qtd > 9) return "Quantidade de sorteios: de 0 a 9.";
+    if (!Number.isInteger(s.de) || s.de < 1) return "Mês inválido nos sorteios.";
+    if (i > 0 && s.de <= e.sorteios[i - 1].de) return "Os meses dos sorteios precisam estar em ordem crescente.";
   }
-  return out;
+  if (!e.ordem.length || e.ordem.length > LIMITE_ORDEM - 1) return `A ordem tem de 1 a ${LIMITE_ORDEM - 1} posições.`;
+  const livres = (c: string) => codigosValidos.has(c) && c !== SORTEIO && c !== CANCELADA;
+  if (!e.ordem.every(livres)) return "Modalidade inválida na ordem (SOR e CAN não entram aqui).";
+  if (e.demais !== null && !livres(e.demais)) return "Modalidade inválida nas demais contemplações.";
+  if (e.fidelidadeMeses !== null && (!Number.isInteger(e.fidelidadeMeses) || e.fidelidadeMeses < 2))
+    return "Mês de liberação do fidelidade: número maior que 1.";
+  if (e.ordem.includes(FIDELIDADE) && !(e.fidOrdemDe ?? e.fidelidadeMeses))
+    return "A ordem tem FID: informe o mês em que o fidelidade libera.";
+  return null;
+}
+
+// Gera as faixas (uma por trecho de meses em que sorteios/fidelidade são iguais) a partir da edição.
+export function gerarFaixas(e: Edicao, prazo: number): Faixa[] {
+  const fidDe = e.fidOrdemDe ?? e.fidelidadeMeses;
+  const cortes = [...new Set([...e.sorteios.map((s) => s.de), ...(fidDe && fidDe > 1 ? [fidDe] : [])])].sort((a, b) => a - b);
+  return cortes
+    .filter((de) => de <= prazo)
+    .map((de, i, arr) => {
+      const qtd = [...e.sorteios].reverse().find((s) => s.de <= de)?.qtd ?? 0;
+      const fidAtivo = !!fidDe && de >= fidDe;
+      const ordem = e.ordem.filter((c) => fidAtivo || c !== FIDELIDADE);
+      const itens: Item[] = [];
+      const poe = (codigo: string, n: number) => {
+        const ult = itens[itens.length - 1];
+        if (ult && ult.codigo === codigo) ult.qtd += n;
+        else itens.push({ codigo, qtd: n });
+      };
+      if (qtd > 0) {
+        poe(SORTEIO, qtd);
+        poe(CANCELADA, qtd);
+      }
+      for (const c of ordem) poe(c, 1);
+      return { de, ate: i + 1 < arr.length ? arr[i + 1] - 1 : prazo, itens, demais: e.demais };
+    });
 }

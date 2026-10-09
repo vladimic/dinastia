@@ -1,6 +1,6 @@
 import "server-only";
 import { createClient } from "@/lib/supabase/server";
-import { montarOrdem, unirFaixas } from "@/lib/sequencia";
+import { linhaDoModelo, modelar, montarOrdem, type Faixa as FaixaSeq } from "@/lib/sequencia";
 
 // família: lista fixa (sem tabela)
 export const FAMILIAS = [
@@ -15,7 +15,7 @@ export const nomeFamilia = (slug: string) => FAMILIAS.find((f) => f.slug === slu
 // ordem de exibição das modalidades
 const ORDEM_TIPO = [
   "SOR",
-  "SOC",
+  "CAN",
   "LIV",
   "LIM",
   "FIX",
@@ -147,8 +147,8 @@ export async function carregarGrupo(numero: number) {
     tipo_contemplacao: { nome: string } | null;
     grupo_sequencia: { ordem: number; quantidade: number; tipo: string; tipo_contemplacao: TipoRef }[];
   };
-  const tipos = new Map((cadastroTipos.data ?? []).map((t) => [t.codigo as string, t]));
-  const faixas = ((v.grupo_sequencia_faixa ?? []) as unknown as Faixa[])
+  const tipos = new Map((cadastroTipos.data ?? []).map((t) => [t.codigo as string, { nome: t.nome as string, cor: t.cor as string }]));
+  const faixas: FaixaSeq[] = ((v.grupo_sequencia_faixa ?? []) as unknown as Faixa[])
     .sort((a, b) => a.assembleia_de - b.assembleia_de)
     .map((f) => ({
       de: f.assembleia_de,
@@ -158,16 +158,24 @@ export async function carregarGrupo(numero: number) {
         .sort((a, b) => a.ordem - b.ordem)
         .map((i) => ({ codigo: i.tipo, qtd: i.quantidade })),
     }));
-  // faixas que só diferem pelo fidelidade viram uma linha; em códigos, sem Sorteio Cancelada, até 20 posições
-  const sequencia = unirFaixas(faixas).map((f) => ({
-    de: f.de,
-    ate: f.ate,
-    ordem: montarOrdem(f.itens, f.demais).map((codigo) => ({
-      codigo,
-      nome: (tipos.get(codigo)?.nome as string | undefined) ?? codigo,
-      cor: (tipos.get(codigo)?.cor as string | undefined) ?? "#5b5680",
-    })),
+  const tiposContemplacao = (cadastroTipos.data ?? []).map((t) => ({
+    codigo: t.codigo as string,
+    nome: t.nome as string,
+    cor: t.cor as string,
   }));
+  const enriquecer = (codigo: string) => ({
+    codigo,
+    nome: tipos.get(codigo)?.nome ?? codigo,
+    cor: tipos.get(codigo)?.cor ?? "#5b5680",
+  });
+  // uma linha por grupo (sorteios, cancelada e fidelidade viram notas); se as faixas diferem por outro
+  // motivo ("regra específica"), cai para uma linha por faixa
+  const modelo = modelar(faixas);
+  const sequencia = {
+    modelo,
+    linha: modelo?.simples ? linhaDoModelo(modelo).map(enriquecer) : [],
+    faixas: modelo && !modelo.simples ? faixas.map((f) => ({ de: f.de, ate: f.ate, ordem: montarOrdem(f.itens, f.demais).map(enriquecer) })) : [],
+  };
 
   return {
     numero: g.numero as number,
@@ -196,5 +204,6 @@ export async function carregarGrupo(numero: number) {
     tiposParcela,
     modalidades,
     sequencia,
+    tiposContemplacao,
   };
 }
