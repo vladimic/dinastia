@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 export type Chip = {
   numero: number;
@@ -11,7 +11,13 @@ export type Chip = {
   min: number | null;
   max: number | null;
   seq: string[]; // códigos das 20 primeiras contemplações
+  furo: boolean; // pagamento com furo ligado
+  reduzida: boolean; // oferece parcela reduzida de 55% ou menos
 };
+
+const LARGURA_MIN = 44; // px, igual ao minmax da grade
+const FOLGA = 4; // px, gap da grade
+const COLUNAS_LEGENDA = 5; // colunas livres necessárias para a legenda caber ao lado do último grupo
 
 const mil = (v: number) => `R$ ${Math.round(v / 1000).toLocaleString("pt-BR")} mil`;
 const dataBR = (iso: string) => iso.slice(0, 10).split("-").reverse().join("/");
@@ -29,6 +35,23 @@ export function GrupoChips({
   hoje: string;
   cores: Record<string, string>;
 }) {
+  // a legenda entra ao lado do último grupo quando sobra espaço na última linha da grade
+  const gradeRef = useRef<HTMLDivElement>(null);
+  const [colunas, setColunas] = useState(0);
+  useEffect(() => {
+    const el = gradeRef.current;
+    if (!el) return;
+    const medir = () => setColunas(Math.max(1, Math.floor((el.clientWidth + FOLGA) / (LARGURA_MIN + FOLGA))));
+    medir();
+    const ro = new ResizeObserver(medir);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+  const resto = colunas ? (grupos.length % colunas === 0 ? 0 : colunas - (grupos.length % colunas)) : 0;
+  const legendaAoLado = resto >= COLUNAS_LEGENDA;
+
+  const temFuro = grupos.some((g) => g.furo);
+  const temReduzida = grupos.some((g) => g.reduzida);
   const [pop, setPop] = useState<{ g: Chip; x: number; y: number; acima: boolean } | null>(null);
 
   function mostrar(g: Chip, el: HTMLElement) {
@@ -41,7 +64,7 @@ export function GrupoChips({
 
   return (
     <>
-      <div className="grid grid-cols-[repeat(auto-fill,minmax(44px,1fr))] gap-1">
+      <div ref={gradeRef} className="grid grid-cols-[repeat(auto-fill,minmax(44px,1fr))] gap-1">
         {grupos.map((g) => {
           const sel = g.numero === ativo;
           return (
@@ -54,16 +77,45 @@ export function GrupoChips({
               onFocus={(e) => mostrar(g, e.currentTarget)}
               onBlur={() => setPop(null)}
               className={
-                "flex h-6 items-center justify-center rounded text-xs font-bold tabular-nums " +
+                "relative flex h-6 items-center justify-center rounded pl-[5px] font-bold tabular-nums " +
+                (g.numero > 9999 ? "text-[11px] " : "text-xs ") +
                 (sel
                   ? "bg-navy text-white shadow-[inset_0_-3px_0_var(--color-laranja)]"
                   : "border border-borda-campo bg-white text-navy hover:border-navy")
               }
             >
+              {(g.furo || g.reduzida) && (
+                <span
+                  aria-hidden="true"
+                  className={"absolute inset-y-0 left-0 w-[5px] rounded-l-[3px] " + (g.furo && g.reduzida ? "" : g.furo ? "bg-furo" : "bg-reduzida")}
+                  style={g.furo && g.reduzida ? { background: "linear-gradient(to bottom, var(--color-furo) 50%, var(--color-reduzida) 50%)" } : undefined}
+                />
+              )}
               {g.numero}
+              {g.furo && <span className="sr-only"> · furo ligado</span>}
+              {g.reduzida && <span className="sr-only"> · parcela reduzida até 55%</span>}
             </Link>
           );
         })}
+        {(temFuro || temReduzida) && (
+          <div
+            style={{ gridColumn: legendaAoLado ? `span ${resto}` : "1 / -1" }}
+            className={"flex min-w-0 flex-wrap items-center gap-x-3 gap-y-0.5 text-[11px] text-tinta " + (colunas ? (legendaAoLado ? "pl-2" : "pt-0.5") : "invisible")}
+          >
+            {temFuro && (
+              <span className="flex items-center gap-1.5 whitespace-nowrap">
+                <i aria-hidden="true" className="h-3.5 w-[5px] rounded-sm bg-furo" />
+                furo ligado
+              </span>
+            )}
+            {temReduzida && (
+              <span className="flex items-center gap-1.5 whitespace-nowrap">
+                <i aria-hidden="true" className="h-3.5 w-[5px] rounded-sm bg-reduzida" />
+                parcela reduzida ≤ 55%
+              </span>
+            )}
+          </div>
+        )}
       </div>
 
       {pop && <Popup {...pop} hoje={hoje} cores={cores} />}
