@@ -1,7 +1,6 @@
 "use client";
 
 import { useRef, useState, useTransition } from "react";
-import { reais } from "@/lib/formato";
 import { BotaoFinalizar, BotaoLapis } from "./Lapis";
 import { salvarCreditos } from "./actions";
 
@@ -87,7 +86,7 @@ export function FaixaCredito({ versaoId, creditos }: { versaoId: number; credito
   }
 
   return (
-    <section className="flex w-[15.5rem] flex-col gap-2 rounded-2xl border border-borda bg-white p-3.5">
+    <section className="flex w-[11.5rem] flex-col gap-2 rounded-2xl border border-borda bg-white p-3.5">
       <div className="flex items-center justify-between">
         <h3 className="text-sm font-bold">Faixa de crédito</h3>
         {editando ? (
@@ -110,12 +109,16 @@ export function FaixaCredito({ versaoId, creditos }: { versaoId: number; credito
       </div>
 
       {!editando ? (
-        <ul className="flex max-h-[340px] flex-col gap-1 overflow-y-auto pr-1">
+        <ul className="flex max-h-[340px] flex-col overflow-y-auto">
           {linhas
             .filter((l) => l.valor !== null)
             .map((l) => (
-              <li key={l.id} className="rounded-md border border-[#ece8de] px-2.5 py-0.5 text-right text-[13px] font-bold tabular-nums">
-                {reais(l.valor)}
+              <li
+                key={l.id}
+                className="flex items-baseline justify-between gap-3 border-b border-linha py-1 text-[13px] font-bold tabular-nums last:border-b-0"
+              >
+                <span className="text-[11px] font-semibold text-tinta">R$</span>
+                <span>{numero.format(l.valor as number)}</span>
               </li>
             ))}
         </ul>

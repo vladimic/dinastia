@@ -2,6 +2,14 @@
 // Regra: a cada mudança entregue, acrescentar uma entrada NO TOPO.
 export const VERSOES: { numero: string; data: string; itens: string[] }[] = [
   {
+    numero: "0024",
+    data: "09/10/2026",
+    itens: [
+      "Faixa de crédito mais compacta: box mais estreito (cerca de 25% menor), com \"R$\" à esquerda e o valor à direita, separados por linhas finas; a edição segue cabendo no box.",
+      "Pop-up dos grupos (ao passar o mouse nos números, no topo): agora mostra também a sequência de contemplação, 20 quadradinhos na cor de cada modalidade; vazado = só entra a partir de certo mês. O pop-up não cresceu: \"Realizadas\" e \"Faltam\" passam para a mesma linha.",
+    ],
+  },
+  {
     numero: "0023",
     data: "09/10/2026",
     itens: [

@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Suspense } from "react";
-import { FAMILIAS, carregarGrupo, contarPorFamilia, listarGrupos, listarIndices } from "@/lib/grupos";
+import { FAMILIAS, carregarGrupo, contarPorFamilia, listarCoresContemplacao, listarGrupos, listarIndices } from "@/lib/grupos";
 import { GrupoDetalheView } from "./GrupoDetalhe";
 import { GrupoChips } from "./GrupoChips";
 
@@ -93,8 +93,9 @@ async function Conteudo({ searchParams }: { searchParams: PageProps<"/grupos">["
   const familia = familiaPedida(sp);
   const numeroGrupo = typeof sp.grupo === "string" ? Number(sp.grupo) : undefined;
 
-  const [grupos, detalhe, indices] = await Promise.all([
+  const [grupos, cores, detalhe, indices] = await Promise.all([
     listarGrupos(familia.slug),
+    listarCoresContemplacao(),
     numeroGrupo ? carregarGrupo(numeroGrupo) : Promise.resolve(null),
     numeroGrupo ? listarIndices() : Promise.resolve([]),
   ]);
@@ -111,6 +112,7 @@ async function Conteudo({ searchParams }: { searchParams: PageProps<"/grupos">["
           familia={familia.slug}
           ativo={detalhe?.numero}
           hoje={hoje}
+          cores={cores}
           grupos={grupos.map((g) => ({
             numero: g.numero,
             prazo: g.prazo_grupo_meses,
@@ -118,6 +120,7 @@ async function Conteudo({ searchParams }: { searchParams: PageProps<"/grupos">["
             data: g.data_assembleia,
             min: g.min,
             max: g.max,
+            seq: g.seq,
           }))}
         />
       )}
