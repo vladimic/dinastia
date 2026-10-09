@@ -79,9 +79,7 @@ export function GrupoChips({
               className={
                 "relative flex h-6 items-center justify-center rounded pl-[5px] font-bold tabular-nums " +
                 (g.numero > 9999 ? "text-[11px] " : "text-xs ") +
-                (sel
-                  ? "bg-navy text-white shadow-[inset_0_-3px_0_var(--color-laranja)]"
-                  : "border border-borda-campo bg-white text-navy hover:border-navy")
+                (sel ? "bg-navy text-white" : "border border-borda-campo bg-white text-navy hover:border-navy")
               }
             >
               {(g.furo || g.reduzida) && (
