@@ -2,6 +2,15 @@
 // Regra: a cada mudança entregue, acrescentar uma entrada NO TOPO.
 export const VERSOES: { numero: string; data: string; itens: string[] }[] = [
   {
+    numero: "0029",
+    data: "09/10/2026",
+    itens: [
+      "Faixa lateral dos números dos grupos com 3 compartimentos fixos, de baixo para cima: parcela 50 / 55 (verde-água), parcela 70 (magenta) e furo (dourado); só o compartimento ligado é colorido.",
+      "Legenda enxuta, na ordem: Furo, Parcela 70, Parcela 50 / 55 e Participantes.",
+      "Pop-up dos grupos: nova linha \"Reduzidas\" com os percentuais de parcela reduzida do grupo, do menor para o maior e sem o sinal de % (ex.: 50 · 70 · 85).",
+    ],
+  },
+  {
     numero: "0028",
     data: "09/10/2026",
     itens: [
