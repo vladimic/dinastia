@@ -203,16 +203,27 @@ export function GrupoDetalheView({ grupo, indices, hoje, salvo, erro }: Props) {
               </div>
               <ol className="flex flex-wrap gap-x-1 gap-y-0.5 text-[13px] font-bold lowercase">
                 {f.ordem.map((o, k) => (
-                  <li key={k} title={o.nome} style={{ color: o.cor }} className="w-[1.5rem]">
+                  <li
+                    key={k}
+                    tabIndex={0}
+                    style={{ color: o.cor }}
+                    className="group relative w-[1.5rem] cursor-help rounded outline-none focus-visible:ring-1 focus-visible:ring-navy"
+                  >
                     {o.codigo}
+                    <span
+                      role="tooltip"
+                      className="pointer-events-none absolute bottom-full left-1/2 z-20 mb-1 hidden -translate-x-1/2 whitespace-nowrap rounded-md bg-navy px-2 py-1 text-[11px] font-semibold normal-case text-white shadow-lg group-hover:block group-focus:block"
+                    >
+                      {o.nome}
+                    </span>
                   </li>
                 ))}
               </ol>
             </div>
           ))}
-          <p className="text-[11px] text-tinta">
-            Primeiras 20 contemplações por faixa de assembleias, sem Sorteio Cancelada.
-          </p>
+          {grupo.fidelidade_meses && (
+            <p className="text-[11px] text-tinta">Fidelidade libera no mês {grupo.fidelidade_meses}.</p>
+          )}
         </section>
 
         <section className="flex w-fit max-w-[430px] flex-col gap-2 rounded-2xl border border-borda bg-white p-3.5">

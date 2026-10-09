@@ -1,6 +1,6 @@
 import "server-only";
 import { createClient } from "@/lib/supabase/server";
-import { montarOrdem } from "@/lib/sequencia";
+import { montarOrdem, unirFaixas } from "@/lib/sequencia";
 
 // família: lista fixa (sem tabela)
 export const FAMILIAS = [
@@ -103,7 +103,7 @@ export async function carregarGrupo(numero: number) {
     supabase
       .from("grupo_assembleia")
       .select(
-        `id, aprovado_por, aprovado_em, observacoes, pagamento_com_furo,
+        `id, aprovado_por, aprovado_em, observacoes, pagamento_com_furo, fidelidade_meses,
          arquivo_importado(nome),
          grupo_assembleia_tipo_parcela(tipo_parcela(codigo, descricao, pct)),
          grupo_modalidade(tipo, max_parcelas_lance, pct_categoria, embutido_max_parcelas, embutido_base,
@@ -148,23 +148,26 @@ export async function carregarGrupo(numero: number) {
     grupo_sequencia: { ordem: number; quantidade: number; tipo: string; tipo_contemplacao: TipoRef }[];
   };
   const tipos = new Map((cadastroTipos.data ?? []).map((t) => [t.codigo as string, t]));
-  const sequencia = ((v.grupo_sequencia_faixa ?? []) as unknown as Faixa[])
+  const faixas = ((v.grupo_sequencia_faixa ?? []) as unknown as Faixa[])
     .sort((a, b) => a.assembleia_de - b.assembleia_de)
-    .map((f) => {
-      const itens = [...f.grupo_sequencia]
+    .map((f) => ({
+      de: f.assembleia_de,
+      ate: f.assembleia_ate,
+      demais: f.demais_tipo,
+      itens: [...f.grupo_sequencia]
         .sort((a, b) => a.ordem - b.ordem)
-        .map((i) => ({ codigo: i.tipo, qtd: i.quantidade }));
-      return {
-        de: f.assembleia_de,
-        ate: f.assembleia_ate,
-        // em códigos, sem Sorteio Cancelada, completada até 20 posições
-        ordem: montarOrdem(itens, f.demais_tipo).map((codigo) => ({
-          codigo,
-          nome: (tipos.get(codigo)?.nome as string | undefined) ?? codigo,
-          cor: (tipos.get(codigo)?.cor as string | undefined) ?? "#5b5680",
-        })),
-      };
-    });
+        .map((i) => ({ codigo: i.tipo, qtd: i.quantidade })),
+    }));
+  // faixas que só diferem pelo fidelidade viram uma linha; em códigos, sem Sorteio Cancelada, até 20 posições
+  const sequencia = unirFaixas(faixas).map((f) => ({
+    de: f.de,
+    ate: f.ate,
+    ordem: montarOrdem(f.itens, f.demais).map((codigo) => ({
+      codigo,
+      nome: (tipos.get(codigo)?.nome as string | undefined) ?? codigo,
+      cor: (tipos.get(codigo)?.cor as string | undefined) ?? "#5b5680",
+    })),
+  }));
 
   return {
     numero: g.numero as number,
@@ -179,6 +182,7 @@ export async function carregarGrupo(numero: number) {
     dia_vencimento: g.dia_vencimento as number | null,
     grupo_assembleia_id: v.id as number,
     pagamento_com_furo: Boolean(v.pagamento_com_furo),
+    fidelidade_meses: v.fidelidade_meses as number | null,
     assembleia: g.assembleia_numero as number,
     data_assembleia: g.data_assembleia as string | null,
     prazo_cota_meses: g.prazo_cota_meses as number,

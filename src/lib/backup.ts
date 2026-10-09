@@ -32,7 +32,7 @@ export async function exportarBackup(supabase: SupabaseClient, email: string) {
       supabase,
       "grupo_assembleia",
       `grupo_numero, assembleia_numero, data_assembleia, prazo_cota_meses, creditos, observacoes,
-       aprovado_por, aprovado_em, pagamento_com_furo,
+       aprovado_por, aprovado_em, pagamento_com_furo, fidelidade_meses,
        arquivo:arquivo_importado(nome, hash_sha256, status, recebido_em, dados_extraidos),
        tipos_parcela:grupo_assembleia_tipo_parcela(tipo_parcela),
        modalidades:grupo_modalidade(tipo, max_parcelas_lance, pct_categoria, embutido_max_parcelas,
@@ -81,15 +81,18 @@ export function validarBackup(b: unknown): asserts b is Backup {
     throw new Error("Backup incompleto: faltam grupos ou versões.");
 }
 
-// "Pagamento com furo" é edição manual: volta como estava no backup (nulo = não informado, não sobrescreve)
+// Campos da versão que voltam como estavam no backup (furo é edição manual; fidelidade nulo não sobrescreve)
 async function restaurarFuro(supabase: SupabaseClient, v: Linha, r: ResultadoRestauracao) {
-  if (typeof v.pagamento_com_furo !== "boolean") return;
+  const campos: Record<string, unknown> = {};
+  if (typeof v.pagamento_com_furo === "boolean") campos.pagamento_com_furo = v.pagamento_com_furo;
+  if (typeof v.fidelidade_meses === "number") campos.fidelidade_meses = v.fidelidade_meses;
+  if (!Object.keys(campos).length) return;
   const { error } = await supabase
     .from("grupo_assembleia")
-    .update({ pagamento_com_furo: v.pagamento_com_furo })
+    .update(campos)
     .eq("grupo_numero", v.grupo_numero)
     .eq("assembleia_numero", v.assembleia_numero);
-  if (error) r.erros.push(`versão ${v.grupo_numero}/${v.assembleia_numero}: pagamento com furo: ${error.message}`);
+  if (error) r.erros.push(`versão ${v.grupo_numero}/${v.assembleia_numero}: furo/fidelidade: ${error.message}`);
 }
 
 export async function restaurarBackup(supabase: SupabaseClient, b: Backup, email: string): Promise<ResultadoRestauracao> {

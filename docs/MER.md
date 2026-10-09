@@ -1,8 +1,9 @@
 # Dinastia · MER (modelo entidade-relacionamento)
 
-Atualizado em 08/10/2026 · versão 0012 · conferido com o banco em produção (Supabase, schema `public`).
+Atualizado em 09/10/2026 · versão 0018 · conferido com o banco em produção (Supabase, schema `public`).
 
 Mudanças desde o MER de 07/10/2026:
+- `grupo_assembleia` ganhou `pagamento_com_furo` (0006/0007) e `fidelidade_meses` (0008).
 - `tipo_contemplacao` ganhou `cor` (`#RRGGBB`) e o `codigo` passou a ter no máximo 10 caracteres (`SOR`, `SOC`, `LIV`, `LIM`, `FIX`, `FID`) — migração 0005.
 - `grupo.seguro_pct_mes` saiu; o seguro prestamista é só `parametros_gerais.seguro_padrao_pct` — migração 0004.
 
@@ -67,6 +68,8 @@ erDiagram
         bigint arquivo_id FK
         text aprovado_por
         timestamptz aprovado_em
+        boolean pagamento_com_furo "sim ou nao, padrao nao"
+        int fidelidade_meses "mes em que o fidelidade libera"
     }
 
     grupo_assembleia_tipo_parcela {
