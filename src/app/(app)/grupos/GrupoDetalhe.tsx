@@ -1,16 +1,14 @@
 import { ehLance, nomeFamilia, type GrupoDetalhe, type Modalidade } from "@/lib/grupos";
-import { dataBR, MESES, milhar, pct } from "@/lib/formato";
-import { salvarGrupo } from "./actions";
+import { dataBR, pct } from "@/lib/formato";
 import { PagamentoComFuro, TiposParcela } from "./ParcelasEFuro";
 import { FaixaCredito } from "./FaixaCredito";
+import { InformacoesGrupo } from "./InformacoesGrupo";
 import { SequenciaContemplacao } from "./SequenciaContemplacao";
 
 type Props = {
   grupo: GrupoDetalhe;
   indices: { sigla: string; nome: string }[];
   hoje: string;
-  salvo: boolean;
-  erro: boolean;
 };
 
 function textoEmbutido(m: Modalidade) {
@@ -38,20 +36,11 @@ function textoDisponivel(m: Modalidade) {
   return partes.join(" · ");
 }
 
-function Linha({ rotulo, children }: { rotulo: string; children: React.ReactNode }) {
-  return (
-    <label className="grid grid-cols-[1fr_6rem] items-center gap-2 text-xs font-semibold text-tinta">
-      {rotulo}
-      {children}
-    </label>
-  );
-}
-
 function dataLocal(ts: string) {
   return new Date(ts).toLocaleDateString("pt-BR", { timeZone: "America/Sao_Paulo" });
 }
 
-export function GrupoDetalheView({ grupo, indices, hoje, salvo, erro }: Props) {
+export function GrupoDetalheView({ grupo, indices, hoje }: Props) {
   const prazoCalculado = grupo.prazo_grupo_meses - (grupo.assembleia - 1);
   const prazoDiverge = prazoCalculado !== grupo.prazo_cota_meses;
   // a tabela vigente é da próxima assembleia enquanto a data dela não passou
@@ -59,9 +48,7 @@ export function GrupoDetalheView({ grupo, indices, hoje, salvo, erro }: Props) {
   const faltam = Math.max(0, grupo.prazo_grupo_meses - realizadas);
 
   return (
-    <form action={salvarGrupo} className="flex flex-col gap-4 border-t border-borda pt-4">
-      <input type="hidden" name="numero" value={grupo.numero} />
-      <input type="hidden" name="familia" value={grupo.familia} />
+    <div key={grupo.numero} className="flex flex-col gap-4 border-t border-borda pt-4">
 
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex flex-wrap items-baseline gap-x-5 gap-y-1 text-[13px]">
@@ -107,21 +94,8 @@ export function GrupoDetalheView({ grupo, indices, hoje, salvo, erro }: Props) {
             </span>
           )}
         </div>
-        <button type="submit" className="min-h-9 rounded-[10px] bg-laranja px-5 text-sm font-bold text-navy hover:brightness-95">
-          Salvar grupo
-        </button>
       </div>
 
-      {salvo && (
-        <p role="status" className="rounded-lg bg-ok-fundo px-4 py-2 text-sm font-semibold text-ok">
-          Grupo salvo.
-        </p>
-      )}
-      {erro && (
-        <p role="alert" className="rounded-lg bg-[#fbe4e4] px-4 py-2 text-sm font-semibold text-[#9b1c1c]">
-          Não foi possível salvar. Confira os campos e tente de novo.
-        </p>
-      )}
       {prazoDiverge && (
         <p className="text-xs font-semibold text-alerta">
           Atenção: prazo da cota na tabela é {grupo.prazo_cota_meses} meses; pela regra (prazo − assembleia + 1) daria {prazoCalculado}.
@@ -129,56 +103,17 @@ export function GrupoDetalheView({ grupo, indices, hoje, salvo, erro }: Props) {
       )}
 
       <div className="flex flex-wrap items-start gap-3">
-        <section className="flex w-[15.5rem] flex-col gap-2 rounded-2xl border border-borda bg-white p-3.5">
-          <h3 className="text-sm font-bold">Informações do grupo</h3>
-          <Linha rotulo="Participantes">
-            <input className="campo-sm" name="participantes" inputMode="numeric" defaultValue={milhar(grupo.participantes)} />
-          </Linha>
-          <Linha rotulo="Taxa de adm. total">
-            <input className="campo-sm" name="taxa_adm_total" inputMode="decimal" defaultValue={pct(grupo.taxa_adm_total)} />
-          </Linha>
-          <Linha rotulo="Fundo de reserva">
-            <input
-              className={"campo-sm " + (grupo.fundo_reserva === null ? "border-alerta-borda bg-alerta-fundo" : "")}
-              name="fundo_reserva"
-              inputMode="decimal"
-              defaultValue={pct(grupo.fundo_reserva)}
-              placeholder="—"
-            />
-          </Linha>
-          <Linha rotulo="Índice de correção">
-            <select className="campo-sm" name="indice" defaultValue={grupo.indice ?? ""}>
-              <option value="">—</option>
-              {indices.map((i) => (
-                <option key={i.sigla} value={i.sigla}>
-                  {i.sigla}
-                </option>
-              ))}
-            </select>
-          </Linha>
-          <Linha rotulo="Reajuste anual em">
-            <select className="campo-sm" name="mes_reajuste" defaultValue={grupo.mes_reajuste ?? ""}>
-              <option value="">—</option>
-              {MESES.map((m, i) => (
-                <option key={m} value={i + 1}>
-                  {m}
-                </option>
-              ))}
-            </select>
-          </Linha>
-          <Linha rotulo="Dia de vencimento">
-            <input className="campo-sm" name="dia_vencimento" inputMode="numeric" defaultValue={grupo.dia_vencimento ?? ""} />
-          </Linha>
-          {grupo.primeira_correcao && (
-            <Linha rotulo="1ª correção">
-              <input
-                className="campo-sm"
-                readOnly
-                value={`${MESES[Number(grupo.primeira_correcao.slice(5, 7)) - 1]}/${grupo.primeira_correcao.slice(0, 4)}`}
-              />
-            </Linha>
-          )}
-        </section>
+        <InformacoesGrupo
+          numero={grupo.numero}
+          participantes={grupo.participantes}
+          taxaAdm={grupo.taxa_adm_total}
+          fundoReserva={grupo.fundo_reserva}
+          indice={grupo.indice}
+          mesReajuste={grupo.mes_reajuste}
+          diaVencimento={grupo.dia_vencimento}
+          primeiraCorrecao={grupo.primeira_correcao}
+          indices={indices}
+        />
 
         <FaixaCredito key={`cred-${grupo.grupo_assembleia_id}-${grupo.creditos.join()}`} versaoId={grupo.grupo_assembleia_id} creditos={grupo.creditos} />
 
@@ -242,6 +177,6 @@ export function GrupoDetalheView({ grupo, indices, hoje, salvo, erro }: Props) {
           </p>
         </section>
       </div>
-    </form>
+    </div>
   );
 }

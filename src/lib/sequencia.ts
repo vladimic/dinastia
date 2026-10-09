@@ -21,8 +21,6 @@ export type ModeloSequencia = {
   ordem: string[];
   /** tipo das demais contemplações; nulo = repete a ordem, sem o sorteio */
   demais: string | null;
-  /** mês em que o FID passa a constar na ordem (nulo = não consta) */
-  fidOrdemDe: number | null;
   /** último mês da sequência (prazo do grupo) */
   prazo: number;
 };
@@ -51,7 +49,6 @@ export function modelar(faixas: Faixa[]): ModeloSequencia | null {
     sorteios,
     ordem: expandir(base.itens).filter((c) => c !== SORTEIO && c !== CANCELADA),
     demais: ultima.demais,
-    fidOrdemDe: comFid ? comFid.de : null,
     prazo: ultima.ate,
   };
 }
@@ -92,20 +89,17 @@ export function notaSorteios(m: ModeloSequencia): string | null {
   return `Sorteios: ${partes.join("; ")}.`;
 }
 
-// "Fidelidade libera no mês 19. Na ordem, só entra a partir do mês 48." (a 2ª frase só se divergirem)
-export function notaFidelidade(fidelidadeMeses: number | null, m: ModeloSequencia | null): string | null {
-  if (!fidelidadeMeses) return null;
-  const dif = m?.fidOrdemDe && m.fidOrdemDe !== fidelidadeMeses ? ` Na ordem, só entra a partir do mês ${m.fidOrdemDe}.` : "";
-  return `Fidelidade libera no mês ${fidelidadeMeses}.${dif}`;
+// "Fidelidade libera no mês 37."
+export function notaFidelidade(fidelidadeMeses: number | null): string | null {
+  return fidelidadeMeses ? `Fidelidade libera no mês ${fidelidadeMeses}.` : null;
 }
 
 export type Edicao = {
   sorteios: { de: number; qtd: number }[];
   ordem: string[];
   demais: string | null;
+  /** mês em que o fidelidade libera; é também o mês em que o FID passa a constar na ordem */
   fidelidadeMeses: number | null;
-  /** mês em que o FID entra na ordem; nulo = acompanha fidelidadeMeses */
-  fidOrdemDe?: number | null;
 };
 
 // Valida a edição; devolve a mensagem de erro ou null.
@@ -123,14 +117,14 @@ export function validarEdicao(e: Edicao, codigosValidos: Set<string>): string | 
   if (e.demais !== null && !livres(e.demais)) return "Modalidade inválida nas demais contemplações.";
   if (e.fidelidadeMeses !== null && (!Number.isInteger(e.fidelidadeMeses) || e.fidelidadeMeses < 2))
     return "Mês de liberação do fidelidade: número maior que 1.";
-  if (e.ordem.includes(FIDELIDADE) && !(e.fidOrdemDe ?? e.fidelidadeMeses))
+  if (e.ordem.includes(FIDELIDADE) && !e.fidelidadeMeses)
     return "A ordem tem FID: informe o mês em que o fidelidade libera.";
   return null;
 }
 
 // Gera as faixas (uma por trecho de meses em que sorteios/fidelidade são iguais) a partir da edição.
 export function gerarFaixas(e: Edicao, prazo: number): Faixa[] {
-  const fidDe = e.fidOrdemDe ?? e.fidelidadeMeses;
+  const fidDe = e.fidelidadeMeses;
   const cortes = [...new Set([...e.sorteios.map((s) => s.de), ...(fidDe && fidDe > 1 ? [fidDe] : [])])].sort((a, b) => a - b);
   return cortes
     .filter((de) => de <= prazo)

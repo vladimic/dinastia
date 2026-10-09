@@ -123,7 +123,7 @@ async function Conteudo({ searchParams }: { searchParams: PageProps<"/grupos">["
       )}
 
       {detalhe ? (
-        <GrupoDetalheView grupo={detalhe} indices={indices} hoje={hoje} salvo={sp.salvo === "1"} erro={sp.erro === "1"} />
+        <GrupoDetalheView grupo={detalhe} indices={indices} hoje={hoje} />
       ) : numeroGrupo ? (
         <p className="py-2 text-sm font-semibold text-[#9b1c1c]">Grupo {numeroGrupo} não encontrado.</p>
       ) : grupos.length > 0 ? (
