@@ -2,6 +2,14 @@
 // Regra: a cada mudança entregue, acrescentar uma entrada NO TOPO.
 export const VERSOES: { numero: string; data: string; itens: string[] }[] = [
   {
+    numero: "0021",
+    data: "09/10/2026",
+    itens: [
+      "Faixa de crédito com edição direta (opção A): cada valor é um campo e grava no banco ao sair dele (ou Enter); campo vazio ou \"×\" remove o valor; \"+ valor\" adiciona. Avisa valor inválido ou repetido. Sai o botão Editar/Salvar/Cancelar.",
+      "Correção na raiz do visual dos botões: um estilo global anulava tamanho e negrito dos botões; agora todos seguem o tamanho pensado (pequeno e em negrito).",
+    ],
+  },
+  {
     numero: "0020",
     data: "09/10/2026",
     itens: [

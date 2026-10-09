@@ -36,13 +36,6 @@ body {
   font-family: var(--font-sans);
 }
 
-input,
-select,
-textarea,
-button {
-  font: inherit;
-}
-
 .campo {
   min-height: 44px;
   padding: 0 12px;
