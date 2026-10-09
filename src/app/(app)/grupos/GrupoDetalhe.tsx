@@ -115,7 +115,7 @@ export function GrupoDetalheView({ grupo, indices, hoje }: Props) {
           indices={indices}
         />
 
-        <FaixaCredito key={`cred-${grupo.grupo_assembleia_id}-${grupo.creditos.join()}`} versaoId={grupo.grupo_assembleia_id} creditos={grupo.creditos} />
+        <FaixaCredito key={`cred-${grupo.grupo_assembleia_id}`} versaoId={grupo.grupo_assembleia_id} creditos={grupo.creditos} />
 
         <div className="flex flex-col gap-3">
           <PagamentoComFuro key={`furo-${grupo.grupo_assembleia_id}`} versaoId={grupo.grupo_assembleia_id} valor={grupo.pagamento_com_furo} />
