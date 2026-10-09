@@ -13,7 +13,7 @@ export type Chip = {
   seq: string[]; // códigos das 20 primeiras contemplações
   participantes: number | null; // tamanho do grupo (a barra na base é proporcional a ele)
   furo: boolean; // pagamento com furo ligado
-  reduzida: boolean; // oferece parcela reduzida de 55% ou menos
+  reduzidas: number[]; // percentuais de parcela reduzida oferecidos (menor → maior)
 };
 
 const LARGURA_MIN = 44; // px, igual ao minmax da grade
@@ -21,6 +21,16 @@ const FOLGA = 4; // px, gap da grade
 const COLUNAS_LEGENDA = 8; // colunas livres necessárias para a legenda caber ao lado do último grupo
 
 const PARTICIPANTES_MAX = 9999; // barra cheia
+const REDUZIDA_MAX = 55; // "parcela 50 / 55": reduzida de 55% ou menos
+const REDUZIDA_70 = 70;
+
+const temAte55 = (g: Chip) => g.reduzidas.some((p) => p <= REDUZIDA_MAX);
+const tem70 = (g: Chip) => g.reduzidas.includes(REDUZIDA_70);
+
+// Faixa lateral em 3 compartimentos fixos, de cima para baixo: furo · parcela 70 · parcela 50 / 55
+const SEM = "transparent";
+const faixaLateral = (g: Chip) =>
+  `linear-gradient(to bottom, ${g.furo ? "var(--color-furo)" : SEM} 0 33.34%, ${tem70(g) ? "var(--color-setenta)" : SEM} 33.34% 66.67%, ${temAte55(g) ? "var(--color-reduzida)" : SEM} 66.67% 100%)`;
 
 const mil = (v: number) => `R$ ${Math.round(v / 1000).toLocaleString("pt-BR")} mil`;
 const dataBR = (iso: string) => iso.slice(0, 10).split("-").reverse().join("/");
@@ -54,7 +64,8 @@ export function GrupoChips({
   const legendaAoLado = resto >= COLUNAS_LEGENDA;
 
   const temFuro = grupos.some((g) => g.furo);
-  const temReduzida = grupos.some((g) => g.reduzida);
+  const tem55 = grupos.some(temAte55);
+  const tem70Grupo = grupos.some(tem70);
   const temParticipantes = grupos.some((g) => g.participantes);
   const [pop, setPop] = useState<{ g: Chip; x: number; y: number; acima: boolean } | null>(null);
 
@@ -86,12 +97,8 @@ export function GrupoChips({
                 (sel ? "bg-navy text-white" : "border border-borda-campo bg-white text-navy hover:border-navy")
               }
             >
-              {(g.furo || g.reduzida) && (
-                <span
-                  aria-hidden="true"
-                  className={"absolute inset-y-0 left-0 w-[5px] rounded-l-[3px] " + (g.furo && g.reduzida ? "" : g.furo ? "bg-furo" : "bg-reduzida")}
-                  style={g.furo && g.reduzida ? { background: "linear-gradient(to bottom, var(--color-furo) 50%, var(--color-reduzida) 50%)" } : undefined}
-                />
+              {(g.furo || temAte55(g) || tem70(g)) && (
+                <span aria-hidden="true" style={{ background: faixaLateral(g) }} className="absolute inset-y-0 left-0 w-[5px] rounded-l-[3px]" />
               )}
               {g.participantes ? (
                 <span
@@ -103,31 +110,23 @@ export function GrupoChips({
               {g.numero}
               {g.participantes ? <span className="sr-only"> · {g.participantes.toLocaleString("pt-BR")} participantes</span> : null}
               {g.furo && <span className="sr-only"> · furo ligado</span>}
-              {g.reduzida && <span className="sr-only"> · parcela reduzida até 55%</span>}
+              {tem70(g) && <span className="sr-only"> · parcela reduzida 70</span>}
+              {temAte55(g) && <span className="sr-only"> · parcela reduzida 50 ou 55</span>}
             </Link>
           );
         })}
-        {(temFuro || temReduzida || temParticipantes) && (
+        {(temFuro || tem70Grupo || tem55 || temParticipantes) && (
           <div
             style={{ gridColumn: legendaAoLado ? `span ${resto}` : "1 / -1" }}
             className={"flex min-w-0 flex-wrap items-center gap-x-3 gap-y-0.5 text-[11px] text-tinta " + (colunas ? (legendaAoLado ? "pl-2" : "pt-0.5") : "invisible")}
           >
-            {temFuro && (
-              <span className="flex items-center gap-1.5 whitespace-nowrap">
-                <i aria-hidden="true" className="h-3.5 w-[5px] rounded-sm bg-furo" />
-                furo ligado
-              </span>
-            )}
+            {temFuro && <Legenda compartimento={0} cor="var(--color-furo)" texto="Furo" />}
+            {tem70Grupo && <Legenda compartimento={1} cor="var(--color-setenta)" texto="Parcela 70" />}
+            {tem55 && <Legenda compartimento={2} cor="var(--color-reduzida)" texto="Parcela 50 / 55" />}
             {temParticipantes && (
               <span className="flex items-center gap-1.5 whitespace-nowrap">
                 <i aria-hidden="true" className="h-[3px] w-5 rounded-full bg-[#8b83c9]" />
-                barra = participantes
-              </span>
-            )}
-            {temReduzida && (
-              <span className="flex items-center gap-1.5 whitespace-nowrap">
-                <i aria-hidden="true" className="h-3.5 w-[5px] rounded-sm bg-reduzida" />
-                parcela reduzida ≤ 55%
+                Participantes
               </span>
             )}
           </div>
@@ -136,6 +135,22 @@ export function GrupoChips({
 
       {pop && <Popup {...pop} hoje={hoje} cores={cores} />}
     </>
+  );
+}
+
+// amostra da faixa: o compartimento ligado colorido, os outros em cinza (mostra a posição na faixa)
+function Legenda({ compartimento, cor, texto }: { compartimento: 0 | 1 | 2; cor: string; texto: string }) {
+  const fundo = ["#e7e3d6", "#e7e3d6", "#e7e3d6"];
+  fundo[compartimento] = cor;
+  return (
+    <span className="flex items-center gap-1.5 whitespace-nowrap">
+      <i
+        aria-hidden="true"
+        style={{ background: `linear-gradient(to bottom, ${fundo[0]} 0 33.34%, ${fundo[1]} 33.34% 66.67%, ${fundo[2]} 66.67% 100%)` }}
+        className="h-3.5 w-[5px] rounded-sm"
+      />
+      {texto}
+    </span>
   );
 }
 
@@ -164,6 +179,12 @@ function Popup({ g, x, y, acima, hoje, cores }: { g: Chip; x: number; y: number;
         <span>Participantes</span>
         <span className="font-semibold text-white tabular-nums">{g.participantes ? g.participantes.toLocaleString("pt-BR") : "—"}</span>
       </div>
+      {g.reduzidas.length > 0 && (
+        <div className={linha}>
+          <span>Reduzidas</span>
+          <span className="font-semibold text-white tabular-nums">{g.reduzidas.join(" · ")}</span>
+        </div>
+      )}
       <div className={linha}>
         <span>Assembleias</span>
         <span className="font-semibold text-white tabular-nums">{g.prazo}</span>

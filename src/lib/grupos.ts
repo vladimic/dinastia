@@ -48,11 +48,9 @@ export type GrupoResumo = {
   participantes: number | null;
   /** pagamento com furo ligado na versão vigente */
   furo: boolean;
-  /** oferece parcela reduzida de 55% ou menos na versão vigente */
-  reduzida: boolean;
+  /** percentuais de parcela reduzida (abaixo de 100) oferecidos na versão vigente, do menor para o maior */
+  reduzidas: number[];
 };
-
-const PCT_REDUZIDA_MAX = 55;
 
 const TAMANHO_POPUP = 20;
 
@@ -68,7 +66,7 @@ export async function listarGrupos(familia: string): Promise<GrupoResumo[]> {
   // sequência da versão vigente de cada grupo, numa consulta só
   const ids = (data ?? []).map((g) => g.grupo_assembleia_id as number);
   const seqPorVersao = new Map<number, string[]>();
-  const marcasPorVersao = new Map<number, { furo: boolean; reduzida: boolean }>();
+  const marcasPorVersao = new Map<number, { furo: boolean; reduzidas: number[] }>();
   if (ids.length) {
     const { data: versoes, error: e2 } = await supabase
       .from("grupo_assembleia")
@@ -101,7 +99,7 @@ export async function listarGrupos(familia: string): Promise<GrupoResumo[]> {
       const pcts = ((ver.grupo_assembleia_tipo_parcela ?? []) as unknown as { tipo_parcela: { pct: number | string } | null }[]).map((t) => Number(t.tipo_parcela?.pct));
       marcasPorVersao.set(ver.id as number, {
         furo: ver.pagamento_com_furo === true,
-        reduzida: pcts.some((p) => p <= PCT_REDUZIDA_MAX),
+        reduzidas: [...new Set(pcts.filter((p) => Number.isFinite(p) && p < 100))].sort((a, b) => a - b),
       });
     }
   }
@@ -119,7 +117,7 @@ export async function listarGrupos(familia: string): Promise<GrupoResumo[]> {
       seq: seqPorVersao.get(g.grupo_assembleia_id as number) ?? [],
       participantes: (g.participantes as number | null) ?? null,
       furo: marcasPorVersao.get(g.grupo_assembleia_id as number)?.furo ?? false,
-      reduzida: marcasPorVersao.get(g.grupo_assembleia_id as number)?.reduzida ?? false,
+      reduzidas: marcasPorVersao.get(g.grupo_assembleia_id as number)?.reduzidas ?? [],
     };
   });
 }
