@@ -1,0 +1,5 @@
+-- Dinastia · 0011: correção de dados — grupos 800, 820 e 830
+-- O PDF traz o fidelidade liberando no mês 19, mas a tabela de ordem só o incluía a partir do mês 48 (erro da tabela).
+-- A ordem passa a incluir o FID desde o mês de liberação (regra: o FID entra na ordem quando o fidelidade libera).
+-- Aplicada no Supabase via MCP em 09/10/2026, com salvar_sequencia, na versão vigente de cada grupo.
+-- Faixas resultantes (iguais nos três): 1-18 sem FID; 19-47 com FID; 48-71 com 2 sorteios; 72-220 com 3 sorteios.

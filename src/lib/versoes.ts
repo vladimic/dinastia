@@ -2,6 +2,15 @@
 // Regra: a cada mudança entregue, acrescentar uma entrada NO TOPO.
 export const VERSOES: { numero: string; data: string; itens: string[] }[] = [
   {
+    numero: "0020",
+    data: "09/10/2026",
+    itens: [
+      "Informações do grupo passam a salvar automaticamente: cada campo grava no banco ao sair dele (ou ao escolher numa lista), com aviso \"Salvo ✓\". Sai o botão \"Salvar grupo\".",
+      "Correção: ao trocar de grupo, os campos mostravam o valor digitado no grupo anterior (era só a tela; o banco não tinha sido alterado). Cada grupo agora carrega os próprios valores.",
+      "Fidelidade passa a entrar na ordem de contemplação desde o mês em que libera. Corrigidos os grupos 800, 820 e 830 (a tabela do PDF só o incluía no mês 48); some a frase de divergência do rodapé.",
+    ],
+  },
+  {
     numero: "0019",
     data: "09/10/2026",
     itens: [

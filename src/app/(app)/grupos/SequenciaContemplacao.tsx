@@ -91,7 +91,7 @@ export function SequenciaContemplacao({ versaoId, modelo, linha, faixas, tipos, 
     if (e.key === "Enter" && (e.target as HTMLElement).tagName === "INPUT") e.preventDefault();
   };
 
-  const notas = modelo?.simples ? [notaSorteios(modelo), notaFidelidade(fidelidadeMeses, modelo)].filter(Boolean) : [];
+  const notas = modelo?.simples ? [notaSorteios(modelo), notaFidelidade(fidelidadeMeses)].filter(Boolean) : [];
 
   if (!editando) {
     return (

@@ -1,36 +1,49 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { lerInt, lerPct } from "@/lib/formato";
-import { gerarFaixas, modelar, validarEdicao, type Edicao } from "@/lib/sequencia";
+import { gerarFaixas, validarEdicao, type Edicao } from "@/lib/sequencia";
 
-// Salva os dados estáveis do grupo. Créditos, parcelas e regras vêm da importação de PDF.
-export async function salvarGrupo(formData: FormData) {
-  const numero = Number(formData.get("numero"));
-  const familia = String(formData.get("familia") ?? "");
-  if (!numero) throw new Error("Grupo inválido.");
+// Salva um campo do grupo assim que ele é alterado (dados estáveis; créditos, parcelas e regras vêm do PDF).
+const CAMPOS_GRUPO = ["participantes", "taxa_adm_total", "fundo_reserva", "indice", "mes_reajuste", "dia_vencimento"] as const;
+export type CampoGrupo = (typeof CAMPOS_GRUPO)[number];
 
-  const indice = String(formData.get("indice") ?? "");
-  const mes = formData.get("mes_reajuste");
+export async function salvarCampoGrupo(numero: number, campo: CampoGrupo, valor: string): Promise<{ ok: true } | { ok: false; erro: string }> {
+  if (!Number.isInteger(numero) || !CAMPOS_GRUPO.includes(campo)) return { ok: false, erro: "Campo inválido." };
+  const bruto = String(valor ?? "").trim();
+
+  let novo: number | string | null;
+  switch (campo) {
+    case "participantes":
+      novo = lerInt(bruto);
+      if (novo === null || novo < 1) return { ok: false, erro: "Participantes: informe um número maior que zero." };
+      break;
+    case "taxa_adm_total":
+    case "fundo_reserva": {
+      novo = lerPct(bruto);
+      if (campo === "taxa_adm_total" && novo === null) return { ok: false, erro: "Taxa de administração: informe o percentual." };
+      if (novo !== null && (novo < 0 || novo > 100)) return { ok: false, erro: "Percentual entre 0 e 100, ex.: 24,00" };
+      break;
+    }
+    case "indice":
+      novo = bruto || null;
+      break;
+    case "mes_reajuste":
+      novo = bruto ? Number(bruto) : null;
+      if (novo !== null && !(Number.isInteger(novo) && novo >= 1 && novo <= 12)) return { ok: false, erro: "Mês inválido." };
+      break;
+    case "dia_vencimento":
+      novo = bruto ? lerInt(bruto) : null;
+      if (novo !== null && (novo < 1 || novo > 31)) return { ok: false, erro: "Dia de vencimento de 1 a 31." };
+      break;
+  }
 
   const supabase = await createClient();
-  const { error } = await supabase
-    .from("grupo")
-    .update({
-      participantes: lerInt(formData.get("participantes")),
-      prazo_grupo_meses: lerInt(formData.get("prazo_grupo_meses")) ?? undefined,
-      dia_vencimento: lerInt(formData.get("dia_vencimento")),
-      taxa_adm_total: lerPct(formData.get("taxa_adm_total")),
-      fundo_reserva: lerPct(formData.get("fundo_reserva")),
-      indice: indice || null,
-      mes_reajuste: mes ? Number(mes) : null,
-    })
-    .eq("numero", numero);
-
-  const base = `/grupos?familia=${encodeURIComponent(familia)}&grupo=${numero}`;
-  redirect(`${base}&${error ? "erro" : "salvo"}=1`);
+  const { error } = await supabase.from("grupo").update({ [campo]: novo }).eq("numero", numero);
+  if (error) return { ok: false, erro: "Não foi possível salvar. Tente de novo." };
+  revalidatePath("/grupos");
+  return { ok: true };
 }
 
 // Marca ou desmarca um tipo de parcela oferecido pelo grupo na versão (assembleia) vigente.
@@ -75,9 +88,7 @@ export async function salvarSequencia(versaoId: number, entrada: Edicao): Promis
   const [atual, tipos] = await Promise.all([
     supabase
       .from("grupo_assembleia")
-      .select(
-        "id, fidelidade_meses, grupo(prazo_grupo_meses), grupo_sequencia_faixa(assembleia_de, assembleia_ate, demais_tipo, grupo_sequencia(ordem, quantidade, tipo))",
-      )
+      .select("id, grupo(prazo_grupo_meses)")
       .eq("id", versaoId)
       .single(),
     supabase.from("tipo_contemplacao").select("codigo"),
@@ -86,24 +97,6 @@ export async function salvarSequencia(versaoId: number, entrada: Edicao): Promis
 
   const prazo = (atual.data.grupo as unknown as { prazo_grupo_meses: number } | null)?.prazo_grupo_meses;
   if (!prazo) return FALHA;
-
-  // mês em que o FID entra na ordem: acompanha o mês de liberação, salvo nos grupos em que o PDF já diverge
-  const faixasAtuais = (
-    (atual.data.grupo_sequencia_faixa ?? []) as unknown as {
-      assembleia_de: number;
-      assembleia_ate: number;
-      demais_tipo: string | null;
-      grupo_sequencia: { ordem: number; quantidade: number; tipo: string }[];
-    }[]
-  ).map((f) => ({
-    de: f.assembleia_de,
-    ate: f.assembleia_ate,
-    demais: f.demais_tipo,
-    itens: [...f.grupo_sequencia].sort((a, b) => a.ordem - b.ordem).map((i) => ({ codigo: i.tipo, qtd: i.quantidade })),
-  }));
-  const modeloAtual = modelar(faixasAtuais);
-  const divergente = !!modeloAtual?.fidOrdemDe && modeloAtual.fidOrdemDe !== atual.data.fidelidade_meses;
-  e.fidOrdemDe = e.fidelidadeMeses === null ? null : divergente ? modeloAtual!.fidOrdemDe : e.fidelidadeMeses;
 
   const erro = validarEdicao(e, new Set((tipos.data ?? []).map((t) => t.codigo as string)));
   if (erro) return { ok: false, erro };
