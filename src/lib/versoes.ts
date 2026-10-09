@@ -2,6 +2,14 @@
 // Regra: a cada mudança entregue, acrescentar uma entrada NO TOPO.
 export const VERSOES: { numero: string; data: string; itens: string[] }[] = [
   {
+    numero: "0022",
+    data: "09/10/2026",
+    itens: [
+      "Faixa de crédito e Sequência de contemplação abrem em modo leitura, com um lápis no cabeçalho para editar. Na edição, só um botão: \"Finalizar edição\".",
+      "Sequência de contemplação agora salva automaticamente a cada alteração (mostra \"Salvando…\" e \"Salvo ✓\"); se a alteração for inválida, avisa e não grava, e o botão passa a \"Descartar e finalizar\".",
+    ],
+  },
+  {
     numero: "0021",
     data: "09/10/2026",
     itens: [
