@@ -194,36 +194,25 @@ export function GrupoDetalheView({ grupo, indices, hoje, salvo, erro }: Props) {
           <TiposParcela key={`tipos-${grupo.grupo_assembleia_id}`} versaoId={grupo.grupo_assembleia_id} tipos={grupo.tiposParcela} />
         </div>
 
-        <section className="flex w-fit max-w-[230px] flex-col gap-3 rounded-2xl border border-borda bg-white p-3.5">
+        <section className="flex w-fit max-w-full flex-col gap-2 rounded-2xl border border-borda bg-white p-3.5">
           <h3 className="text-sm font-bold">Sequência de contemplação</h3>
           {grupo.sequencia.map((f) => (
-            <div key={f.de} className="flex flex-col gap-1">
-              <div className="text-xs font-bold text-tinta">
-                {f.de}ª a {f.ate}ª assembleia
+            <div key={f.de} className="flex items-center gap-3">
+              <div className="w-[5.5rem] shrink-0 text-xs font-bold text-tinta">
+                {f.de}ª a {f.ate}ª
               </div>
-              <ol className="flex flex-col gap-0.5 text-xs">
-                {f.itens.map((i) => (
-                  <li key={i.ordem} className="flex items-center gap-1.5">
-                    <span
-                      className={
-                        "inline-block h-2 w-2 shrink-0 rounded-full " +
-                        (i.codigo === "FID" ? "bg-ouro" : ehLance(i.codigo) ? "bg-laranja" : "bg-navy-3")
-                      }
-                      aria-hidden="true"
-                    />
-                    <span className="tabular-nums text-tinta">{i.ordem}.</span>
-                    <span className="font-semibold">
-                      {i.qtd > 1 ? `${i.qtd}× ` : ""}
-                      {i.nome}
-                    </span>
+              <ol className="flex flex-wrap gap-x-1 gap-y-0.5 text-[13px] font-bold lowercase">
+                {f.ordem.map((o, k) => (
+                  <li key={k} title={o.nome} style={{ color: o.cor }} className="w-[1.5rem]">
+                    {o.codigo}
                   </li>
                 ))}
               </ol>
-              <div className="text-xs text-tinta">
-                Demais: {f.demais ? <strong className="text-navy">{f.demais}</strong> : "mesma sequência"}
-              </div>
             </div>
           ))}
+          <p className="text-[11px] text-tinta">
+            Primeiras 20 contemplações por faixa de assembleias, sem Sorteio Cancelada.
+          </p>
         </section>
 
         <section className="flex w-fit max-w-[430px] flex-col gap-2 rounded-2xl border border-borda bg-white p-3.5">
