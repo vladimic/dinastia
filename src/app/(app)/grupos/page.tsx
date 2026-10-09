@@ -121,6 +121,7 @@ async function Conteudo({ searchParams }: { searchParams: PageProps<"/grupos">["
             min: g.min,
             max: g.max,
             seq: g.seq,
+            participantes: g.participantes,
             furo: g.furo,
             reduzida: g.reduzida,
           }))}
