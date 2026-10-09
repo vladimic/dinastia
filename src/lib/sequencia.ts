@@ -78,20 +78,22 @@ export function linhaDoModelo(m: ModeloSequencia, limite = LIMITE_ORDEM): string
   return montarOrdem(itens, m.demais, limite);
 }
 
-// "Sorteios: 1 até o mês 47; 2 do mês 48 ao 71; 3 a partir do mês 72." (só quando a quantidade muda)
-export function notaSorteios(m: ModeloSequencia): string | null {
-  if (m.sorteios.length < 2) return null;
-  const partes = m.sorteios.map((s, i) => {
-    const prox = m.sorteios[i + 1];
-    if (!prox) return `${s.qtd} a partir do mês ${s.de}`;
-    return i === 0 ? `${s.qtd} até o mês ${prox.de - 1}` : `${s.qtd} do mês ${s.de} ao ${prox.de - 1}`;
-  });
-  return `Sorteios: ${partes.join("; ")}.`;
-}
+export type Posicao = { codigo: string; desde: number | null };
 
-// "Fidelidade libera no mês 37."
-export function notaFidelidade(fidelidadeMeses: number | null): string | null {
-  return fidelidadeMeses ? `Fidelidade libera no mês ${fidelidadeMeses}.` : null;
+// A linha mostrada, com o mês a partir do qual cada posição passa a existir (nulo = desde o início):
+// o 2º e o 3º sorteio entram quando a quantidade de sorteios sobe; o FID entra no mês em que o fidelidade libera.
+export function linhaDetalhada(m: ModeloSequencia, fidelidadeMeses: number | null, limite = LIMITE_ORDEM): Posicao[] {
+  const maxSor = Math.max(0, ...m.sorteios.map((s) => s.qtd));
+  const desdeSorteio = (k: number) => {
+    const de = m.sorteios.find((s) => s.qtd >= k)?.de ?? 1;
+    return de > 1 ? de : null;
+  };
+  let sorVisto = 0;
+  return linhaDoModelo(m, limite).map((codigo) => {
+    if (codigo === SORTEIO) return { codigo, desde: desdeSorteio(++sorVisto <= maxSor ? sorVisto : maxSor) };
+    if (codigo === FIDELIDADE) return { codigo, desde: fidelidadeMeses && fidelidadeMeses > 1 ? fidelidadeMeses : null };
+    return { codigo, desde: null };
+  });
 }
 
 export type Edicao = {

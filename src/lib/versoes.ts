@@ -2,6 +2,15 @@
 // Regra: a cada mudança entregue, acrescentar uma entrada NO TOPO.
 export const VERSOES: { numero: string; data: string; itens: string[] }[] = [
   {
+    numero: "0023",
+    data: "09/10/2026",
+    itens: [
+      "Sequência de contemplação em boxes coloridos, uma contemplação por box, sempre numa linha só e repetindo as demais como antes.",
+      "Boxes pontilhados = só entram a partir de certo mês, que aparece embaixo (só o número): 2º e 3º sorteio quando a quantidade de sorteios sobe, e o fidelidade no mês em que libera.",
+      "Saem as notas do rodapé (Sorteios… e Fidelidade libera no mês…), já que o gráfico mostra a mesma informação. Passar o mouse ou tocar num box mostra o nome e o mês.",
+    ],
+  },
+  {
     numero: "0022",
     data: "09/10/2026",
     itens: [
