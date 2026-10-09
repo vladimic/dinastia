@@ -1,6 +1,6 @@
 import "server-only";
 import { createClient } from "@/lib/supabase/server";
-import { linhaDoModelo, modelar, montarOrdem, type Faixa as FaixaSeq } from "@/lib/sequencia";
+import { linhaDetalhada, modelar, montarOrdem, type Faixa as FaixaSeq } from "@/lib/sequencia";
 
 // família: lista fixa (sem tabela)
 export const FAMILIAS = [
@@ -163,18 +163,19 @@ export async function carregarGrupo(numero: number) {
     nome: t.nome as string,
     cor: t.cor as string,
   }));
-  const enriquecer = (codigo: string) => ({
+  const enriquecer = (codigo: string, desde: number | null = null) => ({
     codigo,
     nome: tipos.get(codigo)?.nome ?? codigo,
     cor: tipos.get(codigo)?.cor ?? "#5b5680",
+    desde,
   });
   // uma linha por grupo (sorteios, cancelada e fidelidade viram notas); se as faixas diferem por outro
   // motivo ("regra específica"), cai para uma linha por faixa
   const modelo = modelar(faixas);
   const sequencia = {
     modelo,
-    linha: modelo?.simples ? linhaDoModelo(modelo).map(enriquecer) : [],
-    faixas: modelo && !modelo.simples ? faixas.map((f) => ({ de: f.de, ate: f.ate, ordem: montarOrdem(f.itens, f.demais).map(enriquecer) })) : [],
+    linha: modelo?.simples ? linhaDetalhada(modelo, (v.fidelidade_meses as number | null) ?? null).map((p) => enriquecer(p.codigo, p.desde)) : [],
+    faixas: modelo && !modelo.simples ? faixas.map((f) => ({ de: f.de, ate: f.ate, ordem: montarOrdem(f.itens, f.demais).map((c) => enriquecer(c)) })) : [],
   };
 
   return {

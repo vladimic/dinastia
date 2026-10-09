@@ -3,9 +3,7 @@
 import { useMemo, useRef, useState, useTransition } from "react";
 import {
   CANCELADA,
-  linhaDoModelo,
-  notaFidelidade,
-  notaSorteios,
+  linhaDetalhada,
   SORTEIO,
   validarEdicao,
   type Edicao,
@@ -15,7 +13,7 @@ import { BotaoFinalizar, BotaoLapis } from "./Lapis";
 import { salvarSequencia } from "./actions";
 
 type Tipo = { codigo: string; nome: string; cor: string };
-type Posicao = { codigo: string; nome: string; cor: string };
+type Posicao = { codigo: string; nome: string; cor: string; desde?: number | null };
 
 type Props = {
   versaoId: number;
@@ -30,22 +28,33 @@ const CTRL =
   "h-8 rounded-lg border border-borda-campo bg-campo px-2 text-[13px] text-navy outline-none focus:ring-2 focus:ring-laranja read-only:bg-linha";
 const CAIXA = "flex w-fit max-w-full flex-col gap-2 rounded-2xl border border-borda bg-white p-3.5";
 
+// Cada contemplação é um box na cor da modalidade; pontilhado = só entra a partir do mês indicado embaixo.
 function Codigos({ itens }: { itens: Posicao[] }) {
+  const comMes = itens.some((o) => o.desde);
   return (
-    <ol className="flex flex-wrap gap-x-0.5 gap-y-0.5 text-[13px] font-bold lowercase">
+    <ol className="flex flex-wrap gap-x-[3px] gap-y-1">
       {itens.map((o, k) => (
         <li
           key={k}
           tabIndex={0}
-          style={{ color: o.cor }}
-          className="group relative w-[1.45rem] cursor-help rounded outline-none focus-visible:ring-1 focus-visible:ring-navy"
+          className="group relative flex cursor-help flex-col items-center gap-0.5 rounded outline-none focus-visible:ring-1 focus-visible:ring-navy"
         >
-          {o.codigo}
+          <span
+            style={{ color: o.cor, background: `${o.cor}1f`, borderColor: `${o.cor}${o.desde ? "aa" : "66"}` }}
+            className={
+              "flex h-7 w-[1.6rem] items-center justify-center rounded-[7px] border text-[12px] font-bold lowercase " +
+              (o.desde ? "border-dashed" : "")
+            }
+          >
+            {o.codigo}
+          </span>
+          {comMes && <span className="h-[11px] text-[9px] font-bold leading-[11px] text-tinta">{o.desde ?? ""}</span>}
           <span
             role="tooltip"
-            className="pointer-events-none absolute bottom-full left-1/2 z-20 mb-1 hidden -translate-x-1/2 whitespace-nowrap rounded-md bg-navy px-2 py-1 text-[11px] font-semibold normal-case text-white shadow-lg group-hover:block group-focus:block"
+            className="pointer-events-none absolute bottom-full left-1/2 z-20 mb-1 hidden -translate-x-1/2 whitespace-nowrap rounded-md bg-navy px-2 py-1 text-[11px] font-semibold text-white shadow-lg group-hover:block group-focus:block"
           >
             {o.nome}
+            {o.desde ? ` · a partir do mês ${o.desde}` : ""}
           </span>
         </li>
       ))}
@@ -146,7 +155,8 @@ export function SequenciaContemplacao({ versaoId, modelo, linha, faixas, tipos, 
       ordem: campos.ordem,
       demais: campos.demais || null,
     };
-    return linhaDoModelo(m).map((c) => porCodigo.get(c) ?? { codigo: c, nome: c, cor: "#5b5680" });
+    const fid = Number(campos.fid) || null;
+    return linhaDetalhada(m, fid).map((p) => ({ ...(porCodigo.get(p.codigo) ?? { codigo: p.codigo, nome: p.codigo, cor: "#5b5680" }), desde: p.desde }));
   }, [modelo, editando, campos, porCodigo]);
 
   // Enter dentro do editor não pode enviar nada; sai do campo (e grava)
@@ -156,8 +166,6 @@ export function SequenciaContemplacao({ versaoId, modelo, linha, faixas, tipos, 
       (e.target as HTMLElement).blur();
     }
   };
-
-  const notas = modelo?.simples ? [notaSorteios(modelo), notaFidelidade(fidelidadeMeses)].filter(Boolean) : [];
 
   if (!editando) {
     return (
@@ -185,11 +193,6 @@ export function SequenciaContemplacao({ versaoId, modelo, linha, faixas, tipos, 
             )}
           </>
         )}
-        {notas.map((n) => (
-          <p key={n} className="text-[11px] text-tinta">
-            {n}
-          </p>
-        ))}
       </section>
     );
   }
