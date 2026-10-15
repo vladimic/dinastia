@@ -219,6 +219,9 @@ function GradeSimulador({ colunas, aoMudarQtd }: { colunas: Coluna[]; aoMudarQtd
 const caixaBase = "flex flex-col rounded-lg border border-borda-campo bg-white px-2.5 py-1.5";
 const tituloParam = "flex min-h-[1.5rem] items-start text-[10px] font-semibold leading-[1.15] tracking-wide text-tinta uppercase";
 const linhaValor = "flex h-6 items-center text-[14px] font-bold tabular-nums";
+// boxes com mais de uma linha de conteúdo (Meses, Contemplação): título de 1 linha e conteúdo subindo, para não ficarem mais altos que os outros
+const tituloCurto = "flex items-start text-[10px] font-semibold leading-[1.15] tracking-wide text-tinta uppercase";
+const linhaCompacta = "flex h-5 items-center text-[14px] font-bold tabular-nums";
 const campoParam = "w-full min-w-0 bg-transparent text-[14px] font-bold tabular-nums outline-none focus:text-laranja";
 const PRE_DEFINIDOS = [1, 12, 24, 36, 48, 60, 120];
 
@@ -379,8 +382,8 @@ export function SimuladorGrupo({
         </div>
 
         <div className={"w-[8.5rem] " + caixaBase}>
-          <span className={tituloParam}>Meses</span>
-          <div className={linhaValor + " justify-between"}>
+          <span className={tituloCurto}>Meses</span>
+          <div className={linhaCompacta + " justify-between"}>
             <span className="text-[11px] font-normal text-tinta">para terminar</span>
             <span>{mesesFaltam}</span>
           </div>
@@ -400,12 +403,8 @@ export function SimuladorGrupo({
         </div>
 
         <div className={"w-[12rem] " + caixaBase}>
-          <span className={tituloParam}>
-            Contemplação
-            <br />
-            em
-          </span>
-          <div className={linhaValor + " gap-1"}>
+          <span className={tituloCurto}>Contemplação em</span>
+          <div className={linhaCompacta + " gap-1"}>
             <input
               className={campoParam + " w-8 border-b border-borda-campo text-right"}
               inputMode="numeric"
