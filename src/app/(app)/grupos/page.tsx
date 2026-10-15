@@ -5,52 +5,58 @@ import { FAMILIAS, carregarGrupo, contarPorFamilia, listarCoresContemplacao, lis
 import { GrupoDetalheView } from "./GrupoDetalhe";
 import { GrupoChips } from "./GrupoChips";
 import { ExportarResumo } from "./ExportarResumo";
-import { SeletorRetratil } from "./SeletorRetratil";
+import { AreaFamilias, PainelGrupos, RetratilProvider } from "./SeletorRetratil";
 
 export const metadata: Metadata = { title: "Grupos e Tabelas · Dinastia" };
 
 export default function GruposPage({ searchParams }: PageProps<"/grupos">) {
   return (
     <>
-      <header className="flex flex-wrap items-center justify-between gap-x-6 gap-y-3 border-b border-borda bg-white px-8 py-3">
+      <Suspense fallback={<Cabecalho />}>
+        <Conteudo searchParams={searchParams} />
+      </Suspense>
+
+    </>
+  );
+}
+
+function Cabecalho({ nav }: { nav?: React.ReactNode }) {
+  return (
+    <header className="flex flex-wrap items-center justify-between gap-x-6 gap-y-3 border-b border-borda bg-white px-8 py-3">
+      <div className="flex flex-wrap items-end gap-x-6 gap-y-2">
         <div className="flex flex-col">
           <div className="text-[11px] text-tinta">Cadastros</div>
           <h1 className="text-xl font-bold leading-tight">Grupos e Tabelas</h1>
         </div>
-        <div className="flex flex-wrap items-center gap-2">
-          <ExportarResumo />
-          <button
-            type="button"
-            disabled
-            title="Em breve"
-            className="flex min-h-9 items-center gap-2 rounded-[10px] border border-navy bg-white px-3 text-[13px] font-semibold opacity-60"
-          >
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
-              <path d="M12 15V4M7 9l5-5 5 5M5 20h14" />
-            </svg>
-            Importar PDFs
-          </button>
-          <button
-            type="button"
-            disabled
-            title="Em breve"
-            className="flex min-h-9 items-center gap-2 rounded-[10px] bg-navy px-3 text-[13px] font-semibold text-white opacity-60"
-          >
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#ceaa5b" strokeWidth="1.8" aria-hidden="true">
-              <path d="M12 3l1.8 4.7L18.5 9.5l-4.7 1.8L12 16l-1.8-4.7L5.5 9.5l4.7-1.8z" />
-              <path d="M19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8z" />
-            </svg>
-            Simular com IA
-          </button>
-        </div>
-      </header>
-
-      <div className="flex flex-col gap-3 px-8 pt-3 pb-10">
-        <Suspense fallback={<div className="py-10 text-sm text-tinta">Carregando…</div>}>
-          <Conteudo searchParams={searchParams} />
-        </Suspense>
+        {nav ?? <div className="h-8 w-80" />}
       </div>
-    </>
+      <div className="flex flex-wrap items-center gap-2">
+        <ExportarResumo />
+        <button
+          type="button"
+          disabled
+          title="Em breve"
+          className="flex min-h-9 items-center gap-2 rounded-[10px] border border-navy bg-white px-3 text-[13px] font-semibold opacity-60"
+        >
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
+            <path d="M12 15V4M7 9l5-5 5 5M5 20h14" />
+          </svg>
+          Importar PDFs
+        </button>
+        <button
+          type="button"
+          disabled
+          title="Em breve"
+          className="flex min-h-9 items-center gap-2 rounded-[10px] bg-navy px-3 text-[13px] font-semibold text-white opacity-60"
+        >
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#ceaa5b" strokeWidth="1.8" aria-hidden="true">
+            <path d="M12 3l1.8 4.7L18.5 9.5l-4.7 1.8L12 16l-1.8-4.7L5.5 9.5l4.7-1.8z" />
+            <path d="M19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8z" />
+          </svg>
+          Simular com IA
+        </button>
+      </div>
+    </header>
   );
 }
 
@@ -99,12 +105,18 @@ async function Conteudo({ searchParams }: { searchParams: PageProps<"/grupos">["
   const hoje = new Date().toISOString().slice(0, 10);
 
   return (
-    <>
-      <SeletorRetratil
-        temSelecao={Boolean(detalhe)}
-        familias={<SeletorFamilia familia={familia} contagem={contagem} />}
-        grupos={
-          grupos.length === 0 ? (
+    <RetratilProvider temSelecao={Boolean(detalhe)}>
+      <Cabecalho
+        nav={
+          <AreaFamilias>
+            <SeletorFamilia familia={familia} contagem={contagem} />
+          </AreaFamilias>
+        }
+      />
+
+      <div className="flex flex-col px-8 pt-0 pb-10">
+        <PainelGrupos>
+          {grupos.length === 0 ? (
             <p className="rounded-xl border border-dashed border-borda-campo bg-white px-5 py-4 text-sm text-tinta">
               Nenhum grupo cadastrado em {familia.nome}.
             </p>
@@ -127,17 +139,19 @@ async function Conteudo({ searchParams }: { searchParams: PageProps<"/grupos">["
                 reduzidas: g.reduzidas,
               }))}
             />
-          )
-        }
-      />
+          )}
+        </PainelGrupos>
 
-      {detalhe ? (
-        <GrupoDetalheView grupo={detalhe} indices={indices} hoje={hoje} />
-      ) : numeroGrupo ? (
-        <p className="py-2 text-sm font-semibold text-[#9b1c1c]">Grupo {numeroGrupo} não encontrado.</p>
-      ) : grupos.length > 0 ? (
-        <p className="py-2 text-sm text-tinta">Selecione um grupo para ver os dados da tabela.</p>
-      ) : null}
-    </>
+        <div className="pt-3">
+          {detalhe ? (
+            <GrupoDetalheView grupo={detalhe} indices={indices} hoje={hoje} />
+          ) : numeroGrupo ? (
+            <p className="py-2 text-sm font-semibold text-[#9b1c1c]">Grupo {numeroGrupo} não encontrado.</p>
+          ) : grupos.length > 0 ? (
+            <p className="py-2 text-sm text-tinta">Selecione um grupo para ver os dados da tabela.</p>
+          ) : null}
+        </div>
+      </div>
+    </RetratilProvider>
   );
 }
