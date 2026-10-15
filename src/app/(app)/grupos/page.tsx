@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Suspense } from "react";
 import { FAMILIAS, carregarGrupo, contarPorFamilia, listarCoresContemplacao, listarGrupos, listarIndices, carregarPadroesSimulador } from "@/lib/grupos";
+import { padroesDeLinha } from "@/lib/simulacao";
 import { GrupoDetalheView } from "./GrupoDetalhe";
 import { GrupoChips } from "./GrupoChips";
 import { ExportarResumo } from "./ExportarResumo";
@@ -101,7 +102,7 @@ async function Conteudo({ searchParams }: { searchParams: PageProps<"/grupos">["
     numeroGrupo ? carregarGrupo(numeroGrupo) : Promise.resolve(null),
     numeroGrupo ? listarIndices() : Promise.resolve([]),
     contarPorFamilia(),
-    numeroGrupo ? carregarPadroesSimulador() : Promise.resolve({ incc: 6, contemplacaoMeses: 1 }),
+    numeroGrupo ? carregarPadroesSimulador() : Promise.resolve(padroesDeLinha(null)),
   ]);
   const hoje = new Date().toISOString().slice(0, 10);
 

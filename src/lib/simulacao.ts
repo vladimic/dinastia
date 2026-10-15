@@ -70,7 +70,9 @@ export function fracaoEmbutido(r: RegraEmbutido, qtdParcelas: number): number {
   return Math.min(1, Number(r.embutido_pct) / 100);
 }
 
-export type Lance = {
+export type TipoColuna = "SOR" | "FIX" | "LIM" | "LIV" | "FID";
+
+export type Coluna = {
   fracaoCarta: number;
   /** parcelas do lance × parcela para lance × % embutido */
   recursoCarta: number;
@@ -78,15 +80,105 @@ export type Lance = {
   recursoProprio: number;
   /** crédito contratado − recurso da carta */
   creditoDisponivel: number;
+  /** ((crédito + taxa) − total pago até a contemplação − lance da carta − lance próprio) / prazo restante; nulo se o prazo restante acabou */
+  parcelaApos: number | null;
+  /** parcela após × prazo restante */
+  saldoDevedor: number | null;
+  /** parcelas pagas até a contemplação */
+  valorInvestido: number;
+  /** crédito disponível − lance próprio − parcelas pagas */
+  dinheiroNovo: number;
+  /** taxa mensal que iguala o dinheiro novo às parcelas após a contemplação (função TAXA); nulo se não houver taxa positiva */
+  custoMensal: number | null;
+  /** (1 + custo mensal)^12 − 1 */
+  custoAnual: number | null;
 };
 
-export function calcularLance(base: Base, credito: number, qtdParcelas: number, regra: RegraEmbutido): Lance {
-  const fracaoCarta = fracaoEmbutido(regra, qtdParcelas);
-  const total = qtdParcelas * base.parcelaLance;
+/** Sorteio: passe `lance = null`. */
+export function calcularColuna(base: Base, credito: number, lance: { qtdParcelas: number; regra: RegraEmbutido } | null): Coluna {
+  const fracaoCarta = lance ? fracaoEmbutido(lance.regra, lance.qtdParcelas) : 0;
+  const totalLance = lance ? lance.qtdParcelas * base.parcelaLance : 0;
+  const recursoCarta = totalLance * fracaoCarta;
+  const recursoProprio = totalLance - recursoCarta;
+  const creditoDisponivel = credito - recursoCarta;
+  const saldoAntes = credito + base.taxaAdmValor - base.totalPago;
+  const parcelaApos = base.prazoRestante > 0 ? Math.max(0, (saldoAntes - totalLance) / base.prazoRestante) : null;
+  const dinheiroNovo = creditoDisponivel - recursoProprio - base.totalPago;
+  const custoMensal = parcelaApos === null ? null : taxaMensal(base.prazoRestante, parcelaApos, dinheiroNovo);
   return {
     fracaoCarta,
-    recursoCarta: total * fracaoCarta,
-    recursoProprio: total * (1 - fracaoCarta),
-    creditoDisponivel: credito - total * fracaoCarta,
+    recursoCarta,
+    recursoProprio,
+    creditoDisponivel,
+    parcelaApos,
+    saldoDevedor: parcelaApos === null ? null : parcelaApos * base.prazoRestante,
+    valorInvestido: base.totalPago,
+    dinheiroNovo,
+    custoMensal,
+    custoAnual: custoMensal === null ? null : (Math.pow(1 + custoMensal, 12) - 1),
+  };
+}
+
+/**
+ * Taxa mensal i tal que valorPresente = parcela × (1 − (1+i)^−n) / i (anuidade postecipada, como a função TAXA da planilha).
+ * Nulo quando não existe taxa positiva (valor presente ≤ 0, parcela ≤ 0, ou as parcelas somam menos que o valor presente).
+ */
+export function taxaMensal(n: number, parcela: number, valorPresente: number): number | null {
+  if (n <= 0 || parcela <= 0 || valorPresente <= 0 || parcela * n <= valorPresente) return null;
+  const f = (i: number) => (parcela * (1 - Math.pow(1 + i, -n))) / i - valorPresente; // decrescente em i
+  let lo = 1e-9;
+  let hi = 1;
+  if (f(hi) > 0) return null; // taxa acima de 100% ao mês: fora do que faz sentido
+  for (let k = 0; k < 200; k++) {
+    const mid = (lo + hi) / 2;
+    if (f(mid) > 0) lo = mid;
+    else hi = mid;
+  }
+  return (lo + hi) / 2;
+}
+
+// ---------------------------------------------------------------------------------------------
+// Padrões do simulador (Parâmetros globais)
+
+export type Rodape = { titulo: string; texto: string };
+
+export type PadroesSimulador = {
+  /** INCC projetado, % ao ano */
+  incc: number;
+  contemplacaoMeses: number;
+  lanceLivreParcelas: number;
+  lanceFidelidadeParcelas: number;
+  /** concorrência de cada lance, % (só se altera em Parâmetros globais) */
+  concorrencia: Record<"FIX" | "LIM" | "LIV" | "FID", number>;
+  /** textos do rodapé de cada coluna */
+  rodape: Record<TipoColuna, Rodape>;
+};
+
+export const RODAPE_PADRAO: Record<TipoColuna, Rodape> = {
+  SOR: { titulo: "Sem lance", texto: "Depende só da sorte" },
+  FIX: { titulo: "Previsibilidade máxima", texto: "Valor de lance pré-definido" },
+  LIM: { titulo: "Equilíbrio e flexibilidade", texto: "Combina crédito + recurso próprio" },
+  LIV: { titulo: "Valor à sua escolha", texto: "Você define o lance, sem teto fixo" },
+  FID: { titulo: "Maior poder de contemplação", texto: "Funciona como leilão" },
+};
+
+/** Linha de parametros_gerais → padrões (valores de fábrica onde a coluna ainda não existir ou vier vazia) */
+export function padroesDeLinha(l: Record<string, unknown> | null | undefined): PadroesSimulador {
+  const n = (v: unknown, padrao: number) => (v === null || v === undefined || v === "" ? padrao : Number(v));
+  const r = (l?.rodape_textos ?? {}) as Partial<Record<TipoColuna, Partial<Rodape>>>;
+  const rodape = { ...RODAPE_PADRAO };
+  for (const k of Object.keys(RODAPE_PADRAO) as TipoColuna[]) rodape[k] = { ...RODAPE_PADRAO[k], ...(r[k] ?? {}) };
+  return {
+    incc: n(l?.incc_pct_ano, 6),
+    contemplacaoMeses: n(l?.contemplacao_meses, 1),
+    lanceLivreParcelas: n(l?.lance_livre_parcelas, 150),
+    lanceFidelidadeParcelas: n(l?.lance_fidelidade_parcelas, 130),
+    concorrencia: {
+      FIX: n(l?.concorrencia_fixo_pct, 25),
+      LIM: n(l?.concorrencia_limitado_pct, 10),
+      LIV: n(l?.concorrencia_livre_pct, 3),
+      FID: n(l?.concorrencia_fidelidade_pct, 2),
+    },
+    rodape,
   };
 }
