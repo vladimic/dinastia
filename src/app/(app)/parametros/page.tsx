@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Suspense } from "react";
 import { createClient } from "@/lib/supabase/server";
 import { pct } from "@/lib/formato";
+import { padroesDeLinha, type TipoColuna } from "@/lib/simulacao";
 import { salvarParametros } from "./actions";
 
 export const metadata: Metadata = { title: "Parâmetros globais · Dinastia" };
@@ -27,13 +28,14 @@ async function Formulario({ searchParams }: { searchParams: PageProps<"/parametr
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("parametros_gerais")
-    .select("seguro_padrao_pct, incc_pct_ano, contemplacao_meses, atualizado_em")
+    .select("*")
     .eq("id", 1)
     .maybeSingle();
   if (error) throw error;
+  const pad = padroesDeLinha(data);
 
   return (
-    <form action={salvarParametros} className="flex w-[26rem] max-w-full flex-col gap-4 rounded-2xl border border-borda bg-white p-5">
+    <form action={salvarParametros} className="flex w-[30rem] max-w-full flex-col gap-4 rounded-2xl border border-borda bg-white p-5">
       <h2 className="text-sm font-bold">Seguro prestamista</h2>
       <label className="grid grid-cols-[1fr_7rem] items-center gap-3 text-xs font-semibold text-tinta">
         % do crédito ao mês (todos os grupos)
@@ -50,21 +52,42 @@ async function Formulario({ searchParams }: { searchParams: PageProps<"/parametr
       </p>
 
       <h2 className="border-t border-linha pt-3 text-sm font-bold">Simulador</h2>
-      <label className="grid grid-cols-[1fr_7rem] items-center gap-3 text-xs font-semibold text-tinta">
-        INCC projetado (% ao ano)
-        <input className="campo-sm" name="incc_pct_ano" inputMode="decimal" defaultValue={pct(data?.incc_pct_ano ?? 6)} required />
-      </label>
-      <label className="grid grid-cols-[1fr_7rem] items-center gap-3 text-xs font-semibold text-tinta">
-        Contemplação em (meses)
-        <input className="campo-sm" name="contemplacao_meses" inputMode="numeric" defaultValue={data?.contemplacao_meses ?? 1} required />
-      </label>
+      <Campo rotulo="INCC projetado (% ao ano)" nome="incc_pct_ano" valor={pct(pad.incc)} />
+      <Campo rotulo="Contemplação em (meses)" nome="contemplacao_meses" valor={String(pad.contemplacaoMeses)} />
+      <Campo rotulo="Parcelas do lance livre" nome="lance_livre_parcelas" valor={String(pad.lanceLivreParcelas)} />
+      <Campo rotulo="Parcelas do lance fidelidade" nome="lance_fidelidade_parcelas" valor={String(pad.lanceFidelidadeParcelas)} />
       <p className="text-[11px] leading-snug text-tinta">
-        Valores com que o simulador de cada grupo abre (INCC e contemplação em meses). Na tela do simulador eles podem ser alterados para aquela simulação, sem mudar estes parâmetros.
+        Valores com que o simulador de cada grupo abre. Na tela do simulador, INCC, contemplação e parcelas dos lances livre e fidelidade podem ser alterados para aquela simulação, sem mudar estes parâmetros.
       </p>
+
+      <h2 className="border-t border-linha pt-3 text-sm font-bold">Concorrência dos lances (%)</h2>
+      <Campo rotulo="Lance fixo" nome="concorrencia_fixo_pct" valor={pct(pad.concorrencia.FIX)} />
+      <Campo rotulo="Lance limitado" nome="concorrencia_limitado_pct" valor={pct(pad.concorrencia.LIM)} />
+      <Campo rotulo="Lance livre" nome="concorrencia_livre_pct" valor={pct(pad.concorrencia.LIV)} />
+      <Campo rotulo="Lance fidelidade" nome="concorrencia_fidelidade_pct" valor={pct(pad.concorrencia.FID)} />
+      <p className="text-[11px] leading-snug text-tinta">Aparece no cabeçalho de cada coluna do simulador; só pode ser alterada aqui.</p>
+
+      <h2 className="border-t border-linha pt-3 text-sm font-bold">Textos sob o prazo restante (simulador)</h2>
+      {(Object.keys(NOMES_COLUNA) as TipoColuna[]).map((k) => (
+        <div key={k} className="flex flex-col gap-1.5">
+          <span className="text-xs font-bold">{NOMES_COLUNA[k]}</span>
+          <input className="campo-sm !text-left" name={`rodape_${k}_titulo`} defaultValue={pad.rodape[k].titulo} maxLength={60} required aria-label={`${NOMES_COLUNA[k]}: título`} />
+          <input className="campo-sm !text-left" name={`rodape_${k}_texto`} defaultValue={pad.rodape[k].texto} maxLength={80} required aria-label={`${NOMES_COLUNA[k]}: texto`} />
+        </div>
+      ))}
 
       {sp.salvo === "1" && (
         <p role="status" className="rounded-lg bg-ok-fundo px-3 py-2 text-sm font-semibold text-ok">
           Parâmetros salvos.
+        </p>
+      )}
+      {["4", "5", "6"].includes(String(sp.erro)) && (
+        <p role="alert" className="rounded-lg bg-[#fbe4e4] px-3 py-2 text-sm font-semibold text-[#9b1c1c]">
+          {sp.erro === "4"
+            ? "Parcelas do lance inválidas. Informe números inteiros de 1 a 999."
+            : sp.erro === "5"
+              ? "Concorrência inválida. Informe um percentual entre 0 e 100."
+              : "Os textos do simulador não podem ficar vazios (título até 60 e texto até 80 caracteres)."}
         </p>
       )}
       {sp.erro === "3" && (
@@ -94,5 +117,22 @@ async function Formulario({ searchParams }: { searchParams: PageProps<"/parametr
         </button>
       </div>
     </form>
+  );
+}
+
+const NOMES_COLUNA: Record<TipoColuna, string> = {
+  SOR: "Sorteio",
+  FIX: "Lance fixo",
+  LIM: "Lance limitado",
+  LIV: "Lance livre",
+  FID: "Lance fidelidade",
+};
+
+function Campo({ rotulo, nome, valor }: { rotulo: string; nome: string; valor: string }) {
+  return (
+    <label className="grid grid-cols-[1fr_7rem] items-center gap-3 text-xs font-semibold text-tinta">
+      {rotulo}
+      <input className="campo-sm" name={nome} inputMode="decimal" defaultValue={valor} required />
+    </label>
   );
 }

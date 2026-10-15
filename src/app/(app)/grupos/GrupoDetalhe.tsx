@@ -1,3 +1,4 @@
+import type { PadroesSimulador } from "@/lib/simulacao";
 import { nomeFamilia, type GrupoDetalhe } from "@/lib/grupos";
 import { dataBR } from "@/lib/formato";
 import { PagamentoComFuro, TiposParcela } from "./ParcelasEFuro";
@@ -12,7 +13,7 @@ type Props = {
   grupo: GrupoDetalhe;
   indices: { sigla: string; nome: string }[];
   hoje: string;
-  padroes: { incc: number; contemplacaoMeses: number };
+  padroes: PadroesSimulador;
 };
 
 function dataLocal(ts: string) {

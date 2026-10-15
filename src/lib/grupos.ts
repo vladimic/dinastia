@@ -1,5 +1,6 @@
 import "server-only";
 import { createClient } from "@/lib/supabase/server";
+import { padroesDeLinha, type PadroesSimulador } from "@/lib/simulacao";
 import { linhaDetalhada, modelar, montarOrdem, type Faixa as FaixaSeq } from "@/lib/sequencia";
 
 // família: lista fixa (sem tabela)
@@ -137,12 +138,12 @@ export async function listarIndices() {
   return data ?? [];
 }
 
-/** Padrões do simulador, vindos dos parâmetros globais (INCC % ao ano e contemplação em meses) */
-export async function carregarPadroesSimulador(): Promise<{ incc: number; contemplacaoMeses: number }> {
+/** Padrões do simulador, vindos dos parâmetros globais */
+export async function carregarPadroesSimulador(): Promise<PadroesSimulador> {
   const supabase = await createClient();
-  const { data, error } = await supabase.from("parametros_gerais").select("incc_pct_ano, contemplacao_meses").eq("id", 1).maybeSingle();
+  const { data, error } = await supabase.from("parametros_gerais").select("*").eq("id", 1).maybeSingle();
   if (error) throw error;
-  return { incc: Number(data?.incc_pct_ano ?? 6), contemplacaoMeses: Number(data?.contemplacao_meses ?? 1) };
+  return padroesDeLinha(data);
 }
 
 type TipoRef = { codigo: string; nome: string };

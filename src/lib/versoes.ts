@@ -2,6 +2,16 @@
 // Regra: a cada mudança entregue, acrescentar uma entrada NO TOPO.
 export const VERSOES: { numero: string; data: string; itens: string[] }[] = [
   {
+    numero: "0050",
+    data: "15/10/2026",
+    itens: [
+      "Simulador: todo valor em R$ é arredondado para cima, sem casas decimais.",
+      "Parâmetros globais (migração 0021, já aplicada): parcelas do lance livre (150) e do lance fidelidade (130), que o simulador usa como ponto de partida e podem ser alteradas na tela sem mudar o parâmetro; concorrência de cada lance (fixo 25%, limitado 10%, livre 3%, fidelidade 2%), só alterável nesta tela de parâmetros; e os textos do rodapé de cada coluna (sob o prazo restante). Lance limitado passa a ser fixo como o fixo (parcelas do grupo). O teto de parcelas informado pelo grupo para cada modalidade continua valendo.",
+      "Parcela após a contemplação nos lances desconta o lance inteiro (recurso da carta + recurso próprio) do saldo. Lance fidelidade fica bloqueado enquanto a contemplação for antes da parcela de liberação do grupo (ex.: 36 meses).",
+      "Novos cálculos: Saldo devedor = parcela após × prazo restante; Valor investido = parcelas pagas até a contemplação; Dinheiro novo = crédito disponível − recurso próprio − parcelas pagas; Custo mensal = taxa que iguala o dinheiro novo às parcelas após a contemplação (função TAXA); Custo anual = (1 + custo mensal)^12 − 1.",
+    ],
+  },
+  {
     numero: "0049",
     data: "15/10/2026",
     itens: [
