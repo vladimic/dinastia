@@ -48,6 +48,15 @@ export const LARGURAS: number[] = [
 ];
 export const NCOLUNAS = LARGURAS.length; // 44
 
+// PDF: quantos grupos cabem em cada página. 113 = os grupos até o 12172, onde a página 1 termina (padrão; o usuário pode mudar).
+export const GRUPOS_POR_PAGINA = 113;
+export const LIMITE_GRUPOS_POR_PAGINA = 500;
+export function lerPorPagina(texto: string | null): number | null {
+  if (texto === null || !/^\d{1,3}$/.test(texto)) return null;
+  const n = Number(texto);
+  return n >= 1 && n <= LIMITE_GRUPOS_POR_PAGINA ? n : null;
+}
+
 export const VERMELHO = "FF0000";
 export const CINZA_ZEBRA = "D9D9D9";
 const AZUL = "0000FF";

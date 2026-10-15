@@ -8,6 +8,7 @@ import {
   LINHA_ESQUERDA,
   NCOLUNAS,
   TITULO,
+  GRUPOS_POR_PAGINA,
   VERMELHO,
   celulasDaLinha,
   rotuloMes,
@@ -15,7 +16,7 @@ import {
   type Mes,
 } from "./tabelaResumo";
 
-// PDF da Tabela Resumo, igual ao modelo: A4 em pé, a tabela inteira numa página (escala reduzida),
+// PDF da Tabela Resumo, igual ao modelo: A4 em pé, uma quantidade fixa de grupos por página (escala reduzida),
 // título e cabeçalho vermelhos, zebra cinza e as mesmas cores por regra do Excel.
 // Desenhado em "pontos de planilha" (largura do Excel e linhas de 15) e depois reduzido pela escala.
 
@@ -24,8 +25,6 @@ const MARGEM = 14;
 const ALTURA_LINHA = 15;
 const ALTURA_TITULO = 31.5;
 const ALTURA_CABECALHO = 2 * ALTURA_LINHA;
-const ESCALA_MINIMA = 0.3; // abaixo disso a tabela passa a ser dividida em várias páginas
-const ESCALA_PAGINADA = 0.34;
 
 // largura de coluna do Excel (caracteres) em pontos
 const pontos = (w: number) => Math.trunc(w * 7 + 5) * 0.75;
@@ -38,32 +37,24 @@ const seguro = (t: string) => t.replace(/[^\x20-\x7E -ÿ]/g, "?"); // só o que
 
 type Fontes = { normal: PDFFont; negrito: PDFFont };
 
-export async function tabelaResumoPdf(linhas: LinhaResumo[], base: Mes): Promise<{ bytes: Uint8Array; paginas: number }> {
+export async function tabelaResumoPdf(
+  linhas: LinhaResumo[],
+  base: Mes,
+  porPagina = GRUPOS_POR_PAGINA,
+): Promise<{ bytes: Uint8Array; paginas: number }> {
   const doc = await PDFDocument.create();
   doc.setTitle(`Tabela Resumo · Imóveis · ${rotuloMes(base)}`);
   doc.setCreator("Dinastia");
   const fontes: Fontes = { normal: await doc.embedFont(StandardFonts.Helvetica), negrito: await doc.embedFont(StandardFonts.HelveticaBold) };
 
+  // cada página tem até "porPagina" grupos (a 1ª leva o título); o cabeçalho se repete em todas.
+  // A escala é a mesma em todas as páginas: a que faz caber a 1ª página cheia.
   const util = { w: A4.w - 2 * MARGEM, h: A4.h - 2 * MARGEM };
-  const escalaLargura = util.w / LARGURA_TABELA;
-  const alturaTotal = ALTURA_TITULO + ALTURA_CABECALHO + linhas.length * ALTURA_LINHA;
-  const escalaUmaPagina = util.h / alturaTotal;
-  const umaPagina = escalaUmaPagina >= ESCALA_MINIMA;
-  const escala = umaPagina ? Math.min(escalaLargura, escalaUmaPagina) : Math.min(escalaLargura, ESCALA_PAGINADA);
-
-  // linhas de dados que cabem em cada página (a 1ª tem o título)
-  const cabem = (comTitulo: boolean) =>
-    Math.max(1, Math.floor((util.h / escala - ALTURA_CABECALHO - (comTitulo ? ALTURA_TITULO : 0)) / ALTURA_LINHA));
+  const porPag = Math.max(1, Math.min(porPagina, linhas.length || 1));
+  const escala = Math.min(util.w / LARGURA_TABELA, util.h / (ALTURA_TITULO + ALTURA_CABECALHO + porPag * ALTURA_LINHA));
   const paginas: LinhaResumo[][] = [];
-  if (umaPagina || !linhas.length) paginas.push(linhas);
-  else {
-    let i = 0;
-    while (i < linhas.length) {
-      const n = cabem(paginas.length === 0);
-      paginas.push(linhas.slice(i, i + n));
-      i += n;
-    }
-  }
+  for (let i = 0; i < linhas.length; i += porPag) paginas.push(linhas.slice(i, i + porPag));
+  if (!paginas.length) paginas.push([]);
 
   const x0 = (A4.w - LARGURA_TABELA * escala) / 2;
   let desenhadas = 0; // linhas já desenhadas, para a zebra continuar de uma página para a outra
