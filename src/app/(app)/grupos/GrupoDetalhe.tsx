@@ -1,40 +1,16 @@
-import { ehLance, nomeFamilia, type GrupoDetalhe, type Modalidade } from "@/lib/grupos";
-import { dataBR, pct } from "@/lib/formato";
+import { nomeFamilia, type GrupoDetalhe } from "@/lib/grupos";
+import { dataBR } from "@/lib/formato";
 import { PagamentoComFuro, TiposParcela } from "./ParcelasEFuro";
 import { FaixaCredito } from "./FaixaCredito";
 import { InformacoesGrupo } from "./InformacoesGrupo";
 import { SequenciaContemplacao } from "./SequenciaContemplacao";
+import { ModalidadesContemplacao } from "./ModalidadesContemplacao";
 
 type Props = {
   grupo: GrupoDetalhe;
   indices: { sigla: string; nome: string }[];
   hoje: string;
 };
-
-function textoEmbutido(m: Modalidade) {
-  if (!ehLance(m.tipo)) return "—";
-  if (m.embutido_pct === null) return "Não";
-  const aprox = m.embutido_texto?.includes("aprox") ? "aprox. " : "";
-  const base = m.embutido_base === "categoria" ? "da categoria" : "do ofertado";
-  return m.embutido_max_parcelas !== null
-    ? `${aprox}${m.embutido_max_parcelas} parcelas (${pct(m.embutido_pct, 0)} ${base})`
-    : `${pct(m.embutido_pct, 0)} ${base}`;
-}
-
-function textoRecursoProprio(m: Modalidade) {
-  if (!ehLance(m.tipo) || !m.recurso_proprio_obrig) return "—";
-  if (m.embutido_pct === null) return "100% do ofertado";
-  if (m.embutido_base === "ofertado" && m.embutido_max_parcelas === null)
-    return `${pct(100 - Number(m.embutido_pct), 0)} do ofertado`;
-  return "O restante";
-}
-
-function textoDisponivel(m: Modalidade) {
-  const partes = [m.a_partir_assembleia_cota <= 1 ? "Desde a 1ª" : `${m.a_partir_assembleia_cota}ª assembleia da cota`];
-  if (m.a_partir_assembleia_cota > 1 && m.requisitos) partes.push(m.requisitos);
-  if (!m.transferivel) partes.push("não transfere com a cota");
-  return partes.join(" · ");
-}
 
 function dataLocal(ts: string) {
   return new Date(ts).toLocaleDateString("pt-BR", { timeZone: "America/Sao_Paulo" });
@@ -122,6 +98,7 @@ export function GrupoDetalheView({ grupo, indices, hoje }: Props) {
           <TiposParcela key={`tipos-${grupo.grupo_assembleia_id}`} versaoId={grupo.grupo_assembleia_id} tipos={grupo.tiposParcela} />
         </div>
 
+        <div className="flex flex-col gap-3">
         <SequenciaContemplacao
           key={`seq-${grupo.grupo_assembleia_id}`}
           versaoId={grupo.grupo_assembleia_id}
@@ -132,50 +109,13 @@ export function GrupoDetalheView({ grupo, indices, hoje }: Props) {
           fidelidadeMeses={grupo.fidelidade_meses}
         />
 
-        <section className="flex w-fit max-w-[430px] flex-col gap-2 rounded-2xl border border-borda bg-white p-3.5">
-          <h3 className="text-sm font-bold">Modalidades de contemplação</h3>
-          <table className="tabela-sm border-collapse">
-            <thead>
-              <tr>
-                <th>Modalidade</th>
-                <th className="num">Lance máx.</th>
-                <th>Embutido</th>
-              </tr>
-            </thead>
-            <tbody>
-              {grupo.modalidades.map((m) => {
-                const lance = ehLance(m.tipo);
-                const rp = textoRecursoProprio(m);
-                return (
-                  <tr key={m.tipo}>
-                    <td>
-                      <div className="font-semibold">{m.tipo_contemplacao.nome}</div>
-                      {(m.a_partir_assembleia_cota > 1 || !m.transferivel) && (
-                        <div className="text-[11px] text-alerta" title={m.requisitos ?? undefined}>
-                          {textoDisponivel(m)}
-                        </div>
-                      )}
-                    </td>
-                    <td className="num whitespace-nowrap">
-                      {!lance
-                        ? "—"
-                        : m.max_parcelas_lance === null
-                          ? "Livre"
-                          : `${m.max_parcelas_lance} parc.${m.pct_categoria !== null ? ` · ${pct(m.pct_categoria, 0)}` : ""}`}
-                    </td>
-                    <td className="max-w-[170px]">
-                      {textoEmbutido(m)}
-                      {lance && rp !== "—" && <div className="text-[11px] text-tinta">+ próprios: {rp}</div>}
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-          <p className="text-[11px] leading-snug text-tinta">
-            % sobre a categoria (crédito + taxa + fundo de reserva). Parcela de lance = categoria ÷ {grupo.prazo_grupo_meses}.
-          </p>
-        </section>
+        <ModalidadesContemplacao
+          modalidades={grupo.modalidades}
+          tipos={grupo.tiposContemplacao}
+          prazoGrupo={grupo.prazo_grupo_meses}
+        />
+        </div>
+
       </div>
     </div>
   );
