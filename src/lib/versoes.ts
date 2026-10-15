@@ -2,6 +2,16 @@
 // Regra: a cada mudança entregue, acrescentar uma entrada NO TOPO.
 export const VERSOES: { numero: string; data: string; itens: string[] }[] = [
   {
+    numero: "0059",
+    data: "15/10/2026",
+    itens: [
+      "Cabeçalho do grupo: Participantes, Taxa adm. total e Índice vêm logo depois do botão +, seguidos de Assembleia atual e do gráfico. Novo botão ⋯ ao lado do + mostra/oculta esses 3 boxes. A 1ª correção passou para a janela do botão +.",
+      "Tipos de parcela: o box ficou maior e ganhou, no fundo, o rótulo Furo com o sinalizador (liga/desliga e grava como antes). O box avulso Pagamento com furo foi removido.",
+      "Simulador: sai o aviso \"Valor ainda de exemplo\". No rótulo das linhas, Recurso da Carta (embutido) e Recurso Próprio (dinheiro); as células mostram só os valores (sem o % embutido/dinheiro). Saldo Devedor, Valor Investido, Custo Mensal, Custo Anual e Dinheiro Novo usam o mesmo padrão de fonte e de caixa dos valores de cima, sem o fundo azul (o azul fica só nos rótulos).",
+      "Boxes de parâmetros do simulador: título com 2 linhas reservadas e linha do valor de altura fixa, então os valores ficam alinhados entre todos os boxes (fonte de valor única, 14 px). O − do contador de cotas deixa de encostar no rótulo.",
+    ],
+  },
+  {
     numero: "0058",
     data: "15/10/2026",
     itens: [
