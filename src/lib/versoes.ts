@@ -2,6 +2,15 @@
 // Regra: a cada mudança entregue, acrescentar uma entrada NO TOPO.
 export const VERSOES: { numero: string; data: string; itens: string[] }[] = [
   {
+    numero: "0058",
+    data: "15/10/2026",
+    itens: [
+      "Crédito Contratado: o contador de cotas perde o \"x\", passa a aceitar digitação (1 a 99; vazio vale 1) e o botão + volta para dentro do box.",
+      "Fidelidade em, Taxa de adm. mensal e Parcela para lance ficam com boxes mais estreitos; o INCC também.",
+      "A grade do simulador passa a ter exatamente a largura da linha de cards do grupo: o lado direito das cinco colunas acompanha a borda direita do box Modalidades de contemplação (medida na tela, também ao redimensionar ou editar os cards).",
+    ],
+  },
+  {
     numero: "0057",
     data: "15/10/2026",
     itens: [

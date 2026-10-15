@@ -6,6 +6,7 @@ import { FaixaCredito } from "./FaixaCredito";
 import { InformacoesGrupo, InformacoesProvider, MaisInformacoes } from "./InformacoesGrupo";
 import { SequenciaContemplacao } from "./SequenciaContemplacao";
 import { ModalidadesContemplacao } from "./ModalidadesContemplacao";
+import { LinhaCartoes } from "./LinhaCartoes";
 import { SimuladorGrupo } from "./SimuladorGrupo";
 import { SimulacaoProvider } from "./SimulacaoContext";
 
@@ -38,7 +39,7 @@ export function GrupoDetalheView({ grupo, indices, hoje, padroes }: Props) {
       tipos={grupo.tiposParcela.map((t) => ({ codigo: t.codigo, descricao: t.descricao, pct: t.pct }))}
       furoInicial={grupo.pagamento_com_furo}
     >
-    <div className="flex flex-col gap-4">
+    <div data-raiz-grupo className="flex flex-col gap-4">
 
       <InformacoesProvider
         numero={grupo.numero}
@@ -108,7 +109,7 @@ export function GrupoDetalheView({ grupo, indices, hoje, padroes }: Props) {
         </p>
       )}
 
-      <div className="flex flex-wrap items-start gap-3">
+      <LinhaCartoes>
         <FaixaCredito key={`cred-${grupo.grupo_assembleia_id}`} versaoId={grupo.grupo_assembleia_id} creditos={grupo.creditos} />
 
         <div className="flex flex-col gap-3">
@@ -134,7 +135,7 @@ export function GrupoDetalheView({ grupo, indices, hoje, padroes }: Props) {
         />
         </div>
 
-      </div>
+      </LinhaCartoes>
 
       <SimuladorGrupo
         numero={grupo.numero}

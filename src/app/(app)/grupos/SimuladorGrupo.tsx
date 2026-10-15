@@ -81,7 +81,7 @@ function Martelo() {
 
 const valorOuro = "font-bold tabular-nums text-ouro";
 
-const GRADE = "grid grid-cols-[10rem_repeat(5,7.8rem)] gap-x-2";
+const GRADE = "grid grid-cols-[10rem_repeat(5,minmax(0,1fr))] gap-x-2";
 const dinheiro = (v: number | null | undefined) => (v === null || v === undefined ? "—" : brl0(v));
 
 /** Cabeçalho de uma coluna (título, parcelas do lance, concorrência e % próprio), empilhado para caber em coluna estreita */
@@ -158,7 +158,7 @@ function GradeSimulador({ colunas, aoMudarQtd }: { colunas: Coluna[]; aoMudarQtd
   ];
 
   return (
-    <div className="flex w-max flex-col gap-1.5">
+    <div className="flex flex-col gap-1.5" style={{ width: "var(--larg-cards, 100%)", minWidth: "46rem" }}>
       <div className={GRADE}>
         <div aria-hidden="true" />
         {colunas.map((c) => (
@@ -221,9 +221,11 @@ function somarDias(iso: string, dias: number) {
   return d.toISOString().slice(0, 10);
 }
 
+const caixaEstreita = "w-[6.5rem] " + caixaBase;
+
 function ParametroTexto({ t, v }: { t: string; v: string }) {
   return (
-    <div className={caixaParam}>
+    <div className={caixaEstreita}>
       <span className={tituloParam}>{t}</span>
       <span className="text-[13px] font-bold tabular-nums">{v}</span>
     </div>
@@ -258,7 +260,9 @@ export function SimuladorGrupo({
   modalidades: Modalidade[];
 }) {
   const { creditoSel, tipoSel, tipos, furo } = useSimulacao();
-  const [cotas, setCotas] = useState(1); // crédito contratado = cotas × crédito escolhido na Faixa de crédito
+  // crédito contratado = cotas × crédito escolhido na Faixa de crédito; o campo aceita digitar (vazio vale 1 enquanto se digita)
+  const [cotasTxt, setCotasTxt] = useState("1");
+  const cotas = Math.min(99, Math.max(1, Number(cotasTxt) || 1));
   const taxaMensal = taxaAdm !== null && mesesFaltam > 0 ? taxaAdm / mesesFaltam : null;
   const [meses, setMeses] = useState(String(padroes.contemplacaoMeses));
   const [vagas, setVagas] = useState("17");
@@ -331,28 +335,35 @@ export function SimuladorGrupo({
         </div>
         <div className={caixaParam}>
           <div className="flex items-center justify-between gap-1">
-            <span className={tituloParam + " text-[9px] leading-[1.1]"}>
+            <span className={tituloParam + " min-w-0 text-[8px] leading-[1.15] tracking-normal"}>
               Crédito
               <br />
               Contratado
             </span>
-            <div className="flex items-center gap-0.5" role="group" aria-label="Quantidade de cotas" title="Quantidade de cotas (multiplica o crédito escolhido)">
+            <div className="flex shrink-0 items-center gap-px" role="group" aria-label="Quantidade de cotas" title="Quantidade de cotas (multiplica o crédito escolhido)">
               <button
                 type="button"
                 aria-label="Menos uma cota"
                 disabled={cotas <= 1}
-                onClick={() => setCotas((n) => Math.max(1, n - 1))}
-                className="h-4 w-4 rounded border border-borda-campo text-[11px] leading-none font-bold hover:border-navy disabled:opacity-40"
+                onClick={() => setCotasTxt(String(Math.max(1, cotas - 1)))}
+                className="h-4 w-3 rounded border border-borda-campo text-[10px] leading-none font-bold hover:border-navy disabled:opacity-40"
               >
                 −
               </button>
-              <span className="min-w-[1.1rem] text-center text-[11px] font-bold tabular-nums">{cotas}x</span>
+              <input
+                inputMode="numeric"
+                aria-label="Quantidade de cotas"
+                value={cotasTxt}
+                onChange={(e) => setCotasTxt(e.target.value.replace(/\D/g, "").slice(0, 2))}
+                onBlur={() => setCotasTxt(String(cotas))}
+                className="h-4 w-4 bg-transparent text-center text-[11px] font-bold tabular-nums outline-none focus:text-laranja"
+              />
               <button
                 type="button"
                 aria-label="Mais uma cota"
                 disabled={cotas >= 99}
-                onClick={() => setCotas((n) => Math.min(99, n + 1))}
-                className="h-4 w-4 rounded border border-borda-campo text-[11px] leading-none font-bold hover:border-navy disabled:opacity-40"
+                onClick={() => setCotasTxt(String(Math.min(99, cotas + 1)))}
+                className="h-4 w-3 rounded border border-borda-campo text-[10px] leading-none font-bold hover:border-navy disabled:opacity-40"
               >
                 +
               </button>
@@ -406,7 +417,7 @@ export function SimuladorGrupo({
             ))}
           </div>
         </div>
-        <div className={caixaParam}>
+        <div className={caixaEstreita}>
           <span className={tituloParam + " leading-tight"}>
             Taxa de adm.
             <br />
@@ -414,7 +425,7 @@ export function SimuladorGrupo({
           </span>
           <span className="text-[15px] font-bold tabular-nums">{taxaMensal === null ? "—" : p2(taxaMensal)}</span>
         </div>
-        <div className={caixaParam}>
+        <div className={caixaEstreita}>
           <span className={tituloParam + " leading-tight"}>
             Parcela para
             <br />
@@ -461,7 +472,7 @@ export function SimuladorGrupo({
             onChange={(e) => e.target.value && setValidade(e.target.value)}
           />
         </div>
-        <div className={"w-[6.5rem] " + caixaBase}>
+        <div className={"w-[5.5rem] " + caixaBase}>
           <div className="flex items-center justify-between gap-2">
             <label htmlFor="incc-sim" className={tituloParam}>
               INCC
