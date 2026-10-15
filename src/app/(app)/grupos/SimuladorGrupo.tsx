@@ -81,59 +81,59 @@ function Martelo() {
 
 const valorOuro = "font-bold tabular-nums text-ouro";
 
-const GRADE = "grid grid-cols-[10rem_repeat(5,minmax(0,1fr))] gap-x-2";
+const GRADE = "grid grid-cols-[10rem_repeat(5,7.8rem)] gap-x-2";
 const dinheiro = (v: number | null | undefined) => (v === null || v === undefined ? "—" : brl0(v));
 
-/** Cabeçalho de uma coluna (título, parcelas do lance, concorrência e % próprio) */
+/** Cabeçalho de uma coluna (título, parcelas do lance, concorrência e % próprio), empilhado para caber em coluna estreita */
 function CabecalhoColuna({ c, aoMudarQtd }: { c: Coluna; aoMudarQtd: (v: string) => void }) {
   const conc = c.concorrencia;
+  if (!c.numero) {
+    return (
+      <div className="flex min-h-[6.25rem] flex-col justify-center bg-navy px-3">
+        <span className="font-display text-[24px] leading-none font-bold text-ouro">{c.titulo[0]}</span>
+        <span className="self-end text-[11px] font-semibold text-ouro">Sem lance</span>
+      </div>
+    );
+  }
   return (
-    <div className="flex min-h-[78px] overflow-hidden bg-[#d9d9d9] text-navy">
-      {c.numero ? (
-        <>
-          <div className="flex min-w-0 flex-1 flex-col justify-center gap-1 px-2">
-            <div className="flex items-center gap-1.5">
-              <span className="flex h-[22px] w-[22px] shrink-0 items-center justify-center rounded border-2 border-navy text-xs font-extrabold leading-none">
-                {c.numero}
-              </span>
-              <span className="text-[13px] leading-[1.1] font-extrabold">
-                {c.titulo[0]}
-                <br />
-                {c.titulo[1]}
-              </span>
-            </div>
-            {c.oferecido && c.qtd !== null && (
-              <label className="flex items-center gap-1 text-[10px] font-semibold" title={c.qtdFixa ? "Parcelas do lance definidas pelo grupo" : "Parcelas do lance (editável nesta simulação)"}>
-                <input
-                  inputMode="numeric"
-                  readOnly={c.qtdFixa}
-                  value={c.qtd}
-                  aria-label={`Parcelas do lance ${c.titulo.join(" ")}`}
-                  onChange={(e) => aoMudarQtd(e.target.value.replace(/\D/g, "").slice(0, 3))}
-                  className={"h-[18px] w-9 rounded border border-borda-campo px-1 text-right text-[11px] font-bold tabular-nums outline-none focus:border-laranja " + (c.qtdFixa ? "bg-linha" : "bg-white")}
-                />
-                parcelas
-              </label>
-            )}
-          </div>
-          <div className="flex w-[47%] shrink-0 flex-col bg-navy">
-            <div className="whitespace-nowrap px-1.5 pt-1 text-[9px] font-bold text-white">
-              Concorrência {conc === null ? "—" : `${conc.toLocaleString("pt-BR", { maximumFractionDigits: 2 })}%`}
-            </div>
-            <div className="mx-1.5 mt-0.5 h-[18px] bg-white" role="img" aria-label={`Concorrência ${conc ?? 0}%`}>
-              <div className="h-full bg-ouro" style={{ width: `${Math.min(100, (conc ?? 0) * 3)}%` }} />
-            </div>
-            <div className="mt-auto flex items-center justify-end gap-1 whitespace-nowrap bg-[#d9d9d9] px-1.5 py-0.5 text-[10.5px] font-bold">
-              <Fic /> {c.proprioPct}% {c.icone === "cadeado" ? <Cadeado /> : <Martelo />} Próprio
-            </div>
-          </div>
-        </>
-      ) : (
-        <div className="flex flex-1 flex-col justify-center bg-navy px-4">
-          <span className="font-display text-[26px] leading-none font-bold text-ouro">{c.titulo[0]}</span>
-          <span className="self-end text-[11px] font-semibold text-ouro">Sem lance</span>
+    <div className="flex min-h-[6.25rem] flex-col overflow-hidden text-navy">
+      <div className="flex flex-1 flex-col justify-center gap-1 bg-[#d9d9d9] px-2 py-1">
+        <div className="flex items-center gap-1.5">
+          <span className="flex h-[20px] w-[20px] shrink-0 items-center justify-center rounded border-2 border-navy text-[11px] font-extrabold leading-none">
+            {c.numero}
+          </span>
+          <span className="text-[12px] leading-[1.1] font-extrabold">
+            {c.titulo[0]}
+            <br />
+            {c.titulo[1]}
+          </span>
         </div>
-      )}
+        {c.oferecido && c.qtd !== null && (
+          <label className="flex items-center gap-1 text-[10px] font-semibold" title={c.qtdFixa ? "Parcelas do lance definidas pelo grupo" : "Parcelas do lance (editável nesta simulação)"}>
+            <input
+              inputMode="numeric"
+              readOnly={c.qtdFixa}
+              value={c.qtd}
+              aria-label={`Parcelas do lance ${c.titulo.join(" ")}`}
+              onChange={(e) => aoMudarQtd(e.target.value.replace(/\D/g, "").slice(0, 3))}
+              className={"h-[18px] w-9 rounded border border-borda-campo px-1 text-right text-[11px] font-bold tabular-nums outline-none focus:border-laranja " + (c.qtdFixa ? "bg-linha" : "bg-white")}
+            />
+            parcelas
+          </label>
+        )}
+      </div>
+      <div className="bg-navy px-1.5 py-1">
+        <div className="flex items-center justify-between text-[9px] font-bold whitespace-nowrap text-white">
+          <span>Concorrência</span>
+          <span className="tabular-nums">{conc === null ? "—" : `${conc.toLocaleString("pt-BR", { maximumFractionDigits: 2 })}%`}</span>
+        </div>
+        <div className="mt-0.5 h-[7px] bg-white" role="img" aria-label={`Concorrência ${conc ?? 0}%`}>
+          <div className="h-full bg-ouro" style={{ width: `${Math.min(100, (conc ?? 0) * 3)}%` }} />
+        </div>
+      </div>
+      <div className="flex items-center justify-end gap-1 bg-[#d9d9d9] px-1.5 py-0.5 text-[10px] font-bold whitespace-nowrap">
+        <Fic /> {c.proprioPct}% {c.icone === "cadeado" ? <Cadeado /> : <Martelo />} Próprio
+      </div>
     </div>
   );
 }
@@ -158,7 +158,7 @@ function GradeSimulador({ colunas, aoMudarQtd }: { colunas: Coluna[]; aoMudarQtd
   ];
 
   return (
-    <div className="flex min-w-[980px] flex-col gap-1.5">
+    <div className="flex w-max flex-col gap-1.5">
       <div className={GRADE}>
         <div aria-hidden="true" />
         {colunas.map((c) => (
@@ -173,7 +173,7 @@ function GradeSimulador({ colunas, aoMudarQtd }: { colunas: Coluna[]; aoMudarQtd
             const sub = l.sub?.(c) ?? null;
             return (
               <div key={c.chave} className={celulaClara}>
-                <span className={`text-[17px] leading-tight ${valorOuro}`}>{l.v(c)}</span>
+                <span className={`text-[15px] leading-tight ${valorOuro}`}>{l.v(c)}</span>
                 {sub && <span className="text-[9px] leading-tight text-tinta">({sub})</span>}
               </div>
             );
@@ -185,7 +185,7 @@ function GradeSimulador({ colunas, aoMudarQtd }: { colunas: Coluna[]; aoMudarQtd
       <div className={GRADE}>
         <div aria-hidden="true" />
         {colunas.map((c) => (
-          <div key={c.chave} className={`flex min-h-[2.6rem] flex-col items-center justify-center px-2 py-1 text-center ${COR_RODAPE[c.cor]}`}>
+          <div key={c.chave} className={`flex min-h-[3.4rem] flex-col items-center justify-center px-1.5 py-1 text-center ${COR_RODAPE[c.cor]}`}>
             <div className="text-[11px] font-bold">{c.rodape.titulo}</div>
             <div className="text-[10px] opacity-90">{c.rodape.texto}</div>
           </div>
@@ -258,6 +258,7 @@ export function SimuladorGrupo({
   modalidades: Modalidade[];
 }) {
   const { creditoSel, tipoSel, tipos, furo } = useSimulacao();
+  const [cotas, setCotas] = useState(1); // crédito contratado = cotas × crédito escolhido na Faixa de crédito
   const taxaMensal = taxaAdm !== null && mesesFaltam > 0 ? taxaAdm / mesesFaltam : null;
   const [meses, setMeses] = useState(String(padroes.contemplacaoMeses));
   const [vagas, setVagas] = useState("17");
@@ -284,11 +285,12 @@ export function SimuladorGrupo({
 
   const tipo = tipos.find((t) => t.codigo === tipoSel);
   const mesesContemplacao = Number(meses) || 0;
+  const creditoContratado = creditoSel === null ? null : creditoSel * cotas;
 
   // cálculos (precisam do crédito, da taxa de administração e do tipo de parcela)
   const base =
-    creditoSel !== null && taxaAdm !== null && tipo
-      ? calcularBase({ credito: creditoSel, taxaAdmPct: taxaAdm, pctParcela: tipo.pct, prazoGrupo, mesesFaltam, furo, mesesContemplacao })
+    creditoContratado !== null && taxaAdm !== null && tipo
+      ? calcularBase({ credito: creditoContratado, taxaAdmPct: taxaAdm, pctParcela: tipo.pct, prazoGrupo, mesesFaltam, furo, mesesContemplacao })
       : null;
 
   const colunas: Coluna[] = COLUNAS.map((c) => {
@@ -304,8 +306,8 @@ export function SimuladorGrupo({
       !base || !oferecido || bloqueio
         ? null
         : c.tipo === "SOR"
-          ? calcularColuna(base, creditoSel as number, null)
-          : calcularColuna(base, creditoSel as number, { qtdParcelas: Number(qtd) || 0, regra: m as Modalidade });
+          ? calcularColuna(base, creditoContratado as number, null)
+          : calcularColuna(base, creditoContratado as number, { qtdParcelas: Number(qtd) || 0, regra: m as Modalidade });
     return {
       ...c,
       oferecido,
@@ -323,17 +325,40 @@ export function SimuladorGrupo({
     <section className="flex flex-col gap-3 border-t border-borda pt-4" aria-label={`Simulador do grupo ${numero}`}>
       {/* parâmetros da simulação (antes ficavam sob a 1ª coluna) */}
       <div className="flex flex-wrap gap-2">
-        <div className={caixaParam}>
-          <span className={tituloParam}>Simulador Grupo</span>
+        <div className={"w-[5.5rem] " + caixaBase}>
+          <span className={tituloParam}>Simulador</span>
           <span className="text-[17px] leading-tight font-extrabold tabular-nums">{numero}</span>
         </div>
         <div className={caixaParam}>
-          <span className={tituloParam + " leading-tight"}>
-            Crédito
-            <br />
-            Contratado
-          </span>
-          <span className={`text-[15px] ${valorOuro}`}>{creditoSel === null ? "—" : brl0(creditoSel)}</span>
+          <div className="flex items-center justify-between gap-1">
+            <span className={tituloParam + " text-[9px] leading-[1.1]"}>
+              Crédito
+              <br />
+              Contratado
+            </span>
+            <div className="flex items-center gap-0.5" role="group" aria-label="Quantidade de cotas" title="Quantidade de cotas (multiplica o crédito escolhido)">
+              <button
+                type="button"
+                aria-label="Menos uma cota"
+                disabled={cotas <= 1}
+                onClick={() => setCotas((n) => Math.max(1, n - 1))}
+                className="h-4 w-4 rounded border border-borda-campo text-[11px] leading-none font-bold hover:border-navy disabled:opacity-40"
+              >
+                −
+              </button>
+              <span className="min-w-[1.1rem] text-center text-[11px] font-bold tabular-nums">{cotas}x</span>
+              <button
+                type="button"
+                aria-label="Mais uma cota"
+                disabled={cotas >= 99}
+                onClick={() => setCotas((n) => Math.min(99, n + 1))}
+                className="h-4 w-4 rounded border border-borda-campo text-[11px] leading-none font-bold hover:border-navy disabled:opacity-40"
+              >
+                +
+              </button>
+            </div>
+          </div>
+          <span className={`text-[15px] ${valorOuro}`}>{creditoContratado === null ? "—" : brl0(creditoContratado)}</span>
         </div>
         <div className={caixaParam} title={tipo ? `Parcela ${tipo.descricao}` : undefined}>
           <span className={tituloParam + " leading-tight"}>
@@ -344,29 +369,17 @@ export function SimuladorGrupo({
           <span className={`text-[15px] ${valorOuro}`}>{base ? brl0(base.parcelaAntes) : "—"}</span>
         </div>
         <div className={caixaParam}>
-          <span className={tituloParam + " leading-tight"}>
-            Meses para
-            <br />
-            terminar o plano
-          </span>
-          <span className="text-[15px] font-bold tabular-nums">{mesesFaltam}</span>
+          <span className={tituloParam}>Meses</span>
+          <div className="flex items-baseline justify-between text-[11px] leading-tight">
+            <span className="text-tinta">para terminar</span>
+            <strong className="text-[13px] tabular-nums">{mesesFaltam}</strong>
+          </div>
+          <div className="flex items-baseline justify-between text-[11px] leading-tight">
+            <span className="text-tinta">decorridos</span>
+            <strong className="text-[13px] tabular-nums">{String(mesesDecorridos).padStart(2, "0")}</strong>
+          </div>
         </div>
-        <div className={caixaParam}>
-          <span className={tituloParam + " leading-tight"}>
-            Meses
-            <br />
-            decorridos
-          </span>
-          <span className="text-[15px] font-bold tabular-nums">{String(mesesDecorridos).padStart(2, "0")}</span>
-        </div>
-        <div className={caixaParam}>
-          <span className={tituloParam + " leading-tight"}>
-            Taxa de adm.
-            <br />
-            mensal
-          </span>
-          <span className="text-[15px] font-bold tabular-nums">{taxaMensal === null ? "—" : p2(taxaMensal)}</span>
-        </div>
+        <ParametroTexto t="Fidelidade em" v={fidelidadeMeses ? `${fidelidadeMeses} Meses` : "—"} />
         <div className={caixaMeses}>
           <span className={tituloParam}>Contemplação em</span>
           <div className="flex items-baseline gap-1">
@@ -395,6 +408,14 @@ export function SimuladorGrupo({
         </div>
         <div className={caixaParam}>
           <span className={tituloParam + " leading-tight"}>
+            Taxa de adm.
+            <br />
+            mensal
+          </span>
+          <span className="text-[15px] font-bold tabular-nums">{taxaMensal === null ? "—" : p2(taxaMensal)}</span>
+        </div>
+        <div className={caixaParam}>
+          <span className={tituloParam + " leading-tight"}>
             Parcela para
             <br />
             lance
@@ -403,8 +424,7 @@ export function SimuladorGrupo({
             {base ? brl0(base.parcelaLance) : "—"}
           </span>
         </div>
-        <ParametroTexto t="Fidelidade em" v={fidelidadeMeses ? `${fidelidadeMeses} Meses` : "—"} />
-        <label className={caixaParam}>
+        <label className={"w-[4.5rem] " + caixaBase}>
           <span className={tituloParam}>Vagas</span>
           <input
             className={campoParam + " text-[#c62828]"}
@@ -413,7 +433,7 @@ export function SimuladorGrupo({
             onChange={(e) => setVagas(e.target.value.replace(/\D/g, "").slice(0, 4))}
           />
         </label>
-        <div className={caixaParam + " relative"}>
+        <div className={"relative w-[6.5rem] " + caixaBase}>
           <div className="flex items-center gap-1.5">
             <span className={tituloParam}>Validade</span>
             <button
@@ -441,7 +461,7 @@ export function SimuladorGrupo({
             onChange={(e) => e.target.value && setValidade(e.target.value)}
           />
         </div>
-        <div className={caixaParam}>
+        <div className={"w-[6.5rem] " + caixaBase}>
           <div className="flex items-center justify-between gap-2">
             <label htmlFor="incc-sim" className={tituloParam}>
               INCC

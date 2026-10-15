@@ -2,6 +2,15 @@
 // Regra: a cada mudança entregue, acrescentar uma entrada NO TOPO.
 export const VERSOES: { numero: string; data: string; itens: string[] }[] = [
   {
+    numero: "0057",
+    data: "15/10/2026",
+    itens: [
+      "Simulador: o box Crédito Contratado ganha o indicador de cotas (começa em 1x, com botões − e +, de 1 a 99). O crédito contratado é o crédito escolhido na Faixa de crédito multiplicado pelas cotas, e todos os cálculos passam a usar esse valor. O box não aumentou.",
+      "Linha de boxes: \"Simulador Grupo\" vira só \"Simulador\" e fica menor; Meses para terminar e Meses decorridos ficam num único box; Fidelidade vem logo depois dos meses; Taxa de adm. mensal vem antes de Parcela para lance; Vagas, Validade e INCC ficam mais estreitos.",
+      "As 5 colunas de valores da grade ficam com 1/3 a menos de largura (cabeçalho das colunas reorganizado em pilha: título, parcelas do lance, concorrência e % próprio).",
+    ],
+  },
+  {
     numero: "0056",
     data: "15/10/2026",
     itens: [
