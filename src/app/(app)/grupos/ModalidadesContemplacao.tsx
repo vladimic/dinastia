@@ -20,7 +20,7 @@ function pctEmbutido(m: Modalidade, prazo: number): number {
   if (m.embutido_pct === null) return 0;
   if (m.embutido_base === "ofertado") return Math.round(Number(m.embutido_pct));
   if (m.embutido_max_parcelas === null) return Math.round(Number(m.embutido_pct));
-  return Math.round((100 * m.embutido_max_parcelas) / (m.max_parcelas_lance ?? prazo));
+  return Math.floor((100 * m.embutido_max_parcelas) / (m.max_parcelas_lance ?? prazo)); // "aprox. 50 parcelas" de 99 = 50%
 }
 
 export function ModalidadesContemplacao({ modalidades, tipos, prazoGrupo }: Props) {

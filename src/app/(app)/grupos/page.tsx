@@ -4,6 +4,7 @@ import { Suspense } from "react";
 import { FAMILIAS, carregarGrupo, contarPorFamilia, listarCoresContemplacao, listarGrupos, listarIndices } from "@/lib/grupos";
 import { GrupoDetalheView } from "./GrupoDetalhe";
 import { GrupoChips } from "./GrupoChips";
+import { ExportarResumo } from "./ExportarResumo";
 
 export const metadata: Metadata = { title: "Grupos e Tabelas · Dinastia" };
 
@@ -21,6 +22,7 @@ export default function GruposPage({ searchParams }: PageProps<"/grupos">) {
           </Suspense>
         </div>
         <div className="flex flex-wrap items-center gap-2">
+          <ExportarResumo />
           <button
             type="button"
             disabled

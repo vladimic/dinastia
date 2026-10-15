@@ -2,6 +2,15 @@
 // Regra: a cada mudança entregue, acrescentar uma entrada NO TOPO.
 export const VERSOES: { numero: string; data: string; itens: string[] }[] = [
   {
+    numero: "0037",
+    data: "15/10/2026",
+    itens: [
+      "Novo botão \"Exportar Tabela Resumo\" em Grupos e Tabelas: gera a Tabela Resumo dos imóveis em Excel (só a aba Imóvel, com os valores prontos) e em PDF igual ao modelo (A4, tabela inteira numa página; se crescer demais, divide em páginas com o cabeçalho repetido).",
+      "Colunas: grupo, taxa, participantes, prazos (original, atual e rodado), furo, menor parcela, mês final, ordem de contemplação (15 posições, com as mesmas cores), Fixo, Limitado, Fidelidade, Livre (quantidade e embutido) e créditos em mil. Fidelidade em \"Meses\" mostra a parcela de liberação (36), e não o mês em que entra na sequência (37).",
+      "Correção de dados: Fidelidade e Livre dos grupos 540 e 690 tinham embutido de 100% embora o PDF diga que o lance é 100% com recursos próprios; passaram a 0% (migração 0013). Também no pop-up de Modalidades, o embutido \"aprox. 50 parcelas\" de um lance de 99 agora aparece como 50%, e não 51%.",
+    ],
+  },
+  {
     numero: "0036",
     data: "15/10/2026",
     itens: [
