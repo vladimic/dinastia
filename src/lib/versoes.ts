@@ -2,6 +2,14 @@
 // Regra: a cada mudança entregue, acrescentar uma entrada NO TOPO.
 export const VERSOES: { numero: string; data: string; itens: string[] }[] = [
   {
+    numero: "0032",
+    data: "15/10/2026",
+    itens: [
+      "Faixa de crédito mais estreita em modo leitura, sem o vazio entre o R$ e o valor (a edição mantém a largura anterior).",
+      "Pagamento com furo: removido o texto \"Não\" ao lado da chave (o \"Sim\" continua quando ligado); o box e o de Tipos de parcela ficam mais estreitos.",
+    ],
+  },
+  {
     numero: "0031",
     data: "15/10/2026",
     itens: [
