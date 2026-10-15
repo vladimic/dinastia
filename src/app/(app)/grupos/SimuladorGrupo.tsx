@@ -79,126 +79,131 @@ function Martelo() {
   );
 }
 
-const rotulo = "text-[11px] font-bold leading-tight text-navy";
 const valorOuro = "font-bold tabular-nums text-ouro";
 
-function CelulaColuna({ c, aoMudarQtd }: { c: Coluna; aoMudarQtd: (v: string) => void }) {
-  const borda = "border border-borda-campo bg-white";
-  const k = c.calc;
-  const pctCarta = k ? Math.round(k.fracaoCarta * 100) : 0;
-  const dinheiro = (v: number | null | undefined) => (v === null || v === undefined ? "—" : brl0(v));
+const GRADE = "grid grid-cols-[10rem_repeat(5,minmax(0,1fr))] gap-x-2";
+const dinheiro = (v: number | null | undefined) => (v === null || v === undefined ? "—" : brl0(v));
+
+/** Cabeçalho de uma coluna (título, parcelas do lance, concorrência e % próprio) */
+function CabecalhoColuna({ c, aoMudarQtd }: { c: Coluna; aoMudarQtd: (v: string) => void }) {
   const conc = c.concorrencia;
   return (
-    <div className="col-span-1 row-span-8 grid grid-rows-subgrid">
-      {/* 1 · cabeçalho */}
-      <div className="flex min-h-[78px] overflow-hidden bg-[#d9d9d9] text-navy">
-        {c.numero ? (
-          <>
-            <div className="flex min-w-0 flex-1 flex-col justify-center gap-1 px-2">
-              <div className="flex items-center gap-1.5">
-                <span className="flex h-[22px] w-[22px] shrink-0 items-center justify-center rounded border-2 border-navy text-xs font-extrabold leading-none">
-                  {c.numero}
-                </span>
-                <span className="text-sm leading-[1.1] font-extrabold">
-                  {c.titulo[0]}
-                  <br />
-                  {c.titulo[1]}
-                </span>
-              </div>
-              {c.oferecido && c.qtd !== null && (
-                <label className="flex items-center gap-1 text-[10px] font-semibold" title={c.qtdFixa ? "Parcelas do lance definidas pelo grupo" : "Parcelas do lance (editável nesta simulação)"}>
-                  <input
-                    inputMode="numeric"
-                    readOnly={c.qtdFixa}
-                    value={c.qtd}
-                    aria-label={`Parcelas do lance ${c.titulo.join(" ")}`}
-                    onChange={(e) => aoMudarQtd(e.target.value.replace(/\D/g, "").slice(0, 3))}
-                    className={"h-[18px] w-9 rounded border border-borda-campo px-1 text-right text-[11px] font-bold tabular-nums outline-none focus:border-laranja " + (c.qtdFixa ? "bg-linha" : "bg-white")}
-                  />
-                  parcelas
-                </label>
-              )}
+    <div className="flex min-h-[78px] overflow-hidden bg-[#d9d9d9] text-navy">
+      {c.numero ? (
+        <>
+          <div className="flex min-w-0 flex-1 flex-col justify-center gap-1 px-2">
+            <div className="flex items-center gap-1.5">
+              <span className="flex h-[22px] w-[22px] shrink-0 items-center justify-center rounded border-2 border-navy text-xs font-extrabold leading-none">
+                {c.numero}
+              </span>
+              <span className="text-[13px] leading-[1.1] font-extrabold">
+                {c.titulo[0]}
+                <br />
+                {c.titulo[1]}
+              </span>
             </div>
-            <div className="flex w-[47%] shrink-0 flex-col bg-navy">
-              <div className="whitespace-nowrap px-1.5 pt-1 text-[10px] font-bold text-white">
-                Concorrência {conc === null ? "—" : `${conc.toLocaleString("pt-BR", { maximumFractionDigits: 2 })}%`}
-              </div>
-              <div className="mx-1.5 mt-0.5 h-[18px] bg-white" role="img" aria-label={`Concorrência ${conc ?? 0}%`}>
-                <div className="h-full bg-ouro" style={{ width: `${Math.min(100, (conc ?? 0) * 3)}%` }} />
-              </div>
-              <div className="mt-auto flex items-center justify-end gap-1 whitespace-nowrap bg-[#d9d9d9] px-1.5 py-0.5 text-[10.5px] font-bold">
-                <Fic /> {c.proprioPct}% {c.icone === "cadeado" ? <Cadeado /> : <Martelo />} Próprio
-              </div>
-            </div>
-          </>
-        ) : (
-          <div className="flex flex-1 flex-col justify-center bg-navy px-4">
-            <span className="font-display text-[26px] leading-none font-bold text-ouro">{c.titulo[0]}</span>
-            <span className="self-end text-[11px] font-semibold text-ouro">Sem lance</span>
+            {c.oferecido && c.qtd !== null && (
+              <label className="flex items-center gap-1 text-[10px] font-semibold" title={c.qtdFixa ? "Parcelas do lance definidas pelo grupo" : "Parcelas do lance (editável nesta simulação)"}>
+                <input
+                  inputMode="numeric"
+                  readOnly={c.qtdFixa}
+                  value={c.qtd}
+                  aria-label={`Parcelas do lance ${c.titulo.join(" ")}`}
+                  onChange={(e) => aoMudarQtd(e.target.value.replace(/\D/g, "").slice(0, 3))}
+                  className={"h-[18px] w-9 rounded border border-borda-campo px-1 text-right text-[11px] font-bold tabular-nums outline-none focus:border-laranja " + (c.qtdFixa ? "bg-linha" : "bg-white")}
+                />
+                parcelas
+              </label>
+            )}
           </div>
-        )}
-      </div>
-
-      {/* 2 · recursos */}
-      <div className={`${borda} grid grid-cols-2 items-start px-1 py-1.5 text-center`}>
-        {k && c.tipo !== "SOR" ? (
-          <>
-            <div>
-              <div className={rotulo}>Recurso da Carta</div>
-              <div className="text-[9px] text-tinta">(embutido {pctCarta}%)</div>
-              <div className={valorOuro}>{brl0(k.recursoCarta)}</div>
+          <div className="flex w-[47%] shrink-0 flex-col bg-navy">
+            <div className="whitespace-nowrap px-1.5 pt-1 text-[9px] font-bold text-white">
+              Concorrência {conc === null ? "—" : `${conc.toLocaleString("pt-BR", { maximumFractionDigits: 2 })}%`}
             </div>
-            <div>
-              <div className={rotulo}>Recurso Próprio</div>
-              <div className="text-[9px] text-tinta">(dinheiro {100 - pctCarta}%)</div>
-              <div className={valorOuro}>{brl0(k.recursoProprio)}</div>
+            <div className="mx-1.5 mt-0.5 h-[18px] bg-white" role="img" aria-label={`Concorrência ${conc ?? 0}%`}>
+              <div className="h-full bg-ouro" style={{ width: `${Math.min(100, (conc ?? 0) * 3)}%` }} />
             </div>
-          </>
-        ) : (
-          <div className="col-span-2 self-center text-xs text-tinta">
-            {c.bloqueio ?? (c.tipo === "SOR" ? "—" : c.oferecido ? "—" : "Grupo não oferece")}
+            <div className="mt-auto flex items-center justify-end gap-1 whitespace-nowrap bg-[#d9d9d9] px-1.5 py-0.5 text-[10.5px] font-bold">
+              <Fic /> {c.proprioPct}% {c.icone === "cadeado" ? <Cadeado /> : <Martelo />} Próprio
+            </div>
           </div>
-        )}
-      </div>
-
-      {/* 3 · crédito, 4 · parcela, 5 · prazo */}
-      <Metrica rotulo="Crédito Disponível após a Contemplação" valor={dinheiro(k?.creditoDisponivel)} />
-      <Metrica rotulo="Valor da Parcela após a Contemplação" valor={dinheiro(k?.parcelaApos)} />
-      <Metrica rotulo="Prazo Restante" valor={k && c.prazoRestante > 0 ? String(c.prazoRestante) : "—"} />
-
-      {/* 6 · rodapé de perfil (textos em Parâmetros globais) */}
-      <div className={`flex flex-col items-center justify-center px-2 py-1 text-center ${COR_RODAPE[c.cor]}`}>
-        <div className="text-[11px] font-bold">{c.rodape.titulo}</div>
-        <div className="text-[10px] opacity-90">{c.rodape.texto}</div>
-      </div>
-
-      {/* 7 · espaço · 8 · custos */}
-      <div aria-hidden="true" />
-      <div className="bg-navy px-2.5 py-1.5 text-xs text-white">
-        <Linha t="Saldo Devedor" v={dinheiro(k?.saldoDevedor)} />
-        <Linha t="Valor Investido" v={dinheiro(k?.valorInvestido)} />
-        <Linha t="Custo Mensal" v={k?.custoMensal == null ? "—" : p2(k.custoMensal * 100)} />
-        <Linha t="Custo Anual" v={k?.custoAnual == null ? "—" : p2(k.custoAnual * 100)} />
-        <Linha t="Dinheiro Novo" v={dinheiro(k?.dinheiroNovo)} />
-      </div>
+        </>
+      ) : (
+        <div className="flex flex-1 flex-col justify-center bg-navy px-4">
+          <span className="font-display text-[26px] leading-none font-bold text-ouro">{c.titulo[0]}</span>
+          <span className="self-end text-[11px] font-semibold text-ouro">Sem lance</span>
+        </div>
+      )}
     </div>
   );
 }
 
-function Linha({ t, v }: { t: string; v: string }) {
-  return (
-    <div className="flex justify-between gap-2 py-px">
-      <span className="font-semibold text-ouro">{t}</span>
-      <span className="tabular-nums text-ouro">{v}</span>
-    </div>
-  );
-}
+// Rótulos só na 1ª coluna; as colunas trazem apenas os valores (sem repetir os nomes).
+function GradeSimulador({ colunas, aoMudarQtd }: { colunas: Coluna[]; aoMudarQtd: (tipo: TipoColuna) => (v: string) => void }) {
+  const rotuloLinha = "flex items-center rounded-md border border-borda-campo bg-white px-2 text-[11px] leading-tight font-bold text-navy";
+  const celulaClara = "flex min-h-[2.6rem] flex-col items-center justify-center border border-borda-campo bg-white px-1 text-center";
+  const linhasClaras: { r: string; v: (c: Coluna) => string; sub?: (c: Coluna) => string | null }[] = [
+    { r: "Recurso da Carta", v: (c) => (c.calc && c.tipo !== "SOR" ? dinheiro(c.calc.recursoCarta) : "—"), sub: (c) => (c.calc && c.tipo !== "SOR" ? `embutido ${Math.round(c.calc.fracaoCarta * 100)}%` : c.bloqueio ?? (c.oferecido ? null : "Grupo não oferece")) },
+    { r: "Recurso Próprio", v: (c) => (c.calc && c.tipo !== "SOR" ? dinheiro(c.calc.recursoProprio) : "—"), sub: (c) => (c.calc && c.tipo !== "SOR" ? `dinheiro ${100 - Math.round(c.calc.fracaoCarta * 100)}%` : null) },
+    { r: "Crédito Disponível após a Contemplação", v: (c) => dinheiro(c.calc?.creditoDisponivel) },
+    { r: "Valor da Parcela após a Contemplação", v: (c) => dinheiro(c.calc?.parcelaApos) },
+    { r: "Prazo Restante", v: (c) => (c.calc && c.prazoRestante > 0 ? String(c.prazoRestante) : "—") },
+  ];
+  const linhasEscuras: { r: string; v: (c: Coluna) => string }[] = [
+    { r: "Saldo Devedor", v: (c) => dinheiro(c.calc?.saldoDevedor) },
+    { r: "Valor Investido", v: (c) => dinheiro(c.calc?.valorInvestido) },
+    { r: "Custo Mensal", v: (c) => (c.calc?.custoMensal == null ? "—" : p2(c.calc.custoMensal * 100)) },
+    { r: "Custo Anual", v: (c) => (c.calc?.custoAnual == null ? "—" : p2(c.calc.custoAnual * 100)) },
+    { r: "Dinheiro Novo", v: (c) => dinheiro(c.calc?.dinheiroNovo) },
+  ];
 
-function Metrica({ rotulo: r, valor }: { rotulo: string; valor: string }) {
   return (
-    <div className="flex flex-col items-center justify-center border border-borda-campo bg-white px-2 py-1.5 text-center">
-      <div className={rotulo}>{r}</div>
-      <div className={`text-[19px] leading-tight ${valorOuro}`}>{valor}</div>
+    <div className="flex min-w-[980px] flex-col gap-1.5">
+      <div className={GRADE}>
+        <div aria-hidden="true" />
+        {colunas.map((c) => (
+          <CabecalhoColuna key={c.chave} c={c} aoMudarQtd={aoMudarQtd(c.tipo)} />
+        ))}
+      </div>
+
+      {linhasClaras.map((l) => (
+        <div key={l.r} className={GRADE}>
+          <div className={rotuloLinha}>{l.r}</div>
+          {colunas.map((c) => {
+            const sub = l.sub?.(c) ?? null;
+            return (
+              <div key={c.chave} className={celulaClara}>
+                <span className={`text-[17px] leading-tight ${valorOuro}`}>{l.v(c)}</span>
+                {sub && <span className="text-[9px] leading-tight text-tinta">({sub})</span>}
+              </div>
+            );
+          })}
+        </div>
+      ))}
+
+      {/* perfil de cada coluna (textos em Parâmetros globais) */}
+      <div className={GRADE}>
+        <div aria-hidden="true" />
+        {colunas.map((c) => (
+          <div key={c.chave} className={`flex min-h-[2.6rem] flex-col items-center justify-center px-2 py-1 text-center ${COR_RODAPE[c.cor]}`}>
+            <div className="text-[11px] font-bold">{c.rodape.titulo}</div>
+            <div className="text-[10px] opacity-90">{c.rodape.texto}</div>
+          </div>
+        ))}
+      </div>
+
+      <div className="flex flex-col">
+        {linhasEscuras.map((l) => (
+          <div key={l.r} className={GRADE}>
+            <div className="flex items-center bg-navy px-2.5 py-0.5 text-xs font-semibold text-ouro">{l.r}</div>
+            {colunas.map((c) => (
+              <div key={c.chave} className="flex items-center justify-end bg-navy px-2.5 py-0.5 text-xs tabular-nums text-ouro">
+                {l.v(c)}
+              </div>
+            ))}
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
@@ -275,7 +280,7 @@ export function SimuladorGrupo({
     LIV: String(limitar("LIV", padroes.lanceLivreParcelas)),
     FID: String(limitar("FID", padroes.lanceFidelidadeParcelas)),
   }));
-  const mudarQtd = (tipo: string) => (v: string) => setQtds((q) => ({ ...q, [tipo]: v === "" ? "" : String(limitar(tipo, Number(v))) }));
+  const mudarQtd = (tipo: TipoColuna) => (v: string) => setQtds((q) => ({ ...q, [tipo]: v === "" ? "" : String(limitar(tipo, Number(v))) }));
 
   const tipo = tipos.find((t) => t.codigo === tipoSel);
   const mesesContemplacao = Number(meses) || 0;
@@ -322,6 +327,46 @@ export function SimuladorGrupo({
           <span className={tituloParam}>Simulador Grupo</span>
           <span className="text-[17px] leading-tight font-extrabold tabular-nums">{numero}</span>
         </div>
+        <div className={caixaParam}>
+          <span className={tituloParam + " leading-tight"}>
+            Crédito
+            <br />
+            Contratado
+          </span>
+          <span className={`text-[15px] ${valorOuro}`}>{creditoSel === null ? "—" : brl0(creditoSel)}</span>
+        </div>
+        <div className={caixaParam} title={tipo ? `Parcela ${tipo.descricao}` : undefined}>
+          <span className={tituloParam + " leading-tight"}>
+            Parcela antes da
+            <br />
+            contemplação
+          </span>
+          <span className={`text-[15px] ${valorOuro}`}>{base ? brl0(base.parcelaAntes) : "—"}</span>
+        </div>
+        <div className={caixaParam}>
+          <span className={tituloParam + " leading-tight"}>
+            Meses para
+            <br />
+            terminar o plano
+          </span>
+          <span className="text-[15px] font-bold tabular-nums">{mesesFaltam}</span>
+        </div>
+        <div className={caixaParam}>
+          <span className={tituloParam + " leading-tight"}>
+            Meses
+            <br />
+            decorridos
+          </span>
+          <span className="text-[15px] font-bold tabular-nums">{String(mesesDecorridos).padStart(2, "0")}</span>
+        </div>
+        <div className={caixaParam}>
+          <span className={tituloParam + " leading-tight"}>
+            Taxa de adm.
+            <br />
+            mensal
+          </span>
+          <span className="text-[15px] font-bold tabular-nums">{taxaMensal === null ? "—" : p2(taxaMensal)}</span>
+        </div>
         <div className={caixaMeses}>
           <span className={tituloParam}>Contemplação em</span>
           <div className="flex items-baseline gap-1">
@@ -347,14 +392,6 @@ export function SimuladorGrupo({
               </button>
             ))}
           </div>
-        </div>
-        <div className={caixaParam}>
-          <span className={tituloParam + " leading-tight"}>
-            Parcela antes da
-            <br />
-            contemplação
-          </span>
-          <span className="text-[13px] font-bold tabular-nums">{tipo?.descricao ?? "—"}</span>
         </div>
         <div className={caixaParam}>
           <span className={tituloParam + " leading-tight"}>
@@ -445,43 +482,8 @@ export function SimuladorGrupo({
       </div>
 
       <div className="overflow-x-auto pb-2">
-        <div className="grid min-w-[1200px] grid-cols-[240px_repeat(5,minmax(176px,1fr))] gap-x-2 gap-y-1.5">
-          {/* cartão do contrato */}
-          <div className="col-span-1 row-span-6 grid grid-rows-subgrid">
-            <div className="flex items-center justify-center bg-[#d9d9d9] px-3 text-center">
-              <span className="font-display text-[26px] leading-tight font-bold">Crédito Imobiliário</span>
-            </div>
-            <div className="row-span-2 flex flex-col items-center justify-center gap-0.5 border border-borda-campo bg-white px-3 text-center">
-              <span className="text-[15px] font-extrabold">Valor Contratado</span>
-              <span className={`text-[28px] leading-tight ${valorOuro}`}>{creditoSel === null ? "—" : brl0(creditoSel)}</span>
-              <span className="mt-1 text-[15px] leading-tight font-extrabold">Parcela antes da Contemplação</span>
-              <span className={`text-base ${valorOuro}`}>{base ? brl0(base.parcelaAntes) : "—"}</span>
-            </div>
-            <div className="grid grid-cols-2 gap-1.5">
-              <Mini t="Meses para Terminar o Plano" v={String(mesesFaltam)} />
-              <Mini t="Meses Decorridos" v={String(mesesDecorridos).padStart(2, "0")} />
-            </div>
-            <div className="flex flex-col items-center justify-center border border-borda-campo bg-white px-2 text-center">
-              <span className="text-[13px] font-extrabold">Taxa de administração mensal</span>
-              <span className="text-base font-extrabold tabular-nums">{taxaMensal === null ? "—" : p2(taxaMensal)}</span>
-            </div>
-            <div aria-hidden="true" />
-          </div>
-
-          {colunas.map((c) => (
-            <CelulaColuna key={c.chave} c={c} aoMudarQtd={mudarQtd(c.tipo)} />
-          ))}
-        </div>
+        <GradeSimulador colunas={colunas} aoMudarQtd={mudarQtd} />
       </div>
     </section>
-  );
-}
-
-function Mini({ t, v }: { t: string; v: string }) {
-  return (
-    <div className="flex flex-col items-center justify-center border border-borda-campo bg-white px-1 py-1 text-center">
-      <span className="text-[12px] leading-tight font-extrabold">{t}</span>
-      <span className={`text-[17px] ${valorOuro}`}>{v}</span>
-    </div>
   );
 }

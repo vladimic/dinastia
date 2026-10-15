@@ -2,6 +2,14 @@
 // Regra: a cada mudança entregue, acrescentar uma entrada NO TOPO.
 export const VERSOES: { numero: string; data: string; itens: string[] }[] = [
   {
+    numero: "0056",
+    data: "15/10/2026",
+    itens: [
+      "Simulador: o cartão da esquerda (Crédito Imobiliário) foi removido e seus dados subiram para a linha de boxes, na ordem: Simulador Grupo · Crédito Contratado · Parcela antes da contemplação (agora o valor calculado) · Meses para terminar o plano · Meses decorridos · Taxa de adm. mensal · Contemplação em · Parcela para lance · Fidelidade em · Vagas · Validade · INCC.",
+      "Grade do simulador: os nomes das linhas (Recurso da Carta, Recurso Próprio, Crédito Disponível, Valor da Parcela após, Prazo Restante, Saldo Devedor, Valor Investido, Custo Mensal, Custo Anual e Dinheiro Novo) passaram para a primeira coluna e deixam de se repetir em cada contemplação; as colunas mostram só os valores. O conteúdo sobe com o espaço liberado.",
+    ],
+  },
+  {
     numero: "0054",
     data: "15/10/2026",
     itens: [
