@@ -3,7 +3,7 @@
 import { createContext, useContext, useState } from "react";
 
 // Escolhas que a tela do grupo repassa ao simulador: o crédito (caixa "Faixa de crédito") e o tipo de parcela (caixa "Tipos de parcela").
-export type TipoSim = { codigo: string; descricao: string };
+export type TipoSim = { codigo: string; descricao: string; pct: number };
 
 type Ctx = {
   creditoSel: number | null;
@@ -11,6 +11,9 @@ type Ctx = {
   tipoSel: string | null;
   setTipoSel: (v: string | null) => void;
   tipos: TipoSim[];
+  /** pagamento com furo do grupo (muda no card "Pagamento com furo" e o simulador acompanha) */
+  furo: boolean;
+  setFuro: (v: boolean) => void;
 };
 
 const SimulacaoCtx = createContext<Ctx | null>(null);
@@ -25,17 +28,20 @@ export function SimulacaoProvider({
   creditoInicial,
   tipoInicial,
   tipos,
+  furoInicial,
   children,
 }: {
   creditoInicial: number | null;
   tipoInicial: string | null;
   tipos: TipoSim[];
+  furoInicial: boolean;
   children: React.ReactNode;
 }) {
   const [creditoSel, setCreditoSel] = useState(creditoInicial);
   const [tipoSel, setTipoSel] = useState(tipoInicial);
+  const [furo, setFuro] = useState(furoInicial);
   return (
-    <SimulacaoCtx.Provider value={{ creditoSel, setCreditoSel, tipoSel, setTipoSel, tipos }}>
+    <SimulacaoCtx.Provider value={{ creditoSel, setCreditoSel, tipoSel, setTipoSel, tipos, furo, setFuro }}>
       {children}
     </SimulacaoCtx.Provider>
   );
