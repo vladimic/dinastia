@@ -203,10 +203,12 @@ function Metrica({ rotulo: r, valor }: { rotulo: string; valor: string }) {
   );
 }
 
-const caixaParam = "flex w-[8.5rem] flex-col gap-0.5 rounded-lg border border-borda-campo bg-white px-3 py-1.5";
+const caixaBase = "flex flex-col gap-0.5 rounded-lg border border-borda-campo bg-white px-3 py-1.5";
+const caixaParam = "w-[8.5rem] " + caixaBase;
+const caixaMeses = "w-[12rem] " + caixaBase; // só o box de Contemplação é mais largo: cabem os 7 atalhos
 const tituloParam = "text-[10px] font-semibold tracking-wide text-tinta uppercase";
 const campoParam = "w-full min-w-0 bg-transparent text-[13px] font-bold tabular-nums outline-none focus:text-laranja";
-const PRE_DEFINIDOS = [12, 24, 36, 48, 60];
+const PRE_DEFINIDOS = [1, 12, 24, 36, 48, 60, 120];
 
 function somarDias(iso: string, dias: number) {
   const d = new Date(iso + "T00:00:00Z");
@@ -320,7 +322,7 @@ export function SimuladorGrupo({
           <span className={tituloParam}>Simulador Grupo</span>
           <span className="text-[17px] leading-tight font-extrabold tabular-nums">{numero}</span>
         </div>
-        <div className={caixaParam}>
+        <div className={caixaMeses}>
           <span className={tituloParam}>Contemplação em</span>
           <div className="flex items-baseline gap-1">
             <input
@@ -337,11 +339,11 @@ export function SimuladorGrupo({
               <button
                 key={m}
                 type="button"
-                aria-pressed={meses === String(m)}
+                aria-pressed={Number(meses) === m && meses !== ""}
                 onClick={() => setMeses(String(m))}
-                className={"h-[18px] flex-1 rounded text-[10px] leading-none font-bold " + (meses === String(m) ? "bg-navy text-white" : "border border-borda-campo hover:border-navy")}
+                className={"h-[18px] flex-1 rounded text-[10px] leading-none font-bold " + (Number(meses) === m && meses !== "" ? "bg-navy text-white ring-1 ring-laranja" : "border border-borda-campo hover:border-navy")}
               >
-                {m}
+                {m === 1 ? "01" : m}
               </button>
             ))}
           </div>
