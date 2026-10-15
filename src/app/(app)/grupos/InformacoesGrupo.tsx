@@ -33,6 +33,8 @@ type Ctx = {
   estado: Estado;
   primeiraCorrecao: string | null;
   indices: { sigla: string; nome: string }[];
+  mostrar: boolean;
+  alternarMostrar: () => void;
   muda: (c: CampoGrupo) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => void;
   sai: (c: CampoGrupo) => (e: React.FocusEvent<HTMLInputElement>) => void;
   enter: (e: React.KeyboardEvent<HTMLInputElement>) => void;
@@ -59,6 +61,7 @@ export function InformacoesProvider(p: Props) {
   });
   const [gravados, setGravados] = useState(valores); // o que já está no banco
   const [estado, setEstado] = useState<Estado>({ tipo: "ocioso" });
+  const [mostrar, setMostrar] = useState(true); // participantes, taxa e índice no cabeçalho (botão ⋯ mostra/oculta)
   const [, iniciar] = useTransition();
 
   function gravar(campo: CampoGrupo, valor: string) {
@@ -86,7 +89,7 @@ export function InformacoesProvider(p: Props) {
   };
 
   return (
-    <InfoCtx.Provider value={{ valores, estado, primeiraCorrecao: p.primeiraCorrecao, indices: p.indices, muda, sai, enter, escolhe }}>
+    <InfoCtx.Provider value={{ valores, estado, primeiraCorrecao: p.primeiraCorrecao, indices: p.indices, mostrar, alternarMostrar: () => setMostrar((v) => !v), muda, sai, enter, escolhe }}>
       {p.children}
     </InfoCtx.Provider>
   );
@@ -113,9 +116,10 @@ function Status({ estado, className = "" }: { estado: Estado; className?: string
   );
 }
 
-/** Faixa do cabeçalho do grupo: participantes, taxa, índice e 1ª correção. */
+/** Faixa do cabeçalho do grupo: participantes, taxa e índice (o botão ⋯ mostra/oculta). */
 export function InformacoesGrupo() {
-  const { valores, estado, primeiraCorrecao, indices, muda, sai, enter, escolhe } = useInfo();
+  const { valores, estado, indices, mostrar, muda, sai, enter, escolhe } = useInfo();
+  if (!mostrar) return null;
   return (
     <section aria-label="Informações do grupo" className="flex flex-wrap items-end gap-x-3 gap-y-1.5 self-center">
       <Linha rotulo="Participantes">
@@ -134,23 +138,31 @@ export function InformacoesGrupo() {
           ))}
         </select>
       </Linha>
-      {primeiraCorrecao && (
-        <Linha rotulo="1ª correção">
-          <input
-            className="campo-sm !w-[6.5rem]"
-            readOnly
-            value={`${MESES[Number(primeiraCorrecao.slice(5, 7)) - 1]}/${primeiraCorrecao.slice(0, 4)}`}
-          />
-        </Linha>
-      )}
       <Status estado={estado} className="pb-1.5" />
     </section>
   );
 }
 
+/** Botão ⋯ ao lado do "+": mostra ou oculta participantes, taxa de adm. total e índice no cabeçalho. */
+export function AlternarInformacoes() {
+  const { mostrar, alternarMostrar } = useInfo();
+  return (
+    <button
+      type="button"
+      aria-pressed={mostrar}
+      onClick={alternarMostrar}
+      aria-label={mostrar ? "Ocultar participantes, taxa e índice" : "Mostrar participantes, taxa e índice"}
+      title={mostrar ? "Ocultar participantes, taxa e índice" : "Mostrar participantes, taxa e índice"}
+      className={"flex h-6 w-6 items-center justify-center rounded-md border text-base leading-none font-bold " + (mostrar ? "border-navy bg-lavanda text-navy" : "border-borda-campo bg-white text-tinta hover:border-navy")}
+    >
+      <span aria-hidden="true" className="-mt-1.5">…</span>
+    </button>
+  );
+}
+
 /** Botão "+" ao lado do título do grupo: abre a janela com fundo de reserva, reajuste e vencimento. */
 export function MaisInformacoes({ numero }: { numero: number }) {
-  const { valores, estado, muda, sai, enter, escolhe } = useInfo();
+  const { valores, estado, primeiraCorrecao, muda, sai, enter, escolhe } = useInfo();
   const janela = useRef<HTMLDialogElement>(null);
   const semFundo = valores.fundo_reserva === "";
 
@@ -199,6 +211,15 @@ export function MaisInformacoes({ numero }: { numero: number }) {
               ))}
             </select>
           </Linha>
+          {primeiraCorrecao && (
+            <Linha rotulo="1ª correção">
+              <input
+                className="campo-sm !w-full"
+                readOnly
+                value={`${MESES[Number(primeiraCorrecao.slice(5, 7)) - 1]}/${primeiraCorrecao.slice(0, 4)}`}
+              />
+            </Linha>
+          )}
           <Linha rotulo="Dia de vencimento">
             <input className="campo-sm !w-full" inputMode="numeric" value={valores.dia_vencimento} onChange={muda("dia_vencimento")} onBlur={sai("dia_vencimento")} onKeyDown={enter} />
           </Linha>

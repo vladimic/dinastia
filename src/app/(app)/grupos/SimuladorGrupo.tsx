@@ -141,15 +141,19 @@ function CabecalhoColuna({ c, aoMudarQtd }: { c: Coluna; aoMudarQtd: (v: string)
 // Rótulos só na 1ª coluna; as colunas trazem apenas os valores (sem repetir os nomes).
 function GradeSimulador({ colunas, aoMudarQtd }: { colunas: Coluna[]; aoMudarQtd: (tipo: TipoColuna) => (v: string) => void }) {
   const rotuloLinha = "flex items-center rounded-md border border-borda-campo bg-white px-2 text-[11px] leading-tight font-bold text-navy";
-  const celulaClara = "flex min-h-[2.6rem] flex-col items-center justify-center border border-borda-campo bg-white px-1 text-center";
-  const linhasClaras: { r: string; v: (c: Coluna) => string; sub?: (c: Coluna) => string | null }[] = [
-    { r: "Recurso da Carta", v: (c) => (c.calc && c.tipo !== "SOR" ? dinheiro(c.calc.recursoCarta) : "—"), sub: (c) => (c.calc && c.tipo !== "SOR" ? `embutido ${Math.round(c.calc.fracaoCarta * 100)}%` : c.bloqueio ?? (c.oferecido ? null : "Grupo não oferece")) },
-    { r: "Recurso Próprio", v: (c) => (c.calc && c.tipo !== "SOR" ? dinheiro(c.calc.recursoProprio) : "—"), sub: (c) => (c.calc && c.tipo !== "SOR" ? `dinheiro ${100 - Math.round(c.calc.fracaoCarta * 100)}%` : null) },
+  const rotuloLinhaEscuro = "flex items-center rounded-md bg-navy px-2 text-[11px] leading-tight font-bold text-ouro";
+  const celula = "flex flex-col items-center justify-center border border-borda-campo bg-white px-1 text-center";
+  // as linhas de cima mostram um aviso no lugar do valor quando a coluna não se aplica (ex.: fidelidade ainda não liberada)
+  const aviso = (c: Coluna) => c.bloqueio ?? (c.oferecido ? null : "Grupo não oferece");
+  const linhasClaras: { r: string; v: (c: Coluna) => string; avisar?: boolean }[] = [
+    { r: "Recurso da Carta (embutido)", v: (c) => (c.calc && c.tipo !== "SOR" ? dinheiro(c.calc.recursoCarta) : "—"), avisar: true },
+    { r: "Recurso Próprio (dinheiro)", v: (c) => (c.calc && c.tipo !== "SOR" ? dinheiro(c.calc.recursoProprio) : "—") },
     { r: "Crédito Disponível após a Contemplação", v: (c) => dinheiro(c.calc?.creditoDisponivel) },
     { r: "Valor da Parcela após a Contemplação", v: (c) => dinheiro(c.calc?.parcelaApos) },
     { r: "Prazo Restante", v: (c) => (c.calc && c.prazoRestante > 0 ? String(c.prazoRestante) : "—") },
   ];
-  const linhasEscuras: { r: string; v: (c: Coluna) => string }[] = [
+  // linhas de baixo: mesmo padrão de fonte e de caixa das de cima (sem fundo azul nos valores)
+  const linhasBaixo: { r: string; v: (c: Coluna) => string }[] = [
     { r: "Saldo Devedor", v: (c) => dinheiro(c.calc?.saldoDevedor) },
     { r: "Valor Investido", v: (c) => dinheiro(c.calc?.valorInvestido) },
     { r: "Custo Mensal", v: (c) => (c.calc?.custoMensal == null ? "—" : p2(c.calc.custoMensal * 100)) },
@@ -170,11 +174,14 @@ function GradeSimulador({ colunas, aoMudarQtd }: { colunas: Coluna[]; aoMudarQtd
         <div key={l.r} className={GRADE}>
           <div className={rotuloLinha}>{l.r}</div>
           {colunas.map((c) => {
-            const sub = l.sub?.(c) ?? null;
+            const msg = l.avisar ? aviso(c) : null;
             return (
-              <div key={c.chave} className={celulaClara}>
-                <span className={`text-[15px] leading-tight ${valorOuro}`}>{l.v(c)}</span>
-                {sub && <span className="text-[9px] leading-tight text-tinta">({sub})</span>}
+              <div key={c.chave} className={`${celula} min-h-[2.4rem]`}>
+                {msg ? (
+                  <span className="text-[9px] leading-tight text-tinta">{msg}</span>
+                ) : (
+                  <span className={`text-[15px] leading-tight ${valorOuro}`}>{l.v(c)}</span>
+                )}
               </div>
             );
           })}
@@ -192,13 +199,13 @@ function GradeSimulador({ colunas, aoMudarQtd }: { colunas: Coluna[]; aoMudarQtd
         ))}
       </div>
 
-      <div className="flex flex-col">
-        {linhasEscuras.map((l) => (
+      <div className="flex flex-col gap-1">
+        {linhasBaixo.map((l) => (
           <div key={l.r} className={GRADE}>
-            <div className="flex items-center bg-navy px-2.5 py-0.5 text-xs font-semibold text-ouro">{l.r}</div>
+            <div className={rotuloLinhaEscuro}>{l.r}</div>
             {colunas.map((c) => (
-              <div key={c.chave} className="flex items-center justify-end bg-navy px-2.5 py-0.5 text-xs tabular-nums text-ouro">
-                {l.v(c)}
+              <div key={c.chave} className={`${celula} h-[1.9rem]`}>
+                <span className={`text-[15px] leading-tight ${valorOuro}`}>{l.v(c)}</span>
               </div>
             ))}
           </div>
@@ -208,28 +215,17 @@ function GradeSimulador({ colunas, aoMudarQtd }: { colunas: Coluna[]; aoMudarQtd
   );
 }
 
-const caixaBase = "flex flex-col gap-0.5 rounded-lg border border-borda-campo bg-white px-3 py-1.5";
-const caixaParam = "w-[8.5rem] " + caixaBase;
-const caixaMeses = "w-[12rem] " + caixaBase; // só o box de Contemplação é mais largo: cabem os 7 atalhos
-const tituloParam = "text-[10px] font-semibold tracking-wide text-tinta uppercase";
-const campoParam = "w-full min-w-0 bg-transparent text-[13px] font-bold tabular-nums outline-none focus:text-laranja";
+// Todos os boxes: título com 2 linhas reservadas + linha do valor de altura fixa => os valores ficam alinhados entre os boxes.
+const caixaBase = "flex flex-col rounded-lg border border-borda-campo bg-white px-2.5 py-1.5";
+const tituloParam = "flex min-h-[1.5rem] items-start text-[10px] font-semibold leading-[1.15] tracking-wide text-tinta uppercase";
+const linhaValor = "flex h-6 items-center text-[14px] font-bold tabular-nums";
+const campoParam = "w-full min-w-0 bg-transparent text-[14px] font-bold tabular-nums outline-none focus:text-laranja";
 const PRE_DEFINIDOS = [1, 12, 24, 36, 48, 60, 120];
 
 function somarDias(iso: string, dias: number) {
   const d = new Date(iso + "T00:00:00Z");
   d.setUTCDate(d.getUTCDate() + dias);
   return d.toISOString().slice(0, 10);
-}
-
-const caixaEstreita = "w-[6.5rem] " + caixaBase;
-
-function ParametroTexto({ t, v }: { t: string; v: string }) {
-  return (
-    <div className={caixaEstreita}>
-      <span className={tituloParam}>{t}</span>
-      <span className="text-[13px] font-bold tabular-nums">{v}</span>
-    </div>
-  );
 }
 
 export function SimuladorGrupo({
@@ -331,16 +327,17 @@ export function SimuladorGrupo({
       <div className="flex flex-wrap gap-2">
         <div className={"w-[5.5rem] " + caixaBase}>
           <span className={tituloParam}>Simulador</span>
-          <span className="text-[17px] leading-tight font-extrabold tabular-nums">{numero}</span>
+          <span className={linhaValor}>{numero}</span>
         </div>
-        <div className={caixaParam}>
-          <div className="flex items-center justify-between gap-1">
-            <span className={tituloParam + " min-w-0 text-[8px] leading-[1.15] tracking-normal"}>
+
+        <div className={"w-[8.5rem] " + caixaBase}>
+          <div className="flex min-h-[1.5rem] items-start justify-between gap-1">
+            <span className="text-[8px] leading-[1.15] font-semibold text-tinta uppercase">
               Crédito
               <br />
               Contratado
             </span>
-            <div className="flex shrink-0 items-center gap-px" role="group" aria-label="Quantidade de cotas" title="Quantidade de cotas (multiplica o crédito escolhido)">
+            <div className="ml-auto flex shrink-0 items-center gap-px pl-1" role="group" aria-label="Quantidade de cotas" title="Quantidade de cotas (multiplica o crédito escolhido)">
               <button
                 type="button"
                 aria-label="Menos uma cota"
@@ -369,31 +366,46 @@ export function SimuladorGrupo({
               </button>
             </div>
           </div>
-          <span className={`text-[15px] ${valorOuro}`}>{creditoContratado === null ? "—" : brl0(creditoContratado)}</span>
+          <span className={`${linhaValor} text-ouro`}>{creditoContratado === null ? "—" : brl0(creditoContratado)}</span>
         </div>
-        <div className={caixaParam} title={tipo ? `Parcela ${tipo.descricao}` : undefined}>
-          <span className={tituloParam + " leading-tight"}>
+
+        <div className={"w-[8.5rem] " + caixaBase} title={tipo ? `Parcela ${tipo.descricao}` : undefined}>
+          <span className={tituloParam}>
             Parcela antes da
             <br />
             contemplação
           </span>
-          <span className={`text-[15px] ${valorOuro}`}>{base ? brl0(base.parcelaAntes) : "—"}</span>
+          <span className={`${linhaValor} text-ouro`}>{base ? brl0(base.parcelaAntes) : "—"}</span>
         </div>
-        <div className={caixaParam}>
+
+        <div className={"w-[8.5rem] " + caixaBase}>
           <span className={tituloParam}>Meses</span>
-          <div className="flex items-baseline justify-between text-[11px] leading-tight">
-            <span className="text-tinta">para terminar</span>
-            <strong className="text-[13px] tabular-nums">{mesesFaltam}</strong>
+          <div className={linhaValor + " justify-between"}>
+            <span className="text-[11px] font-normal text-tinta">para terminar</span>
+            <span>{mesesFaltam}</span>
           </div>
-          <div className="flex items-baseline justify-between text-[11px] leading-tight">
+          <div className="flex h-4 items-center justify-between text-[11px] tabular-nums">
             <span className="text-tinta">decorridos</span>
-            <strong className="text-[13px] tabular-nums">{String(mesesDecorridos).padStart(2, "0")}</strong>
+            <strong>{String(mesesDecorridos).padStart(2, "0")}</strong>
           </div>
         </div>
-        <ParametroTexto t="Fidelidade em" v={fidelidadeMeses ? `${fidelidadeMeses} Meses` : "—"} />
-        <div className={caixaMeses}>
-          <span className={tituloParam}>Contemplação em</span>
-          <div className="flex items-baseline gap-1">
+
+        <div className={"w-[6.5rem] " + caixaBase}>
+          <span className={tituloParam}>
+            Fidelidade
+            <br />
+            em
+          </span>
+          <span className={linhaValor}>{fidelidadeMeses ? `${fidelidadeMeses} Meses` : "—"}</span>
+        </div>
+
+        <div className={"w-[12rem] " + caixaBase}>
+          <span className={tituloParam}>
+            Contemplação
+            <br />
+            em
+          </span>
+          <div className={linhaValor + " gap-1"}>
             <input
               className={campoParam + " w-8 border-b border-borda-campo text-right"}
               inputMode="numeric"
@@ -401,9 +413,9 @@ export function SimuladorGrupo({
               value={meses}
               onChange={(e) => setMeses(e.target.value.replace(/\D/g, "").slice(0, 3))}
             />
-            <span className="text-[11px] text-tinta">meses</span>
+            <span className="text-[11px] font-normal text-tinta">meses</span>
           </div>
-          <div className="flex gap-0.5">
+          <div className="flex gap-0.5 pt-0.5">
             {PRE_DEFINIDOS.map((m) => (
               <button
                 key={m}
@@ -417,36 +429,40 @@ export function SimuladorGrupo({
             ))}
           </div>
         </div>
-        <div className={caixaEstreita}>
-          <span className={tituloParam + " leading-tight"}>
+
+        <div className={"w-[6.5rem] " + caixaBase}>
+          <span className={tituloParam}>
             Taxa de adm.
             <br />
             mensal
           </span>
-          <span className="text-[15px] font-bold tabular-nums">{taxaMensal === null ? "—" : p2(taxaMensal)}</span>
+          <span className={linhaValor}>{taxaMensal === null ? "—" : p2(taxaMensal)}</span>
         </div>
-        <div className={caixaEstreita}>
-          <span className={tituloParam + " leading-tight"}>
+
+        <div className={"w-[6.5rem] " + caixaBase}>
+          <span className={tituloParam}>
             Parcela para
             <br />
             lance
           </span>
-          <span className="text-[13px] font-bold tabular-nums" title="(crédito + taxa de administração) ÷ prazo original do grupo">
+          <span className={linhaValor + " truncate"} title="(crédito + taxa de administração) ÷ prazo original do grupo">
             {base ? brl0(base.parcelaLance) : "—"}
           </span>
         </div>
+
         <label className={"w-[4.5rem] " + caixaBase}>
           <span className={tituloParam}>Vagas</span>
           <input
-            className={campoParam + " text-[#c62828]"}
+            className={`${campoParam} h-6 text-[#c62828]`}
             inputMode="numeric"
             value={vagas}
             onChange={(e) => setVagas(e.target.value.replace(/\D/g, "").slice(0, 4))}
           />
         </label>
+
         <div className={"relative w-[6.5rem] " + caixaBase}>
-          <div className="flex items-center gap-1.5">
-            <span className={tituloParam}>Validade</span>
+          <div className={tituloParam + " items-center gap-1.5"}>
+            <span>Validade</span>
             <button
               type="button"
               aria-label="Trocar a data de validade"
@@ -460,7 +476,7 @@ export function SimuladorGrupo({
               </svg>
             </button>
           </div>
-          <span className="text-[13px] font-bold tabular-nums text-[#c62828]">{dataBR(validade)}</span>
+          <span className={`${linhaValor} text-[#c62828]`}>{dataBR(validade)}</span>
           {/* seletor de data nativo, escondido: abre pelo botão do calendário */}
           <input
             ref={validadeRef}
@@ -472,11 +488,10 @@ export function SimuladorGrupo({
             onChange={(e) => e.target.value && setValidade(e.target.value)}
           />
         </div>
+
         <div className={"w-[5.5rem] " + caixaBase}>
-          <div className="flex items-center justify-between gap-2">
-            <label htmlFor="incc-sim" className={tituloParam}>
-              INCC
-            </label>
+          <div className={tituloParam + " items-center justify-between gap-2"}>
+            <label htmlFor="incc-sim">INCC</label>
             <button
               type="button"
               role="switch"
@@ -489,7 +504,7 @@ export function SimuladorGrupo({
               <span className={"absolute top-0.5 h-3 w-3 rounded-full bg-white shadow transition-all " + (inccLigado ? "left-[14px]" : "left-0.5")} />
             </button>
           </div>
-          <div className="flex items-baseline gap-0.5 text-[13px] font-bold">
+          <div className={linhaValor + " gap-0.5"}>
             <input
               id="incc-sim"
               className={campoParam + " text-right" + (inccLigado ? "" : " text-tinta/60")}
@@ -507,9 +522,6 @@ export function SimuladorGrupo({
             <span aria-hidden="true" className={inccLigado ? "" : "text-tinta/60"}>%</span>
           </div>
         </div>
-        <span className="ml-auto flex items-center gap-1.5 self-start rounded-full bg-laranja-claro px-2.5 py-0.5 text-[11px] font-bold text-alerta">
-          <Fic /> Valor ainda de exemplo (não calculado)
-        </span>
       </div>
 
       <div className="overflow-x-auto pb-2">

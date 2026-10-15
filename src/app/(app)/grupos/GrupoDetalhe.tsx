@@ -1,9 +1,9 @@
 import type { PadroesSimulador } from "@/lib/simulacao";
 import { nomeFamilia, type GrupoDetalhe } from "@/lib/grupos";
 import { dataBR } from "@/lib/formato";
-import { PagamentoComFuro, TiposParcela } from "./ParcelasEFuro";
+import { TiposParcela } from "./ParcelasEFuro";
 import { FaixaCredito } from "./FaixaCredito";
-import { InformacoesGrupo, InformacoesProvider, MaisInformacoes } from "./InformacoesGrupo";
+import { AlternarInformacoes, InformacoesGrupo, InformacoesProvider, MaisInformacoes } from "./InformacoesGrupo";
 import { SequenciaContemplacao } from "./SequenciaContemplacao";
 import { ModalidadesContemplacao } from "./ModalidadesContemplacao";
 import { LinhaCartoes } from "./LinhaCartoes";
@@ -59,7 +59,9 @@ export function GrupoDetalheView({ grupo, indices, hoje, padroes }: Props) {
               Grupo {grupo.numero} · {nomeFamilia(grupo.familia)}
             </span>
             <MaisInformacoes numero={grupo.numero} />
+            <AlternarInformacoes />
           </h2>
+          <InformacoesGrupo />
           <span>
             <span className="text-tinta">Assembleia atual: </span>
             <strong>
@@ -98,7 +100,6 @@ export function GrupoDetalheView({ grupo, indices, hoje, padroes }: Props) {
             </div>
             <span className="text-xs font-bold leading-none tabular-nums">{grupo.prazo_grupo_meses}</span>
           </div>
-          <InformacoesGrupo />
         </div>
       </div>
       </InformacoesProvider>
@@ -112,10 +113,7 @@ export function GrupoDetalheView({ grupo, indices, hoje, padroes }: Props) {
       <LinhaCartoes>
         <FaixaCredito key={`cred-${grupo.grupo_assembleia_id}`} versaoId={grupo.grupo_assembleia_id} creditos={grupo.creditos} />
 
-        <div className="flex flex-col gap-3">
-          <PagamentoComFuro key={`furo-${grupo.grupo_assembleia_id}`} versaoId={grupo.grupo_assembleia_id} />
-          <TiposParcela key={`tipos-${grupo.grupo_assembleia_id}`} versaoId={grupo.grupo_assembleia_id} tipos={grupo.tiposParcela} />
-        </div>
+        <TiposParcela key={`tipos-${grupo.grupo_assembleia_id}`} versaoId={grupo.grupo_assembleia_id} tipos={grupo.tiposParcela} />
 
         <div className="flex flex-col gap-3">
         <SequenciaContemplacao
