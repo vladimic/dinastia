@@ -2,6 +2,15 @@
 // Regra: a cada mudança entregue, acrescentar uma entrada NO TOPO.
 export const VERSOES: { numero: string; data: string; itens: string[] }[] = [
   {
+    numero: "0043",
+    data: "15/10/2026",
+    itens: [
+      "Fundo de reserva dos imóveis = 0%: os grupos de imóveis sem fundo informado passaram a 0% (migração 0018, já aplicada). A importação (importar_grupo) agora aceita \"fundo_reserva\" vindo do PDF do grupo; sem ele, imóveis gravam 0% e edição manual anterior não é sobrescrita.",
+      "Grupos e Tabelas: a lista de grupos ficou retrátil. Ao escolher um grupo ela recolhe e o conteúdo sobe; passar o mouse em \"Imóveis\" reabre a lista e empurra o conteúdo para baixo (no celular, toque na família ativa).",
+      "Leitor de PDF (scripts/importar_tabelas.py) passa a ler o fundo de reserva do PDF do grupo; sem menção no PDF, imóveis ficam com 0%.",
+    ],
+  },
+  {
     numero: "0042",
     data: "15/10/2026",
     itens: [
