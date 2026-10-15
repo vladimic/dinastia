@@ -2,6 +2,16 @@
 // Regra: a cada mudança entregue, acrescentar uma entrada NO TOPO.
 export const VERSOES: { numero: string; data: string; itens: string[] }[] = [
   {
+    numero: "0045",
+    data: "15/10/2026",
+    itens: [
+      "Simulador do grupo (ainda com números fictícios, só o layout) na parte inferior da tela. Parâmetros no topo: Contemplação em (meses) editável, com atalhos 12 · 24 · 36 · 48 · 60; Vagas editável; Validade da proposta com 7 dias a partir de hoje e editável; INCC editável. O ID do plano saiu.",
+      "INCC passa a ser parâmetro global (Parâmetros globais › Simulador, carregado com 6,00% a.a.; migração 0019, já aplicada). O simulador parte desse valor e a alteração feita na tela vale só para aquela simulação.",
+      "Escolha do crédito (caixa Faixa de crédito) e do tipo de parcela (caixa Tipos de parcela): o item escolhido fica em destaque e vai para o simulador (Valor Contratado e Parcela antes da contemplação). Três modelos para comparar, escolhidos no topo do simulador: 1 clicar na linha (fundo escuro), 2 bolinha de seleção, 3 setas ‹ › no topo da caixa.",
+      "Novo Lance Livre entre o Lance Limitado e o Fidelidade.",
+    ],
+  },
+  {
     numero: "0044",
     data: "15/10/2026",
     itens: [

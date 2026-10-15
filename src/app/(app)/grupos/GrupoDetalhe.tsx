@@ -5,26 +5,37 @@ import { FaixaCredito } from "./FaixaCredito";
 import { InformacoesGrupo } from "./InformacoesGrupo";
 import { SequenciaContemplacao } from "./SequenciaContemplacao";
 import { ModalidadesContemplacao } from "./ModalidadesContemplacao";
+import { SimuladorGrupo } from "./SimuladorGrupo";
+import { SimulacaoProvider } from "./SimulacaoContext";
 
 type Props = {
   grupo: GrupoDetalhe;
   indices: { sigla: string; nome: string }[];
   hoje: string;
+  inccPadrao: number;
 };
 
 function dataLocal(ts: string) {
   return new Date(ts).toLocaleDateString("pt-BR", { timeZone: "America/Sao_Paulo" });
 }
 
-export function GrupoDetalheView({ grupo, indices, hoje }: Props) {
+export function GrupoDetalheView({ grupo, indices, hoje, inccPadrao }: Props) {
   const prazoCalculado = grupo.prazo_grupo_meses - (grupo.assembleia - 1);
   const prazoDiverge = prazoCalculado !== grupo.prazo_cota_meses;
   // a tabela vigente é da próxima assembleia enquanto a data dela não passou
   const realizadas = grupo.data_assembleia && grupo.data_assembleia >= hoje ? grupo.assembleia - 1 : grupo.assembleia;
   const faltam = Math.max(0, grupo.prazo_grupo_meses - realizadas);
 
+  const tipoInicial = grupo.tiposParcela.find((t) => t.disponivel && t.codigo === "NORMAL") ?? grupo.tiposParcela.find((t) => t.disponivel);
+
   return (
-    <div key={grupo.numero} className="flex flex-col gap-4 border-t border-borda pt-4">
+    <SimulacaoProvider
+      key={grupo.numero}
+      creditoInicial={grupo.creditos[0] ?? null}
+      tipoInicial={tipoInicial?.codigo ?? null}
+      tipos={grupo.tiposParcela.map((t) => ({ codigo: t.codigo, descricao: t.descricao }))}
+    >
+    <div className="flex flex-col gap-4 border-t border-borda pt-4">
 
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex flex-wrap items-baseline gap-x-5 gap-y-1 text-[13px]">
@@ -117,6 +128,9 @@ export function GrupoDetalheView({ grupo, indices, hoje }: Props) {
         </div>
 
       </div>
+
+      <SimuladorGrupo numero={grupo.numero} hoje={hoje} inccPadrao={inccPadrao} fidelidadeMeses={grupo.fidelidade_meses} />
     </div>
+    </SimulacaoProvider>
   );
 }

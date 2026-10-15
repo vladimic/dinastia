@@ -137,6 +137,14 @@ export async function listarIndices() {
   return data ?? [];
 }
 
+/** INCC projetado (% ao ano) dos parâmetros globais; 6 se ainda não houver */
+export async function carregarInccPadrao(): Promise<number> {
+  const supabase = await createClient();
+  const { data, error } = await supabase.from("parametros_gerais").select("incc_pct_ano").eq("id", 1).maybeSingle();
+  if (error) throw error;
+  return data?.incc_pct_ano === null || data?.incc_pct_ano === undefined ? 6 : Number(data.incc_pct_ano);
+}
+
 type TipoRef = { codigo: string; nome: string };
 
 export type Modalidade = {
