@@ -87,7 +87,7 @@ export function TiposParcela({ versaoId, tipos }: { versaoId: number; tipos: Tip
       </ul>
 
       {/* pagamento com furo: só o rótulo e o sinalizador, no fundo do box */}
-      <div className="mt-1 flex items-center justify-between border-t border-linha pt-2.5">
+      <div className="mt-auto flex items-center justify-between border-t border-linha pt-2.5">
         <span id={`furo-${versaoId}`} className="text-[13px] font-bold">
           Furo
         </span>

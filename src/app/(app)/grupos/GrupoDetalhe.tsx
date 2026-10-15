@@ -115,7 +115,7 @@ export function GrupoDetalheView({ grupo, indices, hoje, padroes }: Props) {
 
         <TiposParcela key={`tipos-${grupo.grupo_assembleia_id}`} versaoId={grupo.grupo_assembleia_id} tipos={grupo.tiposParcela} />
 
-        <div className="flex items-start gap-3">
+        <div className="flex items-stretch gap-3">
         <SequenciaContemplacao
           key={`seq-${grupo.grupo_assembleia_id}`}
           versaoId={grupo.grupo_assembleia_id}

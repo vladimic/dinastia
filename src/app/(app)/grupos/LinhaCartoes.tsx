@@ -24,7 +24,7 @@ export function LinhaCartoes({ children }: { children: React.ReactNode }) {
   }, []);
 
   return (
-    <div ref={ref} className="relative flex flex-wrap items-start gap-3">
+    <div ref={ref} className="relative flex flex-wrap items-stretch gap-3">
       {children}
     </div>
   );
