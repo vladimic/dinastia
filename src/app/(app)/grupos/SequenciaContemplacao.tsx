@@ -6,6 +6,8 @@ import {
   linhaDetalhada,
   notaFidelidade,
   notaSorteios,
+  parcelaFidelidade,
+  FIDELIDADE,
   SORTEIO,
   validarEdicao,
   type Edicao,
@@ -54,7 +56,13 @@ function Codigos({ itens }: { itens: Posicao[] }) {
             className="pointer-events-none absolute bottom-full left-1/2 z-20 mb-1 hidden -translate-x-1/2 whitespace-nowrap rounded-md bg-navy px-2 py-1 text-[11px] font-semibold text-white shadow-lg group-hover:block group-focus:block"
           >
             {o.nome}
-            {o.desde ? ` · a partir do mês ${o.desde}` : ""}
+            {!o.desde
+              ? ""
+              : o.codigo === FIDELIDADE
+                ? ` · liberado na parcela ${parcelaFidelidade(o.desde)}`
+                : o.codigo === SORTEIO
+                  ? ` · sorteio adicional a partir do mês ${o.desde}`
+                  : ` · a partir do mês ${o.desde}`}
           </span>
         </li>
       ))}
@@ -167,9 +175,20 @@ export function SequenciaContemplacao({ versaoId, modelo, linha, faixas, tipos, 
     }
   };
 
-  // legenda: só nos grupos com mais de um sorteio (quando a quantidade sobe e quando o fidelidade libera)
-  const maisDeUmSorteio = !!modelo?.simples && Math.max(0, ...modelo.sorteios.map((s) => s.qtd)) > 1;
-  const notas = maisDeUmSorteio && modelo ? [notaSorteios(modelo), notaFidelidade(fidelidadeMeses)].filter(Boolean) : [];
+  // legenda sempre que houver o que dizer: fidelidade e/ou quantidade de sorteios que muda; o tooltip explica
+  const notas =
+    modelo?.simples
+      ? [
+          notaSorteios(modelo) && {
+            texto: notaSorteios(modelo) as string,
+            dica: "Em alguns períodos o grupo faz mais de um sorteio por assembleia; aqui está quando a quantidade muda.",
+          },
+          notaFidelidade(fidelidadeMeses) && {
+            texto: notaFidelidade(fidelidadeMeses) as string,
+            dica: `Lance fidelidade: só é liberado para quem já pagou ${parcelaFidelidade(fidelidadeMeses ?? 0)} parcelas, por isso entra na sequência a partir da assembleia ${fidelidadeMeses}.`,
+          },
+        ].filter((n): n is { texto: string; dica: string } => !!n)
+      : [];
 
   if (!editando) {
     return (
@@ -198,8 +217,18 @@ export function SequenciaContemplacao({ versaoId, modelo, linha, faixas, tipos, 
           </>
         )}
         {notas.map((n) => (
-          <p key={n} className="w-0 min-w-full text-[11px] text-tinta">
-            {n}
+          <p
+            key={n.texto}
+            tabIndex={0}
+            className="group relative w-0 min-w-full cursor-help rounded text-[11px] text-tinta outline-none focus-visible:ring-1 focus-visible:ring-navy"
+          >
+            {n.texto}
+            <span
+              role="tooltip"
+              className="pointer-events-none absolute bottom-full left-0 z-20 mb-1 hidden w-max max-w-[16rem] rounded-md bg-navy px-2 py-1 text-[11px] font-semibold text-white shadow-lg group-hover:block group-focus:block"
+            >
+              {n.dica}
+            </span>
           </p>
         ))}
       </section>
@@ -333,7 +362,7 @@ export function SequenciaContemplacao({ versaoId, modelo, linha, faixas, tipos, 
           </select>
         </label>
         <label className="flex flex-col gap-1 text-xs font-bold text-tinta">
-          Fidelidade libera no mês
+          Fidelidade entra na sequência no mês
           <input
             className={CTRL + " w-full"}
             inputMode="numeric"

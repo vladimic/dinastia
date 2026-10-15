@@ -1,6 +1,8 @@
 # Dinastia · MER (modelo entidade-relacionamento)
 
-Atualizado em 15/10/2026 · versão 0035 · conferido tabela a tabela, coluna a coluna, com o banco em produção (Supabase, schema `public`).
+Atualizado em 15/10/2026 · versão 0036 · conferido tabela a tabela, coluna a coluna, com o banco em produção (Supabase, schema `public`).
+
+Desenho para baixar: `docs/MER.png` (imagem) e `docs/MER.svg` (vetorial).
 
 Mudanças desde o MER de 09/10/2026:
 - **Esquema: nenhuma.** As 12 tabelas, colunas, chaves, unicidades e índices continuam como no MER anterior (última migração de esquema: 0010).

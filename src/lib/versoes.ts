@@ -2,6 +2,15 @@
 // Regra: a cada mudança entregue, acrescentar uma entrada NO TOPO.
 export const VERSOES: { numero: string; data: string; itens: string[] }[] = [
   {
+    numero: "0036",
+    data: "15/10/2026",
+    itens: [
+      "Sequência de contemplação: a legenda aparece sempre que houver o que dizer (só fidelidade, só mais de um sorteio, ou os dois). Passar o mouse nas linhas da legenda e nos boxes FID e SOR explica o que cada um significa.",
+      "Fidelidade passa a ser escrito como \"liberado na parcela 36\" (a parcela anterior ao mês em que ele entra na sequência, 37). Na edição, o campo agora se chama \"Fidelidade entra na sequência no mês\".",
+      "MER agora também como desenho para baixar (docs/MER.png e docs/MER.svg).",
+    ],
+  },
+  {
     numero: "0035",
     data: "15/10/2026",
     itens: [
