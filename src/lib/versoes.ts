@@ -2,6 +2,14 @@
 // Regra: a cada mudança entregue, acrescentar uma entrada NO TOPO.
 export const VERSOES: { numero: string; data: string; itens: string[] }[] = [
   {
+    numero: "0041",
+    data: "15/10/2026",
+    itens: [
+      "PDF da Tabela Resumo agora tem uma quantidade fixa de grupos por página, repetindo o cabeçalho a cada página: a 1ª termina no grupo 12172 (113 grupos) e o restante segue na página seguinte. As letras ficam maiores que na página única.",
+      "\"Grupos por página\" é um campo da janela de exportação (padrão 113) e o navegador lembra a última quantidade usada, para as próximas exportações.",
+    ],
+  },
+  {
     numero: "0040",
     data: "15/10/2026",
     itens: [

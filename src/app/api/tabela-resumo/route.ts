@@ -1,17 +1,21 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { carregarGruposImoveis } from "@/lib/tabelaResumoDados";
-import { lerMes, montarLinhas, nomeArquivo } from "@/lib/tabelaResumo";
+import { GRUPOS_POR_PAGINA, lerMes, lerPorPagina, montarLinhas, nomeArquivo } from "@/lib/tabelaResumo";
 import { tabelaResumoExcel } from "@/lib/tabelaResumoExcel";
 import { tabelaResumoPdf } from "@/lib/tabelaResumoPdf";
 
-// Tabela Resumo dos imóveis: ?formato=xlsx (só a aba Imóvel) ou ?formato=pdf (igual ao modelo), com ?mes=AAAA-MM de referência
+// Tabela Resumo dos imóveis: ?formato=xlsx (só a aba Imóvel) ou ?formato=pdf (igual ao modelo), com ?mes=AAAA-MM de referência e, no PDF, ?porPagina=N (grupos por página)
 export async function GET(request: NextRequest) {
   const formato = request.nextUrl.searchParams.get("formato");
   if (formato !== "xlsx" && formato !== "pdf") return NextResponse.json({ erro: "Formato inválido (xlsx ou pdf)." }, { status: 400 });
 
   const base = lerMes(request.nextUrl.searchParams.get("mes"));
   if (!base) return NextResponse.json({ erro: "Informe o mês de referência (mes=AAAA-MM)." }, { status: 400 });
+
+  const pedido = request.nextUrl.searchParams.get("porPagina");
+  const porPagina = pedido === null ? GRUPOS_POR_PAGINA : lerPorPagina(pedido);
+  if (porPagina === null) return NextResponse.json({ erro: "Grupos por página: número de 1 a 500." }, { status: 400 });
 
   const supabase = await createClient();
   const {
@@ -33,7 +37,7 @@ export async function GET(request: NextRequest) {
         },
       });
     }
-    const { bytes, paginas } = await tabelaResumoPdf(linhas, base);
+    const { bytes, paginas } = await tabelaResumoPdf(linhas, base, porPagina);
     return new Response(bytes as BodyInit, {
       headers: {
         ...cab,
