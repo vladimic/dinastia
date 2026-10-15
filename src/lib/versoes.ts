@@ -7,7 +7,7 @@ export const VERSOES: { numero: string; data: string; itens: string[] }[] = [
     itens: [
       "Fundo de reserva dos imóveis = 0%: os grupos de imóveis sem fundo informado passaram a 0% (migração 0018, já aplicada). A importação (importar_grupo) agora aceita \"fundo_reserva\" vindo do PDF do grupo; sem ele, imóveis gravam 0% e edição manual anterior não é sobrescrita.",
       "Grupos e Tabelas: a lista de grupos ficou retrátil. Ao escolher um grupo ela recolhe e o conteúdo sobe; passar o mouse em \"Imóveis\" reabre a lista e empurra o conteúdo para baixo (no celular, toque na família ativa).",
-      "Novo Simulador do grupo na parte inferior (LAYOUT COM DADOS FICTÍCIOS, para validação): Sorteio, Lance Fixo, Limitado, Livre (nova coluna) e Fidelidade. Os parâmetros da simulação saíram de baixo da 1ª coluna e foram para o topo.",
+      "Leitor de PDF (scripts/importar_tabelas.py) passa a ler o fundo de reserva do PDF do grupo; sem menção no PDF, imóveis ficam com 0%.",
     ],
   },
   {

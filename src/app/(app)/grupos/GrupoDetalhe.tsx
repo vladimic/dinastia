@@ -5,7 +5,6 @@ import { FaixaCredito } from "./FaixaCredito";
 import { InformacoesGrupo } from "./InformacoesGrupo";
 import { SequenciaContemplacao } from "./SequenciaContemplacao";
 import { ModalidadesContemplacao } from "./ModalidadesContemplacao";
-import { SimuladorGrupo } from "./SimuladorGrupo";
 
 type Props = {
   grupo: GrupoDetalhe;
@@ -118,8 +117,6 @@ export function GrupoDetalheView({ grupo, indices, hoje }: Props) {
         </div>
 
       </div>
-
-      <SimuladorGrupo numero={grupo.numero} />
     </div>
   );
 }

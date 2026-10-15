@@ -98,6 +98,10 @@ def ler_pdf(caminho: Path):
     vencimento = pega(r"Vencimento todo o dia (\d+)", int, obrig=False)
     if vencimento is None:
         avisos.append("dia de vencimento não informado na tabela")
+    # fundo de reserva: só vale o que o PDF disser; sem menção, imóveis = 0% (regra do negócio) e as demais famílias ficam sem valor
+    fundo_reserva = pega(r"Fundo de Reserva:? ([\d,]+)\s*%", num, obrig=False)
+    if fundo_reserva is None and familia == "imoveis":
+        fundo_reserva = 0.0
     seg = re.search(r"Seguro Prestamista (opcional|obrigatório) até a Contemplação e após (obrigatório|opcional)", plano)
     limite = pega(r"não pode ultrapassar o limite de (.+?anos, \d+ meses e \d+ dias)", obrig=False)
 
@@ -270,7 +274,7 @@ def ler_pdf(caminho: Path):
         "data_assembleia": data_assembleia, "taxa_adm": taxa, "prazo_cota": prazo_cota,
         "prazo_grupo": prazo_grupo, "participantes": participantes, "indice": indice,
         "mes_reajuste": mes_reaj, "primeira_correcao": primeira_correcao,
-        "vencimento": vencimento,
+        "vencimento": vencimento, "fundo_reserva": fundo_reserva,
         "seguro_opcional_pre": bool(seg and seg.group(1) == "opcional"),
         "seguro_obrigatorio_pos": bool(seg and seg.group(2) == "obrigatório"),
         "idade_limite": limite, "observacoes": " ".join(obs) or None,
@@ -322,6 +326,7 @@ def payload(g):
         "assembleia": g["assembleia"], "data_assembleia": g["data_assembleia"],
         "prazo_grupo": g["prazo_grupo"], "prazo_cota": g["prazo_cota"],
         "participantes": g["participantes"], "taxa_adm": g["taxa_adm"],
+        "fundo_reserva": g["fundo_reserva"],
         "seguro_pct_mes": g["seguro_pct_mes"], "indice": g["indice"],
         "mes_reajuste": g["mes_reajuste"], "primeira_correcao": g["primeira_correcao"],
         "vencimento": g["vencimento"], "observacoes": g["observacoes"],
