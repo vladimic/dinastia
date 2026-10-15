@@ -2,6 +2,13 @@
 // Regra: a cada mudança entregue, acrescentar uma entrada NO TOPO.
 export const VERSOES: { numero: string; data: string; itens: string[] }[] = [
   {
+    numero: "0031",
+    data: "15/10/2026",
+    itens: [
+      "Box de Modalidades de contemplação com exatamente a largura do box de Sequência de contemplação, para caber na 4ª coluna (antes tinha largura mínima própria e alargava a coluna).",
+    ],
+  },
+  {
     numero: "0030",
     data: "15/10/2026",
     itens: [
