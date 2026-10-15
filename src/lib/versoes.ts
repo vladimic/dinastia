@@ -2,6 +2,13 @@
 // Regra: a cada mudança entregue, acrescentar uma entrada NO TOPO.
 export const VERSOES: { numero: string; data: string; itens: string[] }[] = [
   {
+    numero: "0054",
+    data: "15/10/2026",
+    itens: [
+      "Simulador: Contemplação em ganha os atalhos 01 e 120 (agora 01 · 12 · 24 · 36 · 48 · 60 · 120); só esse box ficou mais largo para caber os sete. O atalho cujo valor está em uso fica marcado (também quando o número é digitado à mão).",
+    ],
+  },
+  {
     numero: "0053",
     data: "15/10/2026",
     itens: [
