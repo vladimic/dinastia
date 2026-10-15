@@ -313,9 +313,13 @@ export function SimuladorGrupo({
   });
 
   return (
-    <section className="flex flex-col gap-3" aria-label={`Simulador do grupo ${numero}`}>
+    <section className="flex flex-col gap-3 border-t border-borda pt-4" aria-label={`Simulador do grupo ${numero}`}>
       {/* parâmetros da simulação (antes ficavam sob a 1ª coluna) */}
       <div className="flex flex-wrap gap-2">
+        <div className={caixaParam}>
+          <span className={tituloParam}>Simulador Grupo</span>
+          <span className="text-[17px] leading-tight font-extrabold tabular-nums">{numero}</span>
+        </div>
         <div className={caixaParam}>
           <span className={tituloParam}>Contemplação em</span>
           <div className="flex items-baseline gap-1">

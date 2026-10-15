@@ -2,6 +2,15 @@
 // Regra: a cada mudança entregue, acrescentar uma entrada NO TOPO.
 export const VERSOES: { numero: string; data: string; itens: string[] }[] = [
   {
+    numero: "0052",
+    data: "15/10/2026",
+    itens: [
+      "Grupos e Tabelas: as Informações do grupo (participantes, taxa de administração, fundo de reserva, índice, reajuste, vencimento e 1ª correção) saíram do card e foram para o cabeçalho do grupo, à direita do gráfico de assembleias realizadas, editáveis como antes. A data de atualização foi para junto de \"Assembleia atual\", em fonte menor.",
+      "Faixa de crédito: com mais de 8 valores (ex.: grupo 690, com 11) a lista passa para duas colunas e o box deixa de ficar tão alto.",
+      "Simulador: volta a linha separando-o do restante do grupo e ganha, à esquerda de \"Contemplação em\", o box \"Simulador Grupo\" com o número do grupo selecionado.",
+    ],
+  },
+  {
     numero: "0051",
     data: "15/10/2026",
     itens: [

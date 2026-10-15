@@ -18,7 +18,7 @@ type Props = {
 
 function Linha({ rotulo, children }: { rotulo: string; children: React.ReactNode }) {
   return (
-    <label className="grid grid-cols-[1fr_6rem] items-center gap-2 text-xs font-semibold text-tinta">
+    <label className="flex flex-col gap-0.5 text-[10px] font-semibold tracking-wide text-tinta uppercase">
       {rotulo}
       {children}
     </label>
@@ -66,31 +66,18 @@ export function InformacoesGrupo(p: Props) {
     gravar(campo, e.target.value);
   };
 
+  // faixa horizontal no cabeçalho do grupo; cada campo grava ao sair dele
   return (
-    <section className="flex w-[15.5rem] flex-col gap-2 rounded-2xl border border-borda bg-white p-3.5">
-      <div className="flex items-center justify-between">
-        <h3 className="text-sm font-bold">Informações do grupo</h3>
-        <span
-          role="status"
-          aria-live="polite"
-          className={
-            "text-[11px] font-semibold " +
-            (estado.tipo === "erro" ? "text-[#9b1c1c]" : estado.tipo === "salvo" ? "text-ok" : "text-tinta")
-          }
-        >
-          {estado.tipo === "salvando" ? "Salvando…" : estado.tipo === "salvo" ? "Salvo ✓" : ""}
-        </span>
-      </div>
-
+    <section aria-label="Informações do grupo" className="flex flex-wrap items-end gap-x-3 gap-y-1.5 self-center">
       <Linha rotulo="Participantes">
-        <input className="campo-sm" inputMode="numeric" value={valores.participantes} onChange={muda("participantes")} onBlur={sai("participantes")} onKeyDown={enter} />
+        <input className="campo-sm !w-[5.5rem]" inputMode="numeric" value={valores.participantes} onChange={muda("participantes")} onBlur={sai("participantes")} onKeyDown={enter} />
       </Linha>
-      <Linha rotulo="Taxa de adm. total">
-        <input className="campo-sm" inputMode="decimal" value={valores.taxa_adm_total} onChange={muda("taxa_adm_total")} onBlur={sai("taxa_adm_total")} onKeyDown={enter} />
+      <Linha rotulo="Taxa adm. total">
+        <input className="campo-sm !w-[5.5rem]" inputMode="decimal" value={valores.taxa_adm_total} onChange={muda("taxa_adm_total")} onBlur={sai("taxa_adm_total")} onKeyDown={enter} />
       </Linha>
       <Linha rotulo="Fundo de reserva">
         <input
-          className={"campo-sm " + (valores.fundo_reserva === "" ? "border-alerta-borda bg-alerta-fundo" : "")}
+          className={"campo-sm !w-[5.5rem] " + (valores.fundo_reserva === "" ? "border-alerta-borda bg-alerta-fundo" : "")}
           inputMode="decimal"
           placeholder="—"
           value={valores.fundo_reserva}
@@ -99,8 +86,8 @@ export function InformacoesGrupo(p: Props) {
           onKeyDown={enter}
         />
       </Linha>
-      <Linha rotulo="Índice de correção">
-        <select className="campo-sm" value={valores.indice} onChange={escolhe("indice")}>
+      <Linha rotulo="Índice">
+        <select className="campo-sm !w-[6.5rem]" value={valores.indice} onChange={escolhe("indice")}>
           <option value="">—</option>
           {p.indices.map((i) => (
             <option key={i.sigla} value={i.sigla}>
@@ -109,8 +96,8 @@ export function InformacoesGrupo(p: Props) {
           ))}
         </select>
       </Linha>
-      <Linha rotulo="Reajuste anual em">
-        <select className="campo-sm" value={valores.mes_reajuste} onChange={escolhe("mes_reajuste")}>
+      <Linha rotulo="Reajuste em">
+        <select className="campo-sm !w-[6.5rem]" value={valores.mes_reajuste} onChange={escolhe("mes_reajuste")}>
           <option value="">—</option>
           {MESES.map((m, i) => (
             <option key={m} value={i + 1}>
@@ -119,24 +106,26 @@ export function InformacoesGrupo(p: Props) {
           ))}
         </select>
       </Linha>
-      <Linha rotulo="Dia de vencimento">
-        <input className="campo-sm" inputMode="numeric" value={valores.dia_vencimento} onChange={muda("dia_vencimento")} onBlur={sai("dia_vencimento")} onKeyDown={enter} />
+      <Linha rotulo="Vencimento">
+        <input className="campo-sm !w-[5.5rem]" inputMode="numeric" value={valores.dia_vencimento} onChange={muda("dia_vencimento")} onBlur={sai("dia_vencimento")} onKeyDown={enter} />
       </Linha>
       {p.primeiraCorrecao && (
         <Linha rotulo="1ª correção">
           <input
-            className="campo-sm"
+            className="campo-sm !w-[6.5rem]"
             readOnly
             value={`${MESES[Number(p.primeiraCorrecao.slice(5, 7)) - 1]}/${p.primeiraCorrecao.slice(0, 4)}`}
           />
         </Linha>
       )}
 
-      {estado.tipo === "erro" && (
-        <p role="alert" className="text-[11px] font-semibold text-[#9b1c1c]">
-          {estado.msg}
-        </p>
-      )}
+      <span
+        role="status"
+        aria-live="polite"
+        className={"pb-1.5 text-[11px] font-semibold " + (estado.tipo === "erro" ? "text-[#9b1c1c]" : estado.tipo === "salvo" ? "text-ok" : "text-tinta")}
+      >
+        {estado.tipo === "salvando" ? "Salvando…" : estado.tipo === "salvo" ? "Salvo ✓" : estado.tipo === "erro" ? estado.msg : ""}
+      </span>
     </section>
   );
 }
