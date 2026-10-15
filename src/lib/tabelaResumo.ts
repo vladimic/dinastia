@@ -269,11 +269,12 @@ export const LINHA_DIREITA = new Set([8, 25, 27, 30, 32]); // I, Z, AB, AE, AG
 const MESES = ["jan", "fev", "mar", "abr", "mai", "jun", "jul", "ago", "set", "out", "nov", "dez"];
 export const rotuloMes = (m: Mes) => `${MESES[m.mes - 1]}/${m.ano}`;
 
-// Mês de referência da Tabela Resumo: aparece no título e é a base do mês final (Fim = referência + prazo atual - 1).
-// É fixo, como na planilha modelo (set/2026): trocar aqui quando a planilha virar de mês.
-export const MES_REFERENCIA: Mes = { ano: 2026, mes: 9 };
+// Mês de referência da Tabela Resumo (título e base do mês final: Fim = referência + prazo atual - 1).
+// É escolhido na hora de exportar, no formato "AAAA-MM" (o do campo de mês do navegador).
+export function lerMes(texto: string | null): Mes | null {
+  const m = /^(\d{4})-(0[1-9]|1[0-2])$/.exec(texto ?? "");
+  if (!m || Number(m[1]) < 2000 || Number(m[1]) > 2100) return null;
+  return { ano: Number(m[1]), mes: Number(m[2]) };
+}
 
-export const nomeArquivo = (agora: Date, ext: "xlsx" | "pdf") => {
-  const [a, m, d] = new Intl.DateTimeFormat("en-CA", { timeZone: "America/Sao_Paulo" }).format(agora).split("-");
-  return `tabela-resumo-imoveis-${a}-${m}-${d}.${ext}`;
-};
+export const nomeArquivo = (m: Mes, ext: "xlsx" | "pdf") => `tabela-resumo-imoveis-${m.ano}-${mm(m.mes)}.${ext}`;
