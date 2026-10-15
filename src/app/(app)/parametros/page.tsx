@@ -27,7 +27,7 @@ async function Formulario({ searchParams }: { searchParams: PageProps<"/parametr
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("parametros_gerais")
-    .select("seguro_padrao_pct, atualizado_em")
+    .select("seguro_padrao_pct, incc_pct_ano, atualizado_em")
     .eq("id", 1)
     .maybeSingle();
   if (error) throw error;
@@ -49,9 +49,23 @@ async function Formulario({ searchParams }: { searchParams: PageProps<"/parametr
         Usado no cálculo do seguro de todos os grupos. Ex.: 0,0472% de R$ 300.000,00 = R$ 141,60 por mês.
       </p>
 
+      <h2 className="border-t border-linha pt-3 text-sm font-bold">Simulador</h2>
+      <label className="grid grid-cols-[1fr_7rem] items-center gap-3 text-xs font-semibold text-tinta">
+        INCC projetado (% ao ano)
+        <input className="campo-sm" name="incc_pct_ano" inputMode="decimal" defaultValue={pct(data?.incc_pct_ano ?? 6)} required />
+      </label>
+      <p className="text-[11px] leading-snug text-tinta">
+        Valor inicial do INCC no simulador de cada grupo. Na tela do simulador ele pode ser alterado para aquela simulação, sem mudar este parâmetro.
+      </p>
+
       {sp.salvo === "1" && (
         <p role="status" className="rounded-lg bg-ok-fundo px-3 py-2 text-sm font-semibold text-ok">
           Parâmetros salvos.
+        </p>
+      )}
+      {sp.erro === "2" && (
+        <p role="alert" className="rounded-lg bg-[#fbe4e4] px-3 py-2 text-sm font-semibold text-[#9b1c1c]">
+          INCC inválido. Informe um percentual entre 0 e 100, ex.: 6,00.
         </p>
       )}
       {sp.erro === "1" && (
