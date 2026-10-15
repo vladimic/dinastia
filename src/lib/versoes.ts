@@ -2,6 +2,14 @@
 // Regra: a cada mudança entregue, acrescentar uma entrada NO TOPO.
 export const VERSOES: { numero: string; data: string; itens: string[] }[] = [
   {
+    numero: "0053",
+    data: "15/10/2026",
+    itens: [
+      "Grupos e Tabelas: botão + ao lado de \"Grupo xxx · Imóveis\" abre uma janela com Fundo de reserva, Reajuste anual em e Dia de vencimento (editáveis, gravam ao sair do campo). Esses 3 campos saíram do cabeçalho, que fica com Participantes, Taxa adm. total, Índice e 1ª correção.",
+      "Faixa de crédito: o box já reserva as duas colunas desde o início, mesmo com poucos valores (até 8 valores usam só a 1ª coluna), e mantém sempre a mesma largura.",
+    ],
+  },
+  {
     numero: "0052",
     data: "15/10/2026",
     itens: [

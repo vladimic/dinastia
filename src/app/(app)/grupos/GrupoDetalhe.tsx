@@ -3,7 +3,7 @@ import { nomeFamilia, type GrupoDetalhe } from "@/lib/grupos";
 import { dataBR } from "@/lib/formato";
 import { PagamentoComFuro, TiposParcela } from "./ParcelasEFuro";
 import { FaixaCredito } from "./FaixaCredito";
-import { InformacoesGrupo } from "./InformacoesGrupo";
+import { InformacoesGrupo, InformacoesProvider, MaisInformacoes } from "./InformacoesGrupo";
 import { SequenciaContemplacao } from "./SequenciaContemplacao";
 import { ModalidadesContemplacao } from "./ModalidadesContemplacao";
 import { SimuladorGrupo } from "./SimuladorGrupo";
@@ -40,10 +40,24 @@ export function GrupoDetalheView({ grupo, indices, hoje, padroes }: Props) {
     >
     <div className="flex flex-col gap-4">
 
+      <InformacoesProvider
+        numero={grupo.numero}
+        participantes={grupo.participantes}
+        taxaAdm={grupo.taxa_adm_total}
+        fundoReserva={grupo.fundo_reserva}
+        indice={grupo.indice}
+        mesReajuste={grupo.mes_reajuste}
+        diaVencimento={grupo.dia_vencimento}
+        primeiraCorrecao={grupo.primeira_correcao}
+        indices={indices}
+      >
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex flex-wrap items-baseline gap-x-5 gap-y-1 text-[13px]">
-          <h2 className="text-lg font-bold">
-            Grupo {grupo.numero} · {nomeFamilia(grupo.familia)}
+          <h2 className="flex items-center gap-2 text-lg font-bold">
+            <span>
+              Grupo {grupo.numero} · {nomeFamilia(grupo.familia)}
+            </span>
+            <MaisInformacoes numero={grupo.numero} />
           </h2>
           <span>
             <span className="text-tinta">Assembleia atual: </span>
@@ -83,19 +97,10 @@ export function GrupoDetalheView({ grupo, indices, hoje, padroes }: Props) {
             </div>
             <span className="text-xs font-bold leading-none tabular-nums">{grupo.prazo_grupo_meses}</span>
           </div>
-          <InformacoesGrupo
-            numero={grupo.numero}
-            participantes={grupo.participantes}
-            taxaAdm={grupo.taxa_adm_total}
-            fundoReserva={grupo.fundo_reserva}
-            indice={grupo.indice}
-            mesReajuste={grupo.mes_reajuste}
-            diaVencimento={grupo.dia_vencimento}
-            primeiraCorrecao={grupo.primeira_correcao}
-            indices={indices}
-          />
+          <InformacoesGrupo />
         </div>
       </div>
+      </InformacoesProvider>
 
       {prazoDiverge && (
         <p className="text-xs font-semibold text-alerta">
