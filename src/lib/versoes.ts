@@ -2,6 +2,15 @@
 // Regra: a cada mudança entregue, acrescentar uma entrada NO TOPO.
 export const VERSOES: { numero: string; data: string; itens: string[] }[] = [
   {
+    numero: "0039",
+    data: "15/10/2026",
+    itens: [
+      "Exportar Tabela Resumo agora pergunta o mês de referência na hora de exportar (campo de mês, que lembra o último escolhido); ele vai no título e é a base do mês final. Sai a referência fixa em set/2026.",
+      "Grupos 370 e 420 criados a partir da Tabela Resumo (taxa, participantes, prazos, créditos, ordem de contemplação, Fixo e Livre). Sem o PDF da assembleia, índice, mês de reajuste e vencimento ficam vazios, para preencher na tela do grupo (migração 0015).",
+      "Pagamento com furo dos grupos atualizado conforme a Tabela Resumo: 49 grupos passaram a S e os grupos 760 e 820 passaram a N (migração 0016).",
+    ],
+  },
+  {
     numero: "0038",
     data: "15/10/2026",
     itens: [
