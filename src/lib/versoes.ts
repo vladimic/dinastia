@@ -2,6 +2,14 @@
 // Regra: a cada mudança entregue, acrescentar uma entrada NO TOPO.
 export const VERSOES: { numero: string; data: string; itens: string[] }[] = [
   {
+    numero: "0030",
+    data: "15/10/2026",
+    itens: [
+      "Modalidades de contemplação do grupo reorganizado em matriz: colunas Fixo, Limitado, Fidelidade e Livre (mesmo tamanho) e linhas Qtd Parcelas, Embutido e Próprio; o box fica abaixo da Sequência de contemplação, na mesma largura.",
+      "Qtd Parcelas mostra só a quantidade; \"*\" = qualquer quantidade até o limite do plano (passe o mouse). Embutido e Próprio em % do lance (Próprio = 100% − Embutido), calculados no lance máximo; modalidade que o grupo não oferece aparece com \"—\".",
+    ],
+  },
+  {
     numero: "0029",
     data: "09/10/2026",
     itens: [
