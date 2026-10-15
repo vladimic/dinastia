@@ -2,6 +2,14 @@
 // Regra: a cada mudança entregue, acrescentar uma entrada NO TOPO.
 export const VERSOES: { numero: string; data: string; itens: string[] }[] = [
   {
+    numero: "0061",
+    data: "15/10/2026",
+    itens: [
+      "Grupos e Tabelas: Tipos de parcela, Sequência de contemplação e Modalidades de contemplação ficam com a mesma largura (15 rem) e a mesma altura da Faixa de crédito (os cards da linha esticam até a altura da linha; o Furo fica no fundo do box Tipos de parcela).",
+      "Simulador: o atalho de meses selecionado em Contemplação em passa a um azul suave (fundo lavanda com borda), menos destacado que o azul escuro anterior.",
+    ],
+  },
+  {
     numero: "0060",
     data: "15/10/2026",
     itens: [

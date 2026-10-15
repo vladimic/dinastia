@@ -37,7 +37,7 @@ function Codigos({ itens, porLinha }: { itens: Posicao[]; porLinha?: number }) {
   return (
     <ol
       className={porLinha ? "grid gap-x-[3px] gap-y-1" : "flex flex-wrap gap-x-[3px] gap-y-1"}
-      style={porLinha ? { gridTemplateColumns: `repeat(${porLinha}, 1.6rem)` } : undefined}
+      style={porLinha ? { gridTemplateColumns: `repeat(${porLinha}, minmax(0, 1fr))`, justifyItems: "center" } : undefined}
     >
       {itens.map((o, k) => (
         <li
@@ -195,7 +195,7 @@ export function SequenciaContemplacao({ versaoId, modelo, linha, faixas, tipos, 
 
   if (!editando) {
     return (
-      <section className={CAIXA + (modelo?.simples ? " w-[11.5rem]!" : "")}>
+      <section className={CAIXA + (modelo?.simples ? " w-[15rem]!" : "")}>
         <div className="flex items-start justify-between gap-2">
           <h3 className="text-sm leading-tight font-bold">Sequência de contemplação</h3>
           {modelo?.simples && <BotaoLapis rotulo="Editar sequência de contemplação" onClick={abrir} />}

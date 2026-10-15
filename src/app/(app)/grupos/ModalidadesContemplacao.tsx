@@ -43,7 +43,7 @@ export function ModalidadesContemplacao({ modalidades, tipos, prazoGrupo }: Prop
   });
 
   return (
-    <section className="flex w-[14.5rem] flex-col gap-1.5 rounded-2xl border border-borda bg-white p-3">
+    <section className="flex w-[15rem] flex-col gap-1.5 rounded-2xl border border-borda bg-white p-3.5">
       <h3 className="text-sm leading-tight font-bold">Modalidades de contemplação</h3>
       <table className="tabela-sm w-full table-fixed border-collapse">
         <colgroup>

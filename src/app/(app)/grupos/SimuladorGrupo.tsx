@@ -421,7 +421,7 @@ export function SimuladorGrupo({
                 type="button"
                 aria-pressed={Number(meses) === m && meses !== ""}
                 onClick={() => setMeses(String(m))}
-                className={"h-[18px] flex-1 rounded text-[10px] leading-none font-bold " + (Number(meses) === m && meses !== "" ? "bg-navy text-white ring-1 ring-laranja" : "border border-borda-campo hover:border-navy")}
+                className={"h-[18px] flex-1 rounded text-[10px] leading-none font-bold " + (Number(meses) === m && meses !== "" ? "border border-[#8b83c9] bg-[#d9d6f0] text-navy" : "border border-borda-campo hover:border-navy")}
               >
                 {m === 1 ? "01" : m}
               </button>
