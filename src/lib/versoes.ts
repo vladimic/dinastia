@@ -2,6 +2,14 @@
 // Regra: a cada mudança entregue, acrescentar uma entrada NO TOPO.
 export const VERSOES: { numero: string; data: string; itens: string[] }[] = [
   {
+    numero: "0038",
+    data: "15/10/2026",
+    itens: [
+      "Tabela Resumo: o mês de referência (título e base do mês final) fica fixo em set/2026, como na planilha modelo, em vez de acompanhar o mês de hoje.",
+      "Correção de dados: o lance livre dos grupos 900 e 940 tinha a regra do lance fixo copiada na importação (embutir 44 parcelas, 100%); passa a 0%, sem embutido (migração 0014).",
+    ],
+  },
+  {
     numero: "0037",
     data: "15/10/2026",
     itens: [

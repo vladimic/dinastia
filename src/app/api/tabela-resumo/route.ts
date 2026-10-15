@@ -1,7 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { carregarGruposImoveis } from "@/lib/tabelaResumoDados";
-import { mesAtual, montarLinhas, nomeArquivo } from "@/lib/tabelaResumo";
+import { MES_REFERENCIA, montarLinhas, nomeArquivo } from "@/lib/tabelaResumo";
 import { tabelaResumoExcel } from "@/lib/tabelaResumoExcel";
 import { tabelaResumoPdf } from "@/lib/tabelaResumoPdf";
 
@@ -19,7 +19,7 @@ export async function GET(request: NextRequest) {
   try {
     const grupos = await carregarGruposImoveis(supabase);
     const agora = new Date();
-    const base = mesAtual(agora);
+    const base = MES_REFERENCIA;
     const linhas = montarLinhas(grupos, base);
     const cab = { "Cache-Control": "no-store", "X-Grupos": String(linhas.length) };
     if (formato === "xlsx") {

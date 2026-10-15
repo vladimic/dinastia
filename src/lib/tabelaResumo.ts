@@ -269,14 +269,9 @@ export const LINHA_DIREITA = new Set([8, 25, 27, 30, 32]); // I, Z, AB, AE, AG
 const MESES = ["jan", "fev", "mar", "abr", "mai", "jun", "jul", "ago", "set", "out", "nov", "dez"];
 export const rotuloMes = (m: Mes) => `${MESES[m.mes - 1]}/${m.ano}`;
 
-// mês atual no fuso de São Paulo
-export function mesAtual(agora = new Date()): Mes {
-  const [ano, mes] = new Intl.DateTimeFormat("en-CA", { timeZone: "America/Sao_Paulo", year: "numeric", month: "2-digit" })
-    .format(agora)
-    .split("-")
-    .map(Number);
-  return { ano, mes };
-}
+// Mês de referência da Tabela Resumo: aparece no título e é a base do mês final (Fim = referência + prazo atual - 1).
+// É fixo, como na planilha modelo (set/2026): trocar aqui quando a planilha virar de mês.
+export const MES_REFERENCIA: Mes = { ano: 2026, mes: 9 };
 
 export const nomeArquivo = (agora: Date, ext: "xlsx" | "pdf") => {
   const [a, m, d] = new Intl.DateTimeFormat("en-CA", { timeZone: "America/Sao_Paulo" }).format(agora).split("-");
