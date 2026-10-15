@@ -2,13 +2,6 @@
 // Regra: a cada mudança entregue, acrescentar uma entrada NO TOPO.
 export const VERSOES: { numero: string; data: string; itens: string[] }[] = [
   {
-    numero: "0055",
-    data: "15/10/2026",
-    itens: [
-      "Protótipo de layout em /grupos/prototipo (grupo fictício, nada é gravado; a tela real não mudou): barra de cenário horizontal com crédito e parcela em chips e parâmetros da simulação na mesma área; Sequência e Modalidades viram \"Regras do grupo\", fechadas, com resumo em chips; simulador compacto com os rótulos só na coluna da esquerda e o prazo restante único. A tela inteira cabe em cerca de 800 px de altura, sem rolagem vertical.",
-    ],
-  },
-  {
     numero: "0054",
     data: "15/10/2026",
     itens: [
