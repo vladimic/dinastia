@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { reais } from "@/lib/formato";
+import { useRef, useState } from "react";
+import { dataBR, reais } from "@/lib/formato";
 import { useSimulacao } from "./SimulacaoContext";
 
 // LAYOUT PARA VALIDAÇÃO: todos os números abaixo são fictícios (não vêm do grupo nem de cálculo).
@@ -302,6 +302,7 @@ export function SimuladorGrupo({
   const taxaMensal = taxaAdm !== null && mesesFaltam > 0 ? taxaAdm / mesesFaltam : null;
   const [meses, setMeses] = useState("1");
   const [vagas, setVagas] = useState("17");
+  const validadeRef = useRef<HTMLInputElement>(null);
   const [validade, setValidade] = useState(() => somarDias(hoje, 7));
   const [inccLigado, setInccLigado] = useState(true);
   const [incc, setIncc] = useState(() => inccPadrao.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
@@ -348,10 +349,17 @@ export function SimuladorGrupo({
             ))}
           </div>
         </div>
-        <ParametroTexto t="Parcela antes da contemplação" v={tipo?.descricao ?? "—"} />
-        <ParametroTexto t="Fidelidade disponível em" v={fidelidadeMeses ? `${fidelidadeMeses} Meses` : "—"} />
+        <div className={caixaParam}>
+          <span className={tituloParam + " leading-tight"}>
+            Parcela antes da
+            <br />
+            contemplação
+          </span>
+          <span className="text-[13px] font-bold tabular-nums">{tipo?.descricao ?? "—"}</span>
+        </div>
+        <ParametroTexto t="Fidelidade em" v={fidelidadeMeses ? `${fidelidadeMeses} Meses` : "—"} />
         <label className={caixaParam + " w-[5.5rem]"}>
-          <span className={tituloParam}>Disponíveis</span>
+          <span className={tituloParam}>Vagas</span>
           <input
             className={campoParam + " text-[#c62828]"}
             inputMode="numeric"
@@ -359,10 +367,34 @@ export function SimuladorGrupo({
             onChange={(e) => setVagas(e.target.value.replace(/\D/g, "").slice(0, 4))}
           />
         </label>
-        <label className={caixaParam}>
-          <span className={tituloParam}>Validade</span>
-          <input type="date" className={campoParam + " text-[#c62828]"} value={validade} onChange={(e) => setValidade(e.target.value)} />
-        </label>
+        <div className={caixaParam + " relative"}>
+          <div className="flex items-center gap-1.5">
+            <span className={tituloParam}>Validade</span>
+            <button
+              type="button"
+              aria-label="Trocar a data de validade"
+              title="Trocar a data"
+              onClick={() => validadeRef.current?.showPicker?.()}
+              className="text-tinta hover:text-navy"
+            >
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+                <rect x="3.5" y="5" width="17" height="15" rx="2" />
+                <path d="M3.5 10h17M8 3v4M16 3v4" />
+              </svg>
+            </button>
+          </div>
+          <span className="text-[13px] font-bold tabular-nums text-[#c62828]">{dataBR(validade)}</span>
+          {/* seletor de data nativo, escondido: abre pelo botão do calendário */}
+          <input
+            ref={validadeRef}
+            type="date"
+            tabIndex={-1}
+            aria-hidden="true"
+            className="pointer-events-none absolute h-0 w-0 opacity-0"
+            value={validade}
+            onChange={(e) => e.target.value && setValidade(e.target.value)}
+          />
+        </div>
         <div className={caixaParam + " w-32"}>
           <div className="flex items-center justify-between gap-2">
             <label htmlFor="incc-sim" className={tituloParam}>
@@ -380,20 +412,23 @@ export function SimuladorGrupo({
               <span className={"absolute top-0.5 h-3 w-3 rounded-full bg-white shadow transition-all " + (inccLigado ? "left-[14px]" : "left-0.5")} />
             </button>
           </div>
-          <input
-            id="incc-sim"
-            className={campoParam + (inccLigado ? "" : " text-tinta/60")}
-            inputMode="decimal"
-            readOnly={!inccLigado}
-            value={inccLigado ? incc : "0,00"}
-            title="Vem de Parâmetros globais; aqui pode ser alterado só para esta simulação"
-            onChange={(e) => setIncc(e.target.value.replace(/[^\d,]/g, "").slice(0, 6))}
-            onBlur={() => {
-              const n = Number(incc.replace(",", "."));
-              const v = Number.isFinite(n) && incc !== "" ? n : inccPadrao;
-              setIncc(v.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
-            }}
-          />
+          <div className="flex items-baseline gap-0.5 text-[13px] font-bold">
+            <input
+              id="incc-sim"
+              className={campoParam + " text-right" + (inccLigado ? "" : " text-tinta/60")}
+              inputMode="decimal"
+              readOnly={!inccLigado}
+              value={inccLigado ? incc : "0,00"}
+              title="Vem de Parâmetros globais; aqui pode ser alterado só para esta simulação"
+              onChange={(e) => setIncc(e.target.value.replace(/[^\d,]/g, "").slice(0, 6))}
+              onBlur={() => {
+                const n = Number(incc.replace(",", "."));
+                const v = Number.isFinite(n) && incc !== "" ? n : inccPadrao;
+                setIncc(v.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
+              }}
+            />
+            <span aria-hidden="true" className={inccLigado ? "" : "text-tinta/60"}>%</span>
+          </div>
         </div>
       </div>
 

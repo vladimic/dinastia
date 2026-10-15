@@ -118,7 +118,7 @@ export function FaixaCredito({ versaoId, creditos }: { versaoId: number; credito
 
       {!editando ? (
         <>
-          <ul className="flex max-h-[340px] flex-col gap-0.5 overflow-y-auto">
+          <ul className="-mx-1 flex max-h-[340px] flex-col gap-1 overflow-y-auto px-1 py-0.5">
             {linhas
               .filter((l) => l.valor !== null)
               .map((l) => {
