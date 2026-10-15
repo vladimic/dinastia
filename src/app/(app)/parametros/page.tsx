@@ -27,7 +27,7 @@ async function Formulario({ searchParams }: { searchParams: PageProps<"/parametr
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("parametros_gerais")
-    .select("seguro_padrao_pct, incc_pct_ano, atualizado_em")
+    .select("seguro_padrao_pct, incc_pct_ano, contemplacao_meses, atualizado_em")
     .eq("id", 1)
     .maybeSingle();
   if (error) throw error;
@@ -54,13 +54,22 @@ async function Formulario({ searchParams }: { searchParams: PageProps<"/parametr
         INCC projetado (% ao ano)
         <input className="campo-sm" name="incc_pct_ano" inputMode="decimal" defaultValue={pct(data?.incc_pct_ano ?? 6)} required />
       </label>
+      <label className="grid grid-cols-[1fr_7rem] items-center gap-3 text-xs font-semibold text-tinta">
+        Contemplação em (meses)
+        <input className="campo-sm" name="contemplacao_meses" inputMode="numeric" defaultValue={data?.contemplacao_meses ?? 1} required />
+      </label>
       <p className="text-[11px] leading-snug text-tinta">
-        Valor inicial do INCC no simulador de cada grupo. Na tela do simulador ele pode ser alterado para aquela simulação, sem mudar este parâmetro.
+        Valores com que o simulador de cada grupo abre (INCC e contemplação em meses). Na tela do simulador eles podem ser alterados para aquela simulação, sem mudar estes parâmetros.
       </p>
 
       {sp.salvo === "1" && (
         <p role="status" className="rounded-lg bg-ok-fundo px-3 py-2 text-sm font-semibold text-ok">
           Parâmetros salvos.
+        </p>
+      )}
+      {sp.erro === "3" && (
+        <p role="alert" className="rounded-lg bg-[#fbe4e4] px-3 py-2 text-sm font-semibold text-[#9b1c1c]">
+          Contemplação inválida. Informe os meses como número inteiro, de 1 a 999.
         </p>
       )}
       {sp.erro === "2" && (

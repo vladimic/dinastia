@@ -257,7 +257,7 @@ function Metrica({ rotulo: r, valor }: { rotulo: string; valor: string }) {
   );
 }
 
-const caixaParam = "flex flex-col gap-0.5 rounded-lg border border-borda-campo bg-white px-3 py-1.5";
+const caixaParam = "flex w-[8.5rem] flex-col gap-0.5 rounded-lg border border-borda-campo bg-white px-3 py-1.5";
 const tituloParam = "text-[10px] font-semibold tracking-wide text-tinta uppercase";
 const campoParam = "w-full min-w-0 bg-transparent text-[13px] font-bold tabular-nums outline-none focus:text-laranja";
 const PRE_DEFINIDOS = [12, 24, 36, 48, 60];
@@ -280,7 +280,7 @@ function ParametroTexto({ t, v }: { t: string; v: string }) {
 export function SimuladorGrupo({
   numero,
   hoje,
-  inccPadrao,
+  padroes,
   fidelidadeMeses,
   mesesFaltam,
   mesesDecorridos,
@@ -288,7 +288,8 @@ export function SimuladorGrupo({
 }: {
   numero: number;
   hoje: string;
-  inccPadrao: number;
+  /** valores iniciais vindos de Parâmetros globais (podem ser alterados nesta tela) */
+  padroes: { incc: number; contemplacaoMeses: number };
   /** parcela em que a fidelidade libera (36), e não o mês em que entra na sequência (37) */
   fidelidadeMeses: number | null;
   /** meses que faltam para terminar o plano = assembleias que ainda faltam no grupo */
@@ -300,12 +301,12 @@ export function SimuladorGrupo({
 }) {
   const { creditoSel, tipoSel, tipos } = useSimulacao();
   const taxaMensal = taxaAdm !== null && mesesFaltam > 0 ? taxaAdm / mesesFaltam : null;
-  const [meses, setMeses] = useState("1");
+  const [meses, setMeses] = useState(String(padroes.contemplacaoMeses));
   const [vagas, setVagas] = useState("17");
   const validadeRef = useRef<HTMLInputElement>(null);
   const [validade, setValidade] = useState(() => somarDias(hoje, 7));
   const [inccLigado, setInccLigado] = useState(true);
-  const [incc, setIncc] = useState(() => inccPadrao.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
+  const [incc, setIncc] = useState(() => padroes.incc.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
 
   const credito = creditoSel ?? CREDITO_BASE;
   const fator = credito / CREDITO_BASE;
@@ -323,7 +324,7 @@ export function SimuladorGrupo({
 
       {/* parâmetros da simulação (antes ficavam sob a 1ª coluna) */}
       <div className="flex flex-wrap gap-2">
-        <div className={caixaParam + " w-[8.5rem]"}>
+        <div className={caixaParam}>
           <span className={tituloParam}>Contemplação em</span>
           <div className="flex items-baseline gap-1">
             <input
@@ -358,7 +359,7 @@ export function SimuladorGrupo({
           <span className="text-[13px] font-bold tabular-nums">{tipo?.descricao ?? "—"}</span>
         </div>
         <ParametroTexto t="Fidelidade em" v={fidelidadeMeses ? `${fidelidadeMeses} Meses` : "—"} />
-        <label className={caixaParam + " w-[5.5rem]"}>
+        <label className={caixaParam}>
           <span className={tituloParam}>Vagas</span>
           <input
             className={campoParam + " text-[#c62828]"}
@@ -395,7 +396,7 @@ export function SimuladorGrupo({
             onChange={(e) => e.target.value && setValidade(e.target.value)}
           />
         </div>
-        <div className={caixaParam + " w-32"}>
+        <div className={caixaParam}>
           <div className="flex items-center justify-between gap-2">
             <label htmlFor="incc-sim" className={tituloParam}>
               INCC
@@ -423,7 +424,7 @@ export function SimuladorGrupo({
               onChange={(e) => setIncc(e.target.value.replace(/[^\d,]/g, "").slice(0, 6))}
               onBlur={() => {
                 const n = Number(incc.replace(",", "."));
-                const v = Number.isFinite(n) && incc !== "" ? n : inccPadrao;
+                const v = Number.isFinite(n) && incc !== "" ? n : padroes.incc;
                 setIncc(v.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
               }}
             />

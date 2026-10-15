@@ -137,12 +137,12 @@ export async function listarIndices() {
   return data ?? [];
 }
 
-/** INCC projetado (% ao ano) dos parâmetros globais; 6 se ainda não houver */
-export async function carregarInccPadrao(): Promise<number> {
+/** Padrões do simulador, vindos dos parâmetros globais (INCC % ao ano e contemplação em meses) */
+export async function carregarPadroesSimulador(): Promise<{ incc: number; contemplacaoMeses: number }> {
   const supabase = await createClient();
-  const { data, error } = await supabase.from("parametros_gerais").select("incc_pct_ano").eq("id", 1).maybeSingle();
+  const { data, error } = await supabase.from("parametros_gerais").select("incc_pct_ano, contemplacao_meses").eq("id", 1).maybeSingle();
   if (error) throw error;
-  return data?.incc_pct_ano === null || data?.incc_pct_ano === undefined ? 6 : Number(data.incc_pct_ano);
+  return { incc: Number(data?.incc_pct_ano ?? 6), contemplacaoMeses: Number(data?.contemplacao_meses ?? 1) };
 }
 
 type TipoRef = { codigo: string; nome: string };
