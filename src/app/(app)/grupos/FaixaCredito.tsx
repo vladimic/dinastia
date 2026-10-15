@@ -93,8 +93,18 @@ export function FaixaCredito({ versaoId, creditos }: { versaoId: number; credito
     );
   }
 
+  // muitos créditos (ex.: grupo 690, com 11): a lista passa para duas colunas, preenchidas de cima para baixo
+  const duasColunas = linhas.length > 8;
+  const linhasPorColuna = duasColunas ? Math.ceil(linhas.length / 2) : linhas.length;
+  const gradeLista = {
+    gridAutoFlow: "column",
+    gridTemplateRows: `repeat(${Math.max(1, linhasPorColuna)}, auto)`,
+    gridTemplateColumns: duasColunas ? "repeat(2, minmax(0, 1fr))" : "minmax(0, 1fr)",
+  } as const;
+  const largura = duasColunas ? (editando ? "w-[25rem]" : "w-[20.5rem]") : editando ? "w-[11.5rem]" : "w-[10rem]";
+
   return (
-    <section className={"flex flex-col gap-2 rounded-2xl border border-borda bg-white p-3.5 " + (editando ? "w-[11.5rem]" : "w-[10rem]")}>
+    <section className={"flex flex-col gap-2 rounded-2xl border border-borda bg-white p-3.5 " + largura}>
       <div className="flex items-center justify-between">
         <h3 className="text-sm font-bold">Faixa de crédito</h3>
         {editando ? (
@@ -118,7 +128,7 @@ export function FaixaCredito({ versaoId, creditos }: { versaoId: number; credito
 
       {!editando ? (
         <>
-          <ul className="-mx-1 flex max-h-[340px] flex-col gap-1 overflow-y-auto px-1 py-0.5">
+          <ul className="-mx-1 grid gap-x-2 gap-y-1 px-1 py-0.5" style={gradeLista}>
             {linhas
               .filter((l) => l.valor !== null)
               .map((l) => {
@@ -137,7 +147,7 @@ export function FaixaCredito({ versaoId, creditos }: { versaoId: number; credito
         </>
       ) : (
         <>
-          <ul className="flex max-h-[340px] flex-col gap-1 overflow-y-auto pr-1">
+          <ul className="grid gap-x-3 gap-y-1" style={gradeLista}>
             {linhas.map((l) => (
               <li key={l.id} className="flex items-center gap-1">
                 <button

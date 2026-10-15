@@ -51,6 +51,11 @@ export function GrupoDetalheView({ grupo, indices, hoje, padroes }: Props) {
               {grupo.assembleia}
               {grupo.data_assembleia ? ` – ${dataBR(grupo.data_assembleia)}` : ""}
             </strong>
+            {grupo.atualizado_em && (
+              <span className="ml-1.5 text-[11px] text-tinta" title={grupo.arquivo ? `Tabela: ${grupo.arquivo}` : undefined}>
+                (atualizado em: {dataLocal(grupo.atualizado_em)})
+              </span>
+            )}
           </span>
           <div
             className="flex items-end gap-2 self-center"
@@ -78,11 +83,17 @@ export function GrupoDetalheView({ grupo, indices, hoje, padroes }: Props) {
             </div>
             <span className="text-xs font-bold leading-none tabular-nums">{grupo.prazo_grupo_meses}</span>
           </div>
-          {grupo.atualizado_em && (
-            <span className="text-xs text-tinta" title={grupo.arquivo ? `Tabela: ${grupo.arquivo}` : undefined}>
-              (atualizado em: {dataLocal(grupo.atualizado_em)})
-            </span>
-          )}
+          <InformacoesGrupo
+            numero={grupo.numero}
+            participantes={grupo.participantes}
+            taxaAdm={grupo.taxa_adm_total}
+            fundoReserva={grupo.fundo_reserva}
+            indice={grupo.indice}
+            mesReajuste={grupo.mes_reajuste}
+            diaVencimento={grupo.dia_vencimento}
+            primeiraCorrecao={grupo.primeira_correcao}
+            indices={indices}
+          />
         </div>
       </div>
 
@@ -93,18 +104,6 @@ export function GrupoDetalheView({ grupo, indices, hoje, padroes }: Props) {
       )}
 
       <div className="flex flex-wrap items-start gap-3">
-        <InformacoesGrupo
-          numero={grupo.numero}
-          participantes={grupo.participantes}
-          taxaAdm={grupo.taxa_adm_total}
-          fundoReserva={grupo.fundo_reserva}
-          indice={grupo.indice}
-          mesReajuste={grupo.mes_reajuste}
-          diaVencimento={grupo.dia_vencimento}
-          primeiraCorrecao={grupo.primeira_correcao}
-          indices={indices}
-        />
-
         <FaixaCredito key={`cred-${grupo.grupo_assembleia_id}`} versaoId={grupo.grupo_assembleia_id} creditos={grupo.creditos} />
 
         <div className="flex flex-col gap-3">
