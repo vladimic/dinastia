@@ -38,7 +38,7 @@ export function GrupoDetalheView({ grupo, indices, hoje, padroes }: Props) {
       tipos={grupo.tiposParcela.map((t) => ({ codigo: t.codigo, descricao: t.descricao, pct: t.pct }))}
       furoInicial={grupo.pagamento_com_furo}
     >
-    <div className="flex flex-col gap-4 border-t border-borda pt-4">
+    <div className="flex flex-col gap-4">
 
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex flex-wrap items-baseline gap-x-5 gap-y-1 text-[13px]">

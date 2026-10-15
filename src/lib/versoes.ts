@@ -2,6 +2,14 @@
 // Regra: a cada mudança entregue, acrescentar uma entrada NO TOPO.
 export const VERSOES: { numero: string; data: string; itens: string[] }[] = [
   {
+    numero: "0051",
+    data: "15/10/2026",
+    itens: [
+      "Parâmetros globais: os textos sob o prazo restante do simulador passam para um box próprio, numa segunda coluna (o botão Salvar continua um só, no primeiro box).",
+      "Grupos e Tabelas: removida a linha acima de \"Grupo xxx · Imóveis\" e o título \"Simulador · Grupo xxx\"; o conteúdo sobe. O aviso de valores de exemplo foi para o fim da linha de parâmetros do simulador.",
+    ],
+  },
+  {
     numero: "0050",
     data: "15/10/2026",
     itens: [

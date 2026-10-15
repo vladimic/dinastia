@@ -35,7 +35,8 @@ async function Formulario({ searchParams }: { searchParams: PageProps<"/parametr
   const pad = padroesDeLinha(data);
 
   return (
-    <form action={salvarParametros} className="flex w-[30rem] max-w-full flex-col gap-4 rounded-2xl border border-borda bg-white p-5">
+    <form action={salvarParametros} className="flex flex-wrap items-start gap-4">
+      <div className="flex w-[30rem] max-w-full flex-col gap-4 rounded-2xl border border-borda bg-white p-5">
       <h2 className="text-sm font-bold">Seguro prestamista</h2>
       <label className="grid grid-cols-[1fr_7rem] items-center gap-3 text-xs font-semibold text-tinta">
         % do crédito ao mês (todos os grupos)
@@ -66,15 +67,6 @@ async function Formulario({ searchParams }: { searchParams: PageProps<"/parametr
       <Campo rotulo="Lance livre" nome="concorrencia_livre_pct" valor={pct(pad.concorrencia.LIV)} />
       <Campo rotulo="Lance fidelidade" nome="concorrencia_fidelidade_pct" valor={pct(pad.concorrencia.FID)} />
       <p className="text-[11px] leading-snug text-tinta">Aparece no cabeçalho de cada coluna do simulador; só pode ser alterada aqui.</p>
-
-      <h2 className="border-t border-linha pt-3 text-sm font-bold">Textos sob o prazo restante (simulador)</h2>
-      {(Object.keys(NOMES_COLUNA) as TipoColuna[]).map((k) => (
-        <div key={k} className="flex flex-col gap-1.5">
-          <span className="text-xs font-bold">{NOMES_COLUNA[k]}</span>
-          <input className="campo-sm !text-left" name={`rodape_${k}_titulo`} defaultValue={pad.rodape[k].titulo} maxLength={60} required aria-label={`${NOMES_COLUNA[k]}: título`} />
-          <input className="campo-sm !text-left" name={`rodape_${k}_texto`} defaultValue={pad.rodape[k].texto} maxLength={80} required aria-label={`${NOMES_COLUNA[k]}: texto`} />
-        </div>
-      ))}
 
       {sp.salvo === "1" && (
         <p role="status" className="rounded-lg bg-ok-fundo px-3 py-2 text-sm font-semibold text-ok">
@@ -115,6 +107,19 @@ async function Formulario({ searchParams }: { searchParams: PageProps<"/parametr
         <button type="submit" className="min-h-9 rounded-[10px] bg-laranja px-5 text-sm font-bold text-navy hover:brightness-95">
           Salvar
         </button>
+      </div>
+      </div>
+
+      <div className="flex w-[26rem] max-w-full flex-col gap-4 rounded-2xl border border-borda bg-white p-5">
+      <h2 className="text-sm font-bold">Textos sob o prazo restante (simulador)</h2>
+      {(Object.keys(NOMES_COLUNA) as TipoColuna[]).map((k) => (
+        <div key={k} className="flex flex-col gap-1.5">
+          <span className="text-xs font-bold">{NOMES_COLUNA[k]}</span>
+          <input className="campo-sm !text-left" name={`rodape_${k}_titulo`} defaultValue={pad.rodape[k].titulo} maxLength={60} required aria-label={`${NOMES_COLUNA[k]}: título`} />
+          <input className="campo-sm !text-left" name={`rodape_${k}_texto`} defaultValue={pad.rodape[k].texto} maxLength={80} required aria-label={`${NOMES_COLUNA[k]}: texto`} />
+        </div>
+      ))}
+        <p className="text-[11px] leading-snug text-tinta">Aparecem sob o prazo restante de cada coluna do simulador. Salvar pelo botão da coluna ao lado.</p>
       </div>
     </form>
   );
