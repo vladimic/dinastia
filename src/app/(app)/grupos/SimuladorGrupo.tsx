@@ -4,42 +4,39 @@ import { useRef, useState } from "react";
 import { dataBR, reais } from "@/lib/formato";
 import { useSimulacao } from "./SimulacaoContext";
 
-// LAYOUT PARA VALIDAÇÃO: todos os números abaixo são fictícios (não vêm do grupo nem de cálculo).
-// Quando o layout for aprovado, esta estrutura recebe os dados reais do grupo e da simulação.
+// Simulador do grupo. Já calculado (conforme as regras combinadas): parcela para lance, parcela antes da contemplação,
+// e, em cada coluna, recurso da carta, recurso próprio, crédito disponível, valor da parcela após e prazo restante.
+// Tudo que ainda é número de exemplo leva a bolinha amarela (<Fic />) e só será calculado quando as regras forem definidas.
+
+import type { Modalidade } from "@/lib/grupos";
+import { calcularBase, calcularLance, type Lance } from "@/lib/simulacao";
 
 const brl0 = (v: number) => reais(v).replace(",00", "");
 const p2 = (v: number) => v.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + "%";
 
-type Coluna = {
+type Meta = {
   chave: string;
+  tipo: "SOR" | "FIX" | "LIM" | "LIV" | "FID";
   titulo: string[];
   numero?: number; // posição do lance (o sorteio não tem)
-  concorrencia?: number; // % de concorrência
-  proprioPct?: number; // % de recurso próprio no lance
+  concorrencia?: number; // (fictício) % de concorrência
+  proprioPct?: number; // (fictício) % de recurso próprio no lance
   icone?: "cadeado" | "martelo";
-  carta?: { rotulo: string; valor: number };
-  proprio?: { rotulo: string; valor: number };
-  creditoDisponivel: number;
-  parcela: number;
-  prazoRestante: number;
   rodape: { titulo: string; texto: string; cor: "navy" | "ouro" | "laranja" | "livre" };
+  // números de exemplo, ainda não calculados
   saldoDevedor: number;
-  valorInvestido?: number;
   custoMensal: number;
   custoAnual: number;
   dinheiroNovo: number;
 };
 
-// só a parcela antes da contemplação segue fictícia; prazos e taxa vêm do grupo
-const PARCELA_ANTES = 794;
+const CREDITO_BASE = 140000; // os exemplos abaixo foram montados sobre este crédito (só escalam com o crédito escolhido)
 
-const COLUNAS: Coluna[] = [
+const COLUNAS: Meta[] = [
   {
     chave: "sorteio",
+    tipo: "SOR",
     titulo: ["Sorteio"],
-    creditoDisponivel: 140000,
-    parcela: 794,
-    prazoRestante: 218,
     rodape: { titulo: "Sem lance", texto: "Depende só da sorte", cor: "navy" },
     saldoDevedor: 173092,
     custoMensal: 0.21,
@@ -48,16 +45,12 @@ const COLUNAS: Coluna[] = [
   },
   {
     chave: "fixo",
+    tipo: "FIX",
     titulo: ["Lance", "Fixo"],
     numero: 1,
     concorrencia: 25,
     proprioPct: 0,
     icone: "cadeado",
-    carta: { rotulo: "embutido 100%", valor: 34776 },
-    proprio: { rotulo: "dinheiro 0%", valor: 0 },
-    creditoDisponivel: 105224,
-    parcela: 634,
-    prazoRestante: 218,
     rodape: { titulo: "Previsibilidade máxima", texto: "Valor de lance pré-definido", cor: "navy" },
     saldoDevedor: 138212,
     custoMensal: 0.27,
@@ -66,16 +59,12 @@ const COLUNAS: Coluna[] = [
   },
   {
     chave: "limitado",
+    tipo: "LIM",
     titulo: ["Lance", "Limitado"],
     numero: 2,
     concorrencia: 10,
     proprioPct: 25,
     icone: "cadeado",
-    carta: { rotulo: "embutido 50%", valor: 34776 },
-    proprio: { rotulo: "dinheiro 50%", valor: 34776 },
-    creditoDisponivel: 105224,
-    parcela: 475,
-    prazoRestante: 218,
     rodape: { titulo: "Equilíbrio e flexibilidade", texto: "Combina crédito + recurso próprio", cor: "ouro" },
     saldoDevedor: 103550,
     custoMensal: 0.39,
@@ -84,16 +73,12 @@ const COLUNAS: Coluna[] = [
   },
   {
     chave: "livre",
+    tipo: "LIV",
     titulo: ["Lance", "Livre"],
     numero: 3,
     concorrencia: 8,
     proprioPct: 35,
     icone: "martelo",
-    carta: { rotulo: "embutido 25%", valor: 35000 },
-    proprio: { rotulo: "dinheiro 75%", valor: 52500 },
-    creditoDisponivel: 105000,
-    parcela: 520,
-    prazoRestante: 218,
     rodape: { titulo: "Valor à sua escolha", texto: "Você define o lance, sem teto fixo", cor: "livre" },
     saldoDevedor: 96800,
     custoMensal: 0.46,
@@ -102,16 +87,12 @@ const COLUNAS: Coluna[] = [
   },
   {
     chave: "fidelidade",
+    tipo: "FID",
     titulo: ["Lance", "Fidelidade"],
     numero: 4,
     concorrencia: 3,
     proprioPct: 42,
     icone: "martelo",
-    carta: { rotulo: "embutido 50%", valor: 59277 },
-    proprio: { rotulo: "dinheiro 50%", valor: 59277 },
-    creditoDisponivel: 80723,
-    parcela: 250,
-    prazoRestante: 218,
     rodape: { titulo: "Maior poder de contemplação", texto: "Funciona como leilão", cor: "laranja" },
     saldoDevedor: 54500,
     custoMensal: 1.1,
@@ -120,17 +101,26 @@ const COLUNAS: Coluna[] = [
   },
 ];
 
-const CREDITO_BASE = 140000; // os valores fictícios acima foram montados sobre este crédito
-const MONEY = ["creditoDisponivel", "parcela", "saldoDevedor", "dinheiroNovo"] as const;
+/** Coluna pronta para desenhar: números calculados + exemplos (marcados com a bolinha) */
+type Coluna = Meta & {
+  oferecido: boolean; // o grupo tem essa modalidade
+  qtd: string | null; // parcelas do lance (texto do campo); nulo no sorteio
+  qtdFixa: boolean; // valor definido pelo grupo, não editável
+  lance: Lance | null;
+  parcelaApos: number | null;
+  prazoRestante: number;
+  creditoDisponivel: number | null;
+};
 
-// Só para o layout: escala os valores em R$ pelo crédito escolhido, assim a seleção feita na tela aparece no simulador.
-function escalar(c: Coluna, f: number): Coluna {
-  const r = (v: number) => Math.round(v * f);
-  const novo: Coluna = { ...c };
-  for (const k of MONEY) novo[k] = r(c[k]);
-  if (c.carta) novo.carta = { ...c.carta, valor: r(c.carta.valor) };
-  if (c.proprio) novo.proprio = { ...c.proprio, valor: r(c.proprio.valor) };
-  return novo;
+/** Bolinha amarela: valor ainda não calculado (número de exemplo) */
+function Fic({ className = "" }: { className?: string }) {
+  return (
+    <i
+      aria-label="Ainda não calculado"
+      title="Ainda não calculado (valor de exemplo)"
+      className={"inline-block h-2 w-2 shrink-0 rounded-full bg-[#f5c400] ring-1 ring-[#b38f00] " + className}
+    />
+  );
 }
 
 const COR_RODAPE: Record<Coluna["rodape"]["cor"], string> = {
@@ -159,31 +149,49 @@ function Martelo() {
 const rotulo = "text-[11px] font-bold leading-tight text-navy";
 const valorOuro = "font-bold tabular-nums text-ouro";
 
-function CelulaColuna({ c }: { c: Coluna }) {
+function CelulaColuna({ c, fator, aoMudarQtd }: { c: Coluna; fator: number; aoMudarQtd: (v: string) => void }) {
   const borda = "border border-borda-campo bg-white";
+  const ex = (v: number) => Math.round(v * fator); // exemplo escalado pelo crédito
+  const pctCarta = c.lance ? Math.round(c.lance.fracaoCarta * 100) : 0;
   return (
     <div className="col-span-1 row-span-8 grid grid-rows-subgrid">
       {/* 1 · cabeçalho */}
       <div className="flex min-h-[78px] overflow-hidden bg-[#d9d9d9] text-navy">
         {c.numero ? (
           <>
-            <div className="flex min-w-0 flex-1 items-center gap-1.5 px-2">
-              <span className="flex h-[22px] w-[22px] shrink-0 items-center justify-center rounded border-2 border-navy text-xs font-extrabold leading-none">
-                {c.numero}
-              </span>
-              <span className="text-sm leading-[1.1] font-extrabold">
-                {c.titulo[0]}
-                <br />
-                {c.titulo[1]}
-              </span>
+            <div className="flex min-w-0 flex-1 flex-col justify-center gap-1 px-2">
+              <div className="flex items-center gap-1.5">
+                <span className="flex h-[22px] w-[22px] shrink-0 items-center justify-center rounded border-2 border-navy text-xs font-extrabold leading-none">
+                  {c.numero}
+                </span>
+                <span className="text-sm leading-[1.1] font-extrabold">
+                  {c.titulo[0]}
+                  <br />
+                  {c.titulo[1]}
+                </span>
+              </div>
+              {c.oferecido && c.qtd !== null && (
+                <label className="flex items-center gap-1 text-[10px] font-semibold" title={c.qtdFixa ? "Parcelas do lance definidas pelo grupo" : "Parcelas do lance (editável)"}>
+                  <input
+                    inputMode="numeric"
+                    readOnly={c.qtdFixa}
+                    value={c.qtd}
+                    aria-label={`Parcelas do lance ${c.titulo.join(" ")}`}
+                    onChange={(e) => aoMudarQtd(e.target.value.replace(/\D/g, "").slice(0, 3))}
+                    className={"h-[18px] w-9 rounded border border-borda-campo px-1 text-right text-[11px] font-bold tabular-nums outline-none focus:border-laranja " + (c.qtdFixa ? "bg-linha" : "bg-white")}
+                  />
+                  parcelas
+                </label>
+              )}
             </div>
-            <div className="flex w-[47%] shrink-0 flex-col bg-navy">
+            <div className="relative flex w-[47%] shrink-0 flex-col bg-navy">
               <div className="whitespace-nowrap px-1.5 pt-1 text-[10px] font-bold text-white">Concorrência {c.concorrencia}%</div>
+              <Fic className="absolute top-[3px] right-[3px]" />
               <div className="mx-1.5 mt-0.5 h-[18px] bg-white" role="img" aria-label={`Concorrência ${c.concorrencia}%`}>
                 <div className="h-full bg-ouro" style={{ width: `${Math.min(100, (c.concorrencia ?? 0) * 3)}%` }} />
               </div>
               <div className="mt-auto flex items-center justify-end gap-1 whitespace-nowrap bg-[#d9d9d9] px-1.5 py-0.5 text-[10.5px] font-bold">
-                {c.proprioPct}% {c.icone === "cadeado" ? <Cadeado /> : <Martelo />} Próprio
+                <Fic /> {c.proprioPct}% {c.icone === "cadeado" ? <Cadeado /> : <Martelo />} Próprio
               </div>
             </div>
           </>
@@ -197,28 +205,28 @@ function CelulaColuna({ c }: { c: Coluna }) {
 
       {/* 2 · recursos */}
       <div className={`${borda} grid grid-cols-2 items-start px-1 py-1.5 text-center`}>
-        {c.carta && c.proprio ? (
+        {c.lance ? (
           <>
             <div>
               <div className={rotulo}>Recurso da Carta</div>
-              <div className="text-[9px] text-tinta">({c.carta.rotulo})</div>
-              <div className={valorOuro}>{brl0(c.carta.valor)}</div>
+              <div className="text-[9px] text-tinta">(embutido {pctCarta}%)</div>
+              <div className={valorOuro}>{brl0(c.lance.recursoCarta)}</div>
             </div>
             <div>
               <div className={rotulo}>Recurso Próprio</div>
-              <div className="text-[9px] text-tinta">({c.proprio.rotulo})</div>
-              <div className={valorOuro}>{brl0(c.proprio.valor)}</div>
+              <div className="text-[9px] text-tinta">(dinheiro {100 - pctCarta}%)</div>
+              <div className={valorOuro}>{brl0(c.lance.recursoProprio)}</div>
             </div>
           </>
         ) : (
-          <div className="col-span-2 self-center text-xs text-tinta">—</div>
+          <div className="col-span-2 self-center text-xs text-tinta">{c.tipo === "SOR" ? "—" : "Grupo não oferece"}</div>
         )}
       </div>
 
       {/* 3 · crédito, 4 · parcela, 5 · prazo */}
-      <Metrica rotulo="Crédito Disponível após a Contemplação" valor={brl0(c.creditoDisponivel)} />
-      <Metrica rotulo="Valor da Parcela após a Contemplação" valor={brl0(c.parcela)} />
-      <Metrica rotulo="Prazo Restante" valor={String(c.prazoRestante)} />
+      <Metrica rotulo="Crédito Disponível após a Contemplação" valor={c.creditoDisponivel === null ? "—" : brl0(c.creditoDisponivel)} />
+      <Metrica rotulo="Valor da Parcela após a Contemplação" valor={c.parcelaApos === null || !c.oferecido ? "—" : brl0(c.parcelaApos)} />
+      <Metrica rotulo="Prazo Restante" valor={c.prazoRestante > 0 && c.oferecido ? String(c.prazoRestante) : "—"} />
 
       {/* 6 · rodapé de perfil */}
       <div className={`flex flex-col items-center justify-center px-2 py-1 text-center ${COR_RODAPE[c.rodape.cor]}`}>
@@ -226,14 +234,14 @@ function CelulaColuna({ c }: { c: Coluna }) {
         <div className="text-[10px] opacity-90">{c.rodape.texto}</div>
       </div>
 
-      {/* 7 · espaço · 8 · custos */}
+      {/* 7 · espaço · 8 · custos (ainda de exemplo) */}
       <div aria-hidden="true" />
       <div className="bg-navy px-2.5 py-1.5 text-xs text-white">
-        <Linha t="Saldo Devedor" v={brl0(c.saldoDevedor).replace("R$ ", "")} />
-        <Linha t="Valor Investido" v={c.valorInvestido ? brl0(c.valorInvestido).replace("R$ ", "") : ""} />
+        <Linha t="Saldo Devedor" v={brl0(ex(c.saldoDevedor)).replace("R$ ", "")} />
+        <Linha t="Valor Investido" v="" />
         <Linha t="Custo Mensal" v={p2(c.custoMensal)} />
         <Linha t="Custo Anual" v={p2(c.custoAnual)} />
-        <Linha t="Dinheiro Novo" v={brl0(c.dinheiroNovo).replace("R$ ", "")} />
+        <Linha t="Dinheiro Novo" v={brl0(ex(c.dinheiroNovo)).replace("R$ ", "")} />
       </div>
     </div>
   );
@@ -242,7 +250,9 @@ function CelulaColuna({ c }: { c: Coluna }) {
 function Linha({ t, v }: { t: string; v: string }) {
   return (
     <div className="flex justify-between gap-2 py-px">
-      <span className="font-semibold text-ouro">{t}</span>
+      <span className="flex items-center gap-1.5 font-semibold text-ouro">
+        <Fic /> {t}
+      </span>
       <span className="tabular-nums text-ouro">{v}</span>
     </div>
   );
@@ -285,6 +295,8 @@ export function SimuladorGrupo({
   mesesFaltam,
   mesesDecorridos,
   taxaAdm,
+  prazoGrupo,
+  modalidades,
 }: {
   numero: number;
   hoje: string;
@@ -298,8 +310,11 @@ export function SimuladorGrupo({
   mesesDecorridos: number;
   /** taxa de administração total do grupo (%) */
   taxaAdm: number | null;
+  /** prazo original do grupo, em meses */
+  prazoGrupo: number;
+  modalidades: Modalidade[];
 }) {
-  const { creditoSel, tipoSel, tipos } = useSimulacao();
+  const { creditoSel, tipoSel, tipos, furo } = useSimulacao();
   const taxaMensal = taxaAdm !== null && mesesFaltam > 0 ? taxaAdm / mesesFaltam : null;
   const [meses, setMeses] = useState(String(padroes.contemplacaoMeses));
   const [vagas, setVagas] = useState("17");
@@ -308,17 +323,56 @@ export function SimuladorGrupo({
   const [inccLigado, setInccLigado] = useState(true);
   const [incc, setIncc] = useState(() => padroes.incc.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
 
+  const porTipo = new Map(modalidades.map((m) => [m.tipo as string, m]));
+  const tetoQtd = (tipo: string) => porTipo.get(tipo)?.max_parcelas_lance ?? null; // sem teto = livre
+  const qtdFix = porTipo.get("FIX")?.max_parcelas_lance ?? 0;
+  // parcelas do lance de cada modalidade: o teto do grupo; no Livre (sem teto) começa igual ao Fixo; editável, menos no Fixo
+  const [qtds, setQtds] = useState<Record<string, string>>(() => ({
+    FIX: String(qtdFix),
+    LIM: String(tetoQtd("LIM") ?? 0),
+    LIV: String(tetoQtd("LIV") ?? qtdFix),
+    FID: String(tetoQtd("FID") ?? 0),
+  }));
+  const mudarQtd = (tipo: string) => (v: string) => {
+    const teto = tetoQtd(tipo);
+    setQtds((q) => ({ ...q, [tipo]: teto !== null && Number(v) > teto ? String(teto) : v }));
+  };
+
   const credito = creditoSel ?? CREDITO_BASE;
   const fator = credito / CREDITO_BASE;
-  const colunas = COLUNAS.map((c) => escalar(c, fator));
   const tipo = tipos.find((t) => t.codigo === tipoSel);
+  const mesesContemplacao = Number(meses) || 0;
+
+  // cálculos (precisam do crédito, da taxa de administração e do tipo de parcela)
+  const base =
+    creditoSel !== null && taxaAdm !== null && tipo
+      ? calcularBase({ credito: creditoSel, taxaAdmPct: taxaAdm, pctParcela: tipo.pct, prazoGrupo, mesesFaltam, furo, mesesContemplacao })
+      : null;
+
+  const colunas: Coluna[] = COLUNAS.map((c) => {
+    const m = porTipo.get(c.tipo);
+    const oferecido = c.tipo === "SOR" || Boolean(m);
+    const qtd = c.tipo === "SOR" ? null : qtds[c.tipo];
+    const lance: Lance | null =
+      base && m && c.tipo !== "SOR" ? calcularLance(base, creditoSel as number, Number(qtd) || 0, m) : null;
+    return {
+      ...c,
+      oferecido,
+      qtd,
+      qtdFixa: c.tipo === "FIX",
+      lance,
+      parcelaApos: base?.parcelaApos ?? null,
+      prazoRestante: base?.prazoRestante ?? 0,
+      creditoDisponivel: !base ? null : c.tipo === "SOR" ? creditoSel : lance ? lance.creditoDisponivel : null,
+    };
+  });
 
   return (
     <section className="flex flex-col gap-3 border-t border-borda pt-4" aria-label={`Simulador do grupo ${numero}`}>
       <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
         <h2 className="text-lg font-bold">Simulador · Grupo {numero}</h2>
-        <span className="rounded-full bg-laranja-claro px-2.5 py-0.5 text-[11px] font-bold text-alerta">
-          Dados fictícios — validação de layout
+        <span className="flex items-center gap-1.5 rounded-full bg-laranja-claro px-2.5 py-0.5 text-[11px] font-bold text-alerta">
+          <Fic /> Valor ainda não calculado (exemplo)
         </span>
       </div>
 
@@ -357,6 +411,16 @@ export function SimuladorGrupo({
             contemplação
           </span>
           <span className="text-[13px] font-bold tabular-nums">{tipo?.descricao ?? "—"}</span>
+        </div>
+        <div className={caixaParam}>
+          <span className={tituloParam + " leading-tight"}>
+            Parcela para
+            <br />
+            lance
+          </span>
+          <span className="text-[13px] font-bold tabular-nums" title="(crédito + taxa de administração) ÷ prazo original do grupo">
+            {base ? reais(base.parcelaLance) : "—"}
+          </span>
         </div>
         <ParametroTexto t="Fidelidade em" v={fidelidadeMeses ? `${fidelidadeMeses} Meses` : "—"} />
         <label className={caixaParam}>
@@ -442,9 +506,9 @@ export function SimuladorGrupo({
             </div>
             <div className="row-span-2 flex flex-col items-center justify-center gap-0.5 border border-borda-campo bg-white px-3 text-center">
               <span className="text-[15px] font-extrabold">Valor Contratado</span>
-              <span className={`text-[28px] leading-tight ${valorOuro}`}>{brl0(credito)}</span>
+              <span className={`text-[28px] leading-tight ${valorOuro}`}>{creditoSel === null ? "—" : brl0(creditoSel)}</span>
               <span className="mt-1 text-[15px] leading-tight font-extrabold">Parcela antes da Contemplação</span>
-              <span className={`text-base ${valorOuro}`}>{brl0(Math.round(PARCELA_ANTES * fator))}</span>
+              <span className={`text-base ${valorOuro}`}>{base ? brl0(base.parcelaAntes) : "—"}</span>
             </div>
             <div className="grid grid-cols-2 gap-1.5">
               <Mini t="Meses para Terminar o Plano" v={String(mesesFaltam)} />
@@ -458,7 +522,7 @@ export function SimuladorGrupo({
           </div>
 
           {colunas.map((c) => (
-            <CelulaColuna key={c.chave} c={c} />
+            <CelulaColuna key={c.chave} c={c} fator={fator} aoMudarQtd={mudarQtd(c.tipo)} />
           ))}
         </div>
       </div>

@@ -34,7 +34,8 @@ export function GrupoDetalheView({ grupo, indices, hoje, padroes }: Props) {
       key={grupo.numero}
       creditoInicial={grupo.creditos[0] ?? null}
       tipoInicial={tipoInicial?.codigo ?? null}
-      tipos={grupo.tiposParcela.map((t) => ({ codigo: t.codigo, descricao: t.descricao }))}
+      tipos={grupo.tiposParcela.map((t) => ({ codigo: t.codigo, descricao: t.descricao, pct: t.pct }))}
+      furoInicial={grupo.pagamento_com_furo}
     >
     <div className="flex flex-col gap-4 border-t border-borda pt-4">
 
@@ -106,7 +107,7 @@ export function GrupoDetalheView({ grupo, indices, hoje, padroes }: Props) {
         <FaixaCredito key={`cred-${grupo.grupo_assembleia_id}`} versaoId={grupo.grupo_assembleia_id} creditos={grupo.creditos} />
 
         <div className="flex flex-col gap-3">
-          <PagamentoComFuro key={`furo-${grupo.grupo_assembleia_id}`} versaoId={grupo.grupo_assembleia_id} valor={grupo.pagamento_com_furo} />
+          <PagamentoComFuro key={`furo-${grupo.grupo_assembleia_id}`} versaoId={grupo.grupo_assembleia_id} />
           <TiposParcela key={`tipos-${grupo.grupo_assembleia_id}`} versaoId={grupo.grupo_assembleia_id} tipos={grupo.tiposParcela} />
         </div>
 
@@ -138,6 +139,8 @@ export function GrupoDetalheView({ grupo, indices, hoje, padroes }: Props) {
         mesesFaltam={faltam}
         mesesDecorridos={realizadas}
         taxaAdm={grupo.taxa_adm_total}
+        prazoGrupo={grupo.prazo_grupo_meses}
+        modalidades={grupo.modalidades}
       />
     </div>
     </SimulacaoProvider>

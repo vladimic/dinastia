@@ -8,8 +8,8 @@ type Tipo = { codigo: string; descricao: string; disponivel: boolean };
 
 const CAIXA = "flex flex-col gap-2 rounded-2xl border border-borda bg-white p-3.5";
 
-export function PagamentoComFuro({ versaoId, valor }: { versaoId: number; valor: boolean }) {
-  const [atual, setAtual] = useState(valor);
+export function PagamentoComFuro({ versaoId }: { versaoId: number }) {
+  const { furo: atual, setFuro: setAtual } = useSimulacao(); // o simulador usa o mesmo valor
   const [erro, setErro] = useState(false);
   const [pendente, iniciar] = useTransition();
 

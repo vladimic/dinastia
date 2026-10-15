@@ -2,6 +2,16 @@
 // Regra: a cada mudança entregue, acrescentar uma entrada NO TOPO.
 export const VERSOES: { numero: string; data: string; itens: string[] }[] = [
   {
+    numero: "0049",
+    data: "15/10/2026",
+    itens: [
+      "Simulador: primeiros cálculos reais (src/lib/simulacao.ts). Parcela para lance = (crédito + taxa de administração) ÷ prazo original do grupo (novo box no cabeçalho). Parcela antes da contemplação = ((crédito × % da parcela) + (crédito × taxa de administração)) ÷ prazo, sendo prazo = prazo total do grupo com furo e prazo que falta sem furo (o card Pagamento com furo agora também alimenta o simulador).",
+      "Coluna Sorteio: crédito disponível = crédito contratado; parcela após = ((crédito + taxa) − total pago até a contemplação) ÷ prazo restante; prazo restante = prazo que falta − meses até a contemplação. Colunas de lance: recurso da carta = parcelas do lance × parcela para lance × % embutido; recurso próprio idem com o % próprio; crédito disponível = crédito − recurso da carta; parcela após e prazo iguais aos do Sorteio.",
+      "Cada coluna de lance mostra as parcelas do lance (editável; o teto vem do grupo, no Fixo é fixo e no Livre, sem teto, começa igual ao Fixo). Modalidade que o grupo não oferece aparece como \"Grupo não oferece\".",
+      "Valores ainda não calculados (concorrência, % próprio, saldo devedor, valor investido, custo mensal, custo anual e dinheiro novo) ganham uma bolinha amarela.",
+    ],
+  },
+  {
     numero: "0048",
     data: "15/10/2026",
     itens: [
