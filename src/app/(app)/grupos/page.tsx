@@ -5,6 +5,7 @@ import { FAMILIAS, carregarGrupo, contarPorFamilia, listarCoresContemplacao, lis
 import { GrupoDetalheView } from "./GrupoDetalhe";
 import { GrupoChips } from "./GrupoChips";
 import { ExportarResumo } from "./ExportarResumo";
+import { SeletorRetratil } from "./SeletorRetratil";
 
 export const metadata: Metadata = { title: "Grupos e Tabelas · Dinastia" };
 
@@ -12,14 +13,9 @@ export default function GruposPage({ searchParams }: PageProps<"/grupos">) {
   return (
     <>
       <header className="flex flex-wrap items-center justify-between gap-x-6 gap-y-3 border-b border-borda bg-white px-8 py-3">
-        <div className="flex flex-wrap items-end gap-x-6 gap-y-2">
-          <div className="flex flex-col">
-            <div className="text-[11px] text-tinta">Cadastros</div>
-            <h1 className="text-xl font-bold leading-tight">Grupos e Tabelas</h1>
-          </div>
-          <Suspense fallback={<div className="h-8 w-80" />}>
-            <SeletorFamilia searchParams={searchParams} />
-          </Suspense>
+        <div className="flex flex-col">
+          <div className="text-[11px] text-tinta">Cadastros</div>
+          <h1 className="text-xl font-bold leading-tight">Grupos e Tabelas</h1>
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <ExportarResumo />
@@ -49,7 +45,7 @@ export default function GruposPage({ searchParams }: PageProps<"/grupos">) {
         </div>
       </header>
 
-      <div className="flex flex-col gap-3 px-8 pt-4 pb-10">
+      <div className="flex flex-col gap-3 px-8 pt-3 pb-10">
         <Suspense fallback={<div className="py-10 text-sm text-tinta">Carregando…</div>}>
           <Conteudo searchParams={searchParams} />
         </Suspense>
@@ -63,9 +59,7 @@ function familiaPedida(sp: Record<string, string | string[] | undefined>) {
   return FAMILIAS.find((f) => f.slug === pedida) ?? FAMILIAS[0];
 }
 
-async function SeletorFamilia({ searchParams }: { searchParams: PageProps<"/grupos">["searchParams"] }) {
-  const [sp, contagem] = await Promise.all([searchParams, contarPorFamilia()]);
-  const familia = familiaPedida(sp);
+function SeletorFamilia({ familia, contagem }: { familia: (typeof FAMILIAS)[number]; contagem: Record<string, number> }) {
   return (
     <nav aria-label="Família de produto" className="flex flex-wrap gap-1.5">
       {FAMILIAS.map((f) => {
@@ -95,40 +89,47 @@ async function Conteudo({ searchParams }: { searchParams: PageProps<"/grupos">["
   const familia = familiaPedida(sp);
   const numeroGrupo = typeof sp.grupo === "string" ? Number(sp.grupo) : undefined;
 
-  const [grupos, cores, detalhe, indices] = await Promise.all([
+  const [grupos, cores, detalhe, indices, contagem] = await Promise.all([
     listarGrupos(familia.slug),
     listarCoresContemplacao(),
     numeroGrupo ? carregarGrupo(numeroGrupo) : Promise.resolve(null),
     numeroGrupo ? listarIndices() : Promise.resolve([]),
+    contarPorFamilia(),
   ]);
   const hoje = new Date().toISOString().slice(0, 10);
 
   return (
     <>
-      {grupos.length === 0 ? (
-        <p className="rounded-xl border border-dashed border-borda-campo bg-white px-5 py-4 text-sm text-tinta">
-          Nenhum grupo cadastrado em {familia.nome}.
-        </p>
-      ) : (
-        <GrupoChips
-          familia={familia.slug}
-          ativo={detalhe?.numero}
-          hoje={hoje}
-          cores={cores}
-          grupos={grupos.map((g) => ({
-            numero: g.numero,
-            prazo: g.prazo_grupo_meses,
-            assembleia: g.assembleia,
-            data: g.data_assembleia,
-            min: g.min,
-            max: g.max,
-            seq: g.seq,
-            participantes: g.participantes,
-            furo: g.furo,
-            reduzidas: g.reduzidas,
-          }))}
-        />
-      )}
+      <SeletorRetratil
+        temSelecao={Boolean(detalhe)}
+        familias={<SeletorFamilia familia={familia} contagem={contagem} />}
+        grupos={
+          grupos.length === 0 ? (
+            <p className="rounded-xl border border-dashed border-borda-campo bg-white px-5 py-4 text-sm text-tinta">
+              Nenhum grupo cadastrado em {familia.nome}.
+            </p>
+          ) : (
+            <GrupoChips
+              familia={familia.slug}
+              ativo={detalhe?.numero}
+              hoje={hoje}
+              cores={cores}
+              grupos={grupos.map((g) => ({
+                numero: g.numero,
+                prazo: g.prazo_grupo_meses,
+                assembleia: g.assembleia,
+                data: g.data_assembleia,
+                min: g.min,
+                max: g.max,
+                seq: g.seq,
+                participantes: g.participantes,
+                furo: g.furo,
+                reduzidas: g.reduzidas,
+              }))}
+            />
+          )
+        }
+      />
 
       {detalhe ? (
         <GrupoDetalheView grupo={detalhe} indices={indices} hoje={hoje} />
