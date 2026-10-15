@@ -2,6 +2,13 @@
 // Regra: a cada mudança entregue, acrescentar uma entrada NO TOPO.
 export const VERSOES: { numero: string; data: string; itens: string[] }[] = [
   {
+    numero: "0040",
+    data: "15/10/2026",
+    itens: [
+      "Menor parcela conforme a Tabela Resumo: o grupo 1090 passa de Reduzida 55% para Reduzida 50% (migração 0017). Nos 13 grupos em que o resumo diz 100 (780, 840, 930, 960, 970, 1010, 1020, 1040, 1050, 1060, 1070, 1080 e 1110) a Reduzida 50% ainda precisa ser retirada.",
+    ],
+  },
+  {
     numero: "0039",
     data: "15/10/2026",
     itens: [
