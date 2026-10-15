@@ -93,15 +93,16 @@ export function FaixaCredito({ versaoId, creditos }: { versaoId: number; credito
     );
   }
 
-  // muitos créditos (ex.: grupo 690, com 11): a lista passa para duas colunas, preenchidas de cima para baixo
+  // O box já reserva duas colunas (mesmo com poucos valores): até 8 valores só a 1ª coluna é usada;
+  // com mais (ex.: grupo 690, com 11) a lista se divide ao meio, preenchida de cima para baixo.
   const duasColunas = linhas.length > 8;
   const linhasPorColuna = duasColunas ? Math.ceil(linhas.length / 2) : linhas.length;
   const gradeLista = {
     gridAutoFlow: "column",
     gridTemplateRows: `repeat(${Math.max(1, linhasPorColuna)}, auto)`,
-    gridTemplateColumns: duasColunas ? "repeat(2, minmax(0, 1fr))" : "minmax(0, 1fr)",
+    gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
   } as const;
-  const largura = duasColunas ? (editando ? "w-[25rem]" : "w-[20.5rem]") : editando ? "w-[11.5rem]" : "w-[10rem]";
+  const largura = editando ? "w-[25rem]" : "w-[20.5rem]";
 
   return (
     <section className={"flex flex-col gap-2 rounded-2xl border border-borda bg-white p-3.5 " + largura}>
