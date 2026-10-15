@@ -195,7 +195,7 @@ export function SequenciaContemplacao({ versaoId, modelo, linha, faixas, tipos, 
 
   if (!editando) {
     return (
-      <section className={CAIXA + (modelo?.simples ? " w-[15rem]!" : "")}>
+      <section className={CAIXA + (modelo?.simples ? " w-[16rem]!" : "")}>
         <div className="flex items-start justify-between gap-2">
           <h3 className="text-sm leading-tight font-bold">Sequência de contemplação</h3>
           {modelo?.simples && <BotaoLapis rotulo="Editar sequência de contemplação" onClick={abrir} />}
