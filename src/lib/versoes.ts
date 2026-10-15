@@ -2,6 +2,14 @@
 // Regra: a cada mudança entregue, acrescentar uma entrada NO TOPO.
 export const VERSOES: { numero: string; data: string; itens: string[] }[] = [
   {
+    numero: "0047",
+    data: "15/10/2026",
+    itens: [
+      "Faixa de crédito: o valor selecionado para o simulador ficava com o destaque cortado nas bordas; corrigido (contorno por dentro da linha).",
+      "Simulador: \"Parcela antes da contemplação\" em duas linhas; \"Fidelidade disponível em\" vira \"Fidelidade em\"; \"Disponíveis\" volta a ser \"Vagas\"; Validade com o botão de calendário ao lado da palavra (caixa menor) e data em dd/mm/aaaa; INCC com o símbolo %.",
+    ],
+  },
+  {
     numero: "0046",
     data: "15/10/2026",
     itens: [

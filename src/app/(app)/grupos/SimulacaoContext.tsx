@@ -43,7 +43,7 @@ export function SimulacaoProvider({
 
 /** Aparência de uma opção selecionável (linha com bolinha; a escolhida fica em laranja). */
 export function classeOpcao(sel: boolean) {
-  return "flex w-full items-center gap-2 rounded-md px-2 py-1 text-left " + (sel ? "bg-laranja-claro ring-1 ring-laranja" : "hover:bg-linha");
+  return "flex w-full items-center gap-2 rounded-md px-2 py-1 text-left " + (sel ? "bg-laranja-claro ring-1 ring-inset ring-laranja" : "hover:bg-linha");
 }
 
 export function Radio({ marcado }: { marcado: boolean }) {
