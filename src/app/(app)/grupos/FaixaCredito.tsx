@@ -3,7 +3,7 @@
 import { useRef, useState, useTransition } from "react";
 import { BotaoFinalizar, BotaoLapis } from "./Lapis";
 import { salvarCreditos } from "./actions";
-import { Radio, Seletor, classeOpcao, useSimulacao } from "./SimulacaoContext";
+import { Radio, classeOpcao, useSimulacao } from "./SimulacaoContext";
 
 const numero = new Intl.NumberFormat("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
@@ -25,7 +25,7 @@ export function FaixaCredito({ versaoId, creditos }: { versaoId: number; credito
   const [linhas, setLinhas] = useState<Linha[]>(() => creditos.map((c, id) => ({ id, texto: numero.format(c), valor: c })));
   const [estado, setEstado] = useState<Estado>({ tipo: "ocioso" });
   const [, iniciar] = useTransition();
-  const { creditoSel, setCreditoSel, modo } = useSimulacao();
+  const { creditoSel, setCreditoSel } = useSimulacao();
 
   function enviar(novos: number[], aoSalvar: () => void, aoFalhar: () => void) {
     setEstado({ tipo: "salvando" });
@@ -118,28 +118,18 @@ export function FaixaCredito({ versaoId, creditos }: { versaoId: number; credito
 
       {!editando ? (
         <>
-          {modo === 3 && <SeletorCredito linhas={linhas} />}
           <ul className="flex max-h-[340px] flex-col gap-0.5 overflow-y-auto">
             {linhas
               .filter((l) => l.valor !== null)
               .map((l) => {
                 const sel = l.valor === creditoSel;
-                const conteudo = (
-                  <>
-                    {modo === 2 && <Radio marcado={sel} />}
-                    <span className={"text-[11px] font-semibold " + (sel && modo === 1 ? "text-ouro" : "text-tinta")}>R$</span>
-                    <span className="ml-auto text-[13px] font-bold tabular-nums">{numero.format(l.valor as number)}</span>
-                  </>
-                );
                 return (
                   <li key={l.id}>
-                    {modo === 3 ? (
-                      <div className={classeOpcao(modo, sel)}>{conteudo}</div>
-                    ) : (
-                      <button type="button" aria-pressed={sel} onClick={() => setCreditoSel(l.valor)} className={classeOpcao(modo, sel)}>
-                        {conteudo}
-                      </button>
-                    )}
+                    <button type="button" aria-pressed={sel} onClick={() => setCreditoSel(l.valor)} className={classeOpcao(sel)}>
+                      <Radio marcado={sel} />
+                      <span className="text-[11px] font-semibold text-tinta">R$</span>
+                      <span className="ml-auto text-[13px] font-bold tabular-nums">{numero.format(l.valor as number)}</span>
+                    </button>
                   </li>
                 );
               })}
@@ -215,13 +205,4 @@ export function FaixaCredito({ versaoId, creditos }: { versaoId: number; credito
       )}
     </section>
   );
-}
-
-// modo 3: setas ‹ › percorrem os créditos da faixa (do primeiro ao último)
-function SeletorCredito({ linhas }: { linhas: Linha[] }) {
-  const { creditoSel, setCreditoSel } = useSimulacao();
-  const valores = linhas.filter((l) => l.valor !== null).map((l) => l.valor as number);
-  const i = Math.max(0, valores.indexOf(creditoSel ?? NaN));
-  const vai = (d: number) => setCreditoSel(valores[(i + d + valores.length) % valores.length]);
-  return <Seletor rotulo="Crédito do simulador" texto={Math.round(valores[i] ?? 0).toLocaleString("pt-BR")} onAnterior={() => vai(-1)} onProximo={() => vai(1)} />;
 }

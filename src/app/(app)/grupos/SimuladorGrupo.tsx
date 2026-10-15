@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { reais } from "@/lib/formato";
-import { useSimulacao, type Modo } from "./SimulacaoContext";
+import { useSimulacao } from "./SimulacaoContext";
 
 // LAYOUT PARA VALIDAÇÃO: todos os números abaixo são fictícios (não vêm do grupo nem de cálculo).
 // Quando o layout for aprovado, esta estrutura recebe os dados reais do grupo e da simulação.
@@ -30,13 +30,8 @@ type Coluna = {
   dinheiroNovo: number;
 };
 
-const CONTRATO = {
-  valor: 140000,
-  parcelaAntes: 794,
-  mesesParaTerminar: 219,
-  mesesDecorridos: 1,
-  taxaAdmMensal: 0.11,
-};
+// só a parcela antes da contemplação segue fictícia; prazos e taxa vêm do grupo
+const PARCELA_ANTES = 794;
 
 const COLUNAS: Coluna[] = [
   {
@@ -287,16 +282,28 @@ export function SimuladorGrupo({
   hoje,
   inccPadrao,
   fidelidadeMeses,
+  mesesFaltam,
+  mesesDecorridos,
+  taxaAdm,
 }: {
   numero: number;
   hoje: string;
   inccPadrao: number;
+  /** parcela em que a fidelidade libera (36), e não o mês em que entra na sequência (37) */
   fidelidadeMeses: number | null;
+  /** meses que faltam para terminar o plano = assembleias que ainda faltam no grupo */
+  mesesFaltam: number;
+  /** meses decorridos = assembleias realizadas */
+  mesesDecorridos: number;
+  /** taxa de administração total do grupo (%) */
+  taxaAdm: number | null;
 }) {
-  const { creditoSel, tipoSel, tipos, modo, setModo } = useSimulacao();
+  const { creditoSel, tipoSel, tipos } = useSimulacao();
+  const taxaMensal = taxaAdm !== null && mesesFaltam > 0 ? taxaAdm / mesesFaltam : null;
   const [meses, setMeses] = useState("1");
   const [vagas, setVagas] = useState("17");
   const [validade, setValidade] = useState(() => somarDias(hoje, 7));
+  const [inccLigado, setInccLigado] = useState(true);
   const [incc, setIncc] = useState(() => inccPadrao.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
 
   const credito = creditoSel ?? CREDITO_BASE;
@@ -311,53 +318,40 @@ export function SimuladorGrupo({
         <span className="rounded-full bg-laranja-claro px-2.5 py-0.5 text-[11px] font-bold text-alerta">
           Dados fictícios — validação de layout
         </span>
-        <div className="ml-auto flex items-center gap-1.5 text-[11px] text-tinta" role="group" aria-label="Modelo de seleção (teste)">
-          Seleção de crédito e parcela, modelo:
-          {([1, 2, 3] as Modo[]).map((m) => (
-            <button
-              key={m}
-              type="button"
-              aria-pressed={modo === m}
-              onClick={() => setModo(m)}
-              className={"h-6 w-6 rounded-md text-xs font-bold " + (modo === m ? "bg-navy text-white" : "border border-borda-campo bg-white text-navy hover:border-navy")}
-            >
-              {m}
-            </button>
-          ))}
-        </div>
       </div>
 
       {/* parâmetros da simulação (antes ficavam sob a 1ª coluna) */}
       <div className="flex flex-wrap gap-2">
-        <div className={caixaParam}>
-          <span className={tituloParam}>Contemplação em (meses)</span>
-          <div className="flex items-center gap-2">
+        <div className={caixaParam + " w-[8.5rem]"}>
+          <span className={tituloParam}>Contemplação em</span>
+          <div className="flex items-baseline gap-1">
             <input
-              className={campoParam + " w-10 border-b border-borda-campo"}
+              className={campoParam + " w-8 border-b border-borda-campo text-right"}
               inputMode="numeric"
               aria-label="Contemplação em meses"
               value={meses}
               onChange={(e) => setMeses(e.target.value.replace(/\D/g, "").slice(0, 3))}
             />
-            <div className="flex gap-1">
-              {PRE_DEFINIDOS.map((m) => (
-                <button
-                  key={m}
-                  type="button"
-                  aria-pressed={meses === String(m)}
-                  onClick={() => setMeses(String(m))}
-                  className={"h-5 min-w-7 rounded px-1 text-[11px] font-bold " + (meses === String(m) ? "bg-navy text-white" : "border border-borda-campo hover:border-navy")}
-                >
-                  {m}
-                </button>
-              ))}
-            </div>
+            <span className="text-[11px] text-tinta">meses</span>
+          </div>
+          <div className="flex gap-0.5">
+            {PRE_DEFINIDOS.map((m) => (
+              <button
+                key={m}
+                type="button"
+                aria-pressed={meses === String(m)}
+                onClick={() => setMeses(String(m))}
+                className={"h-[18px] flex-1 rounded text-[10px] leading-none font-bold " + (meses === String(m) ? "bg-navy text-white" : "border border-borda-campo hover:border-navy")}
+              >
+                {m}
+              </button>
+            ))}
           </div>
         </div>
         <ParametroTexto t="Parcela antes da contemplação" v={tipo?.descricao ?? "—"} />
-        <ParametroTexto t="Fidelidade disponível em" v={fidelidadeMeses ? `${fidelidadeMeses}M` : "—"} />
-        <label className={caixaParam + " w-24"}>
-          <span className={tituloParam}>Vagas disponíveis</span>
+        <ParametroTexto t="Fidelidade disponível em" v={fidelidadeMeses ? `${fidelidadeMeses} Meses` : "—"} />
+        <label className={caixaParam + " w-[5.5rem]"}>
+          <span className={tituloParam}>Disponíveis</span>
           <input
             className={campoParam + " text-[#c62828]"}
             inputMode="numeric"
@@ -366,23 +360,41 @@ export function SimuladorGrupo({
           />
         </label>
         <label className={caixaParam}>
-          <span className={tituloParam}>Validade da proposta (7 dias)</span>
+          <span className={tituloParam}>Validade</span>
           <input type="date" className={campoParam + " text-[#c62828]"} value={validade} onChange={(e) => setValidade(e.target.value)} />
         </label>
-        <label className={caixaParam + " w-32"}>
-          <span className={tituloParam}>INCC (% ao ano)</span>
+        <div className={caixaParam + " w-32"}>
+          <div className="flex items-center justify-between gap-2">
+            <label htmlFor="incc-sim" className={tituloParam}>
+              INCC
+            </label>
+            <button
+              type="button"
+              role="switch"
+              aria-checked={inccLigado}
+              aria-label="Considerar o INCC (desligado = 0%)"
+              title={inccLigado ? "Ligado: considera o INCC informado" : "Desligado: assume 0%"}
+              onClick={() => setInccLigado((v) => !v)}
+              className={"relative h-4 w-7 shrink-0 rounded-full transition-colors " + (inccLigado ? "bg-ok" : "bg-[#cfcbe0]")}
+            >
+              <span className={"absolute top-0.5 h-3 w-3 rounded-full bg-white shadow transition-all " + (inccLigado ? "left-[14px]" : "left-0.5")} />
+            </button>
+          </div>
           <input
-            className={campoParam}
+            id="incc-sim"
+            className={campoParam + (inccLigado ? "" : " text-tinta/60")}
             inputMode="decimal"
-            value={incc}
+            readOnly={!inccLigado}
+            value={inccLigado ? incc : "0,00"}
             title="Vem de Parâmetros globais; aqui pode ser alterado só para esta simulação"
             onChange={(e) => setIncc(e.target.value.replace(/[^\d,]/g, "").slice(0, 6))}
             onBlur={() => {
               const n = Number(incc.replace(",", "."));
-              setIncc(Number.isFinite(n) && incc !== "" ? n.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : inccPadrao.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
+              const v = Number.isFinite(n) && incc !== "" ? n : inccPadrao;
+              setIncc(v.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
             }}
           />
-        </label>
+        </div>
       </div>
 
       <div className="overflow-x-auto pb-2">
@@ -396,15 +408,15 @@ export function SimuladorGrupo({
               <span className="text-[15px] font-extrabold">Valor Contratado</span>
               <span className={`text-[28px] leading-tight ${valorOuro}`}>{brl0(credito)}</span>
               <span className="mt-1 text-[15px] leading-tight font-extrabold">Parcela antes da Contemplação</span>
-              <span className={`text-base ${valorOuro}`}>{brl0(Math.round(CONTRATO.parcelaAntes * fator))}</span>
+              <span className={`text-base ${valorOuro}`}>{brl0(Math.round(PARCELA_ANTES * fator))}</span>
             </div>
             <div className="grid grid-cols-2 gap-1.5">
-              <Mini t="Meses para Terminar o Plano" v={String(CONTRATO.mesesParaTerminar)} />
-              <Mini t="Meses Decorridos" v={String(CONTRATO.mesesDecorridos).padStart(2, "0")} />
+              <Mini t="Meses para Terminar o Plano" v={String(mesesFaltam)} />
+              <Mini t="Meses Decorridos" v={String(mesesDecorridos).padStart(2, "0")} />
             </div>
             <div className="flex flex-col items-center justify-center border border-borda-campo bg-white px-2 text-center">
               <span className="text-[13px] font-extrabold">Taxa de administração mensal</span>
-              <span className="text-base font-extrabold tabular-nums">{p2(CONTRATO.taxaAdmMensal)}</span>
+              <span className="text-base font-extrabold tabular-nums">{taxaMensal === null ? "—" : p2(taxaMensal)}</span>
             </div>
             <div aria-hidden="true" />
           </div>

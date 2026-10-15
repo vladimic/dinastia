@@ -2,6 +2,17 @@
 // Regra: a cada mudança entregue, acrescentar uma entrada NO TOPO.
 export const VERSOES: { numero: string; data: string; itens: string[] }[] = [
   {
+    numero: "0046",
+    data: "15/10/2026",
+    itens: [
+      "Simulador: atalhos 12 · 24 · 36 · 48 · 60 agora ficam abaixo do campo de meses (caixa mais estreita). \"Vagas disponíveis\" vira \"Disponíveis\" e \"Validade da proposta (7 dias)\" vira \"Validade\".",
+      "INCC sem \"ao ano\" e com chave ligado/desligado: desligado, a simulação assume 0%.",
+      "Fidelidade disponível em passa a mostrar a parcela de liberação em \"Meses\" (36, e não 37).",
+      "Meses para terminar o plano = meses que faltam do grupo; Meses decorridos = assembleias realizadas; Taxa de administração mensal = taxa de administração do grupo ÷ meses para terminar (dados reais do grupo).",
+      "Seleção de crédito e de tipo de parcela fica só no modelo da bolinha (modelos 1 e 3 removidos). O tipo de parcela já vem selecionado na menor reduzida oferecida (ou Normal, se o grupo não tem reduzida).",
+    ],
+  },
+  {
     numero: "0045",
     data: "15/10/2026",
     itens: [
