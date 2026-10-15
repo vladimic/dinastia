@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { ArquivoBaixavel, Modal, hoje } from "@/components/ExportarArquivo";
+import { MES_REFERENCIA, rotuloMes } from "@/lib/tabelaResumo";
 
 const XLSX = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
 
@@ -25,7 +26,7 @@ export function ExportarResumo() {
       {aberto && (
         <Modal titulo="Exportar Tabela Resumo" onFechar={() => setAberto(false)}>
           <p className="text-sm leading-relaxed text-tinta">
-            Imóveis, com a versão vigente de cada grupo. O mês final (Fim) usa o mês de hoje como referência.
+            Imóveis, com a versão vigente de cada grupo. Mês de referência: {rotuloMes(MES_REFERENCIA)} (título e mês final).
           </p>
           <section className="flex flex-col gap-2">
             <h3 className="text-sm font-bold">Excel (só a aba Imóvel)</h3>
