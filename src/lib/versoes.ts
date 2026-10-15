@@ -2,6 +2,13 @@
 // Regra: a cada mudança entregue, acrescentar uma entrada NO TOPO.
 export const VERSOES: { numero: string; data: string; itens: string[] }[] = [
   {
+    numero: "0062",
+    data: "15/10/2026",
+    itens: [
+      "Grupos e Tabelas: o box Sequência de contemplação ficou mais largo (16 rem) e o título deixa de quebrar linha; o box Modalidades de contemplação ficou mais largo (16,5 rem) e as palavras não se sobrepõem mais (coluna de rótulos maior e células com menos folga lateral). Os quatro cards continuam numa só linha em telas de 1440 px.",
+    ],
+  },
+  {
     numero: "0061",
     data: "15/10/2026",
     itens: [

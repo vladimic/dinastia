@@ -43,11 +43,11 @@ export function ModalidadesContemplacao({ modalidades, tipos, prazoGrupo }: Prop
   });
 
   return (
-    <section className="flex w-[15rem] flex-col gap-1.5 rounded-2xl border border-borda bg-white p-3.5">
+    <section className="flex w-[16.5rem] flex-col gap-1.5 rounded-2xl border border-borda bg-white p-3.5">
       <h3 className="text-sm leading-tight font-bold">Modalidades de contemplação</h3>
       <table className="tabela-sm w-full table-fixed border-collapse">
         <colgroup>
-          <col style={{ width: "3.9rem" }} />
+          <col style={{ width: "4.6rem" }} />
         </colgroup>
         <thead>
           <tr>
@@ -66,7 +66,7 @@ export function ModalidadesContemplacao({ modalidades, tipos, prazoGrupo }: Prop
           <tr>
             <td className="font-semibold text-tinta">Qtd Parcelas</td>
             {celulas.map((c) => (
-              <td key={c.codigo} className="text-center tabular-nums" title={c.asterisco ? DICA_ASTERISCO : undefined}>
+              <td key={c.codigo} className="!px-1 text-center tabular-nums" title={c.asterisco ? DICA_ASTERISCO : undefined}>
                 {c.qtd}
               </td>
             ))}
@@ -76,7 +76,7 @@ export function ModalidadesContemplacao({ modalidades, tipos, prazoGrupo }: Prop
               Embutido
             </td>
             {celulas.map((c) => (
-              <td key={c.codigo} className="text-center tabular-nums">
+              <td key={c.codigo} className="!px-1 text-center tabular-nums">
                 {c.emb}
               </td>
             ))}
@@ -84,7 +84,7 @@ export function ModalidadesContemplacao({ modalidades, tipos, prazoGrupo }: Prop
           <tr>
             <td className="font-semibold text-tinta">Próprio</td>
             {celulas.map((c) => (
-              <td key={c.codigo} className="text-center tabular-nums">
+              <td key={c.codigo} className="!px-1 text-center tabular-nums">
                 {c.proprio}
               </td>
             ))}
