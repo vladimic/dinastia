@@ -2,6 +2,13 @@
 // Regra: a cada mudança entregue, acrescentar uma entrada NO TOPO.
 export const VERSOES: { numero: string; data: string; itens: string[] }[] = [
   {
+    numero: "0042",
+    data: "15/10/2026",
+    itens: [
+      "Menor parcela conforme a Tabela Resumo concluída: nos 13 grupos em que o resumo diz 100 (780, 840, 930, 960, 970, 1010, 1020, 1040, 1050, 1060, 1070, 1080 e 1110) a Reduzida 50% foi retirada e eles passam a ter só a parcela Normal. O 1090 já estava ajustado (Reduzida 50%).",
+    ],
+  },
+  {
     numero: "0041",
     data: "15/10/2026",
     itens: [
