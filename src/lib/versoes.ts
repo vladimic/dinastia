@@ -2,6 +2,14 @@
 // Regra: a cada mudança entregue, acrescentar uma entrada NO TOPO.
 export const VERSOES: { numero: string; data: string; itens: string[] }[] = [
   {
+    numero: "0060",
+    data: "15/10/2026",
+    itens: [
+      "Simulador: os boxes Contemplação em e Meses (para terminar e decorridos) deixam de reservar a 2ª linha do título; o conteúdo sobe e eles não ficam mais altos que os demais.",
+      "Sequência de contemplação: o box fica estreito, com 5 contemplações por linha (as 25 posições em 5 linhas), e a largura se ajusta a isso. Modalidades de contemplação ficou menor e passou para o lado da Sequência. A grade do simulador continua acompanhando a borda direita do último box.",
+    ],
+  },
+  {
     numero: "0059",
     data: "15/10/2026",
     itens: [

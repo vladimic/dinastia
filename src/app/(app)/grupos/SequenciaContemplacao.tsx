@@ -33,9 +33,12 @@ const CTRL =
 const CAIXA = "flex w-fit max-w-full flex-col gap-2 rounded-2xl border border-borda bg-white p-3.5";
 
 // Cada contemplação é um box na cor da modalidade; pontilhado = só entra a partir de certo mês (tooltip e legenda).
-function Codigos({ itens }: { itens: Posicao[] }) {
+function Codigos({ itens, porLinha }: { itens: Posicao[]; porLinha?: number }) {
   return (
-    <ol className="flex flex-wrap gap-x-[3px] gap-y-1">
+    <ol
+      className={porLinha ? "grid gap-x-[3px] gap-y-1" : "flex flex-wrap gap-x-[3px] gap-y-1"}
+      style={porLinha ? { gridTemplateColumns: `repeat(${porLinha}, 1.6rem)` } : undefined}
+    >
       {itens.map((o, k) => (
         <li
           key={k}
@@ -192,13 +195,13 @@ export function SequenciaContemplacao({ versaoId, modelo, linha, faixas, tipos, 
 
   if (!editando) {
     return (
-      <section className={CAIXA}>
-        <div className="flex items-center justify-between gap-6">
-          <h3 className="text-sm font-bold">Sequência de contemplação</h3>
+      <section className={CAIXA + (modelo?.simples ? " w-[11.5rem]!" : "")}>
+        <div className="flex items-start justify-between gap-2">
+          <h3 className="text-sm leading-tight font-bold">Sequência de contemplação</h3>
           {modelo?.simples && <BotaoLapis rotulo="Editar sequência de contemplação" onClick={abrir} />}
         </div>
         {modelo?.simples ? (
-          <Codigos itens={linha} />
+          <Codigos itens={linha} porLinha={5} />
         ) : (
           <>
             {faixas.map((f) => (
