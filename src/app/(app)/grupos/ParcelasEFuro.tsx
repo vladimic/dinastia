@@ -26,7 +26,7 @@ export function PagamentoComFuro({ versaoId, valor }: { versaoId: number; valor:
   }
 
   return (
-    <section className={CAIXA + " w-[14.5rem] py-2.5!"} aria-busy={pendente}>
+    <section className={CAIXA + " w-[15.5rem] py-2.5!"} aria-busy={pendente}>
       <div className="flex items-center justify-between gap-3">
         <span id={`furo-${versaoId}`} className="text-[13px] font-bold">
           Pagamento com furo
@@ -89,7 +89,7 @@ export function TiposParcela({ versaoId, tipos }: { versaoId: number; tipos: Tip
   }
 
   return (
-    <section className={CAIXA + " w-[14.5rem]"} aria-busy={pendente}>
+    <section className={CAIXA + " w-[15.5rem]"} aria-busy={pendente}>
       <h3 className="text-sm font-bold">Tipos de parcela</h3>
       <ul className="flex flex-col gap-1">
         {tipos.map((t) => {
