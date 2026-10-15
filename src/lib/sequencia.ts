@@ -78,6 +78,22 @@ export function linhaDoModelo(m: ModeloSequencia, limite = LIMITE_ORDEM): string
   return montarOrdem(itens, m.demais, limite);
 }
 
+// "Sorteios: 1 até o mês 47; 2 do mês 48 ao 71; 3 a partir do mês 72." (só quando a quantidade muda)
+export function notaSorteios(m: ModeloSequencia): string | null {
+  if (m.sorteios.length < 2) return null;
+  const partes = m.sorteios.map((s, i) => {
+    const prox = m.sorteios[i + 1];
+    if (!prox) return `${s.qtd} a partir do mês ${s.de}`;
+    return i === 0 ? `${s.qtd} até o mês ${prox.de - 1}` : `${s.qtd} do mês ${s.de} ao ${prox.de - 1}`;
+  });
+  return `Sorteios: ${partes.join("; ")}.`;
+}
+
+// "Fidelidade libera no mês 37."
+export function notaFidelidade(fidelidadeMeses: number | null): string | null {
+  return fidelidadeMeses ? `Fidelidade libera no mês ${fidelidadeMeses}.` : null;
+}
+
 export type Posicao = { codigo: string; desde: number | null };
 
 // A linha mostrada, com o mês a partir do qual cada posição passa a existir (nulo = desde o início):

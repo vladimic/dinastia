@@ -2,6 +2,17 @@
 // Regra: a cada mudança entregue, acrescentar uma entrada NO TOPO.
 export const VERSOES: { numero: string; data: string; itens: string[] }[] = [
   {
+    numero: "0035",
+    data: "15/10/2026",
+    itens: [
+      "Sequência de contemplação: nos grupos com mais de um sorteio, volta a legenda no rodapé (\"Sorteios: …\" e \"Fidelidade libera no mês …\"); os números embaixo dos boxes foram removidos (o pontilhado e o passar do mouse continuam).",
+      "Grupo 770: o Lance Livre passa a ser limitado a 72 parcelas (ajuste pontual no banco, migração 0012).",
+      "Novo \"Exportar Excel\" no menu: uma planilha .xlsx com todas as tabelas do banco, uma aba por tabela (a tabela de usuários autorizados não entra: o app não consegue lê-la, por segurança).",
+      "\"Exportar dados\" e \"Importar dados\" renomeados para \"Exportar Backup\" e \"Importar Backup\" (o arquivo exportado agora se chama dinastia-backup-AAAA-MM-DD.json).",
+      "MER atualizado (docs/MER.md), conferido com o banco: sem mudanças de esquema desde 09/10.",
+    ],
+  },
+  {
     numero: "0034",
     data: "15/10/2026",
     itens: [

@@ -4,6 +4,8 @@ import { useMemo, useRef, useState, useTransition } from "react";
 import {
   CANCELADA,
   linhaDetalhada,
+  notaFidelidade,
+  notaSorteios,
   SORTEIO,
   validarEdicao,
   type Edicao,
@@ -28,9 +30,8 @@ const CTRL =
   "h-8 rounded-lg border border-borda-campo bg-campo px-2 text-[13px] text-navy outline-none focus:ring-2 focus:ring-laranja read-only:bg-linha";
 const CAIXA = "flex w-fit max-w-full flex-col gap-2 rounded-2xl border border-borda bg-white p-3.5";
 
-// Cada contemplação é um box na cor da modalidade; pontilhado = só entra a partir do mês indicado embaixo.
+// Cada contemplação é um box na cor da modalidade; pontilhado = só entra a partir de certo mês (tooltip e legenda).
 function Codigos({ itens }: { itens: Posicao[] }) {
-  const comMes = itens.some((o) => o.desde);
   return (
     <ol className="flex flex-wrap gap-x-[3px] gap-y-1">
       {itens.map((o, k) => (
@@ -48,7 +49,6 @@ function Codigos({ itens }: { itens: Posicao[] }) {
           >
             {o.codigo}
           </span>
-          {comMes && <span className="h-[11px] text-[9px] font-bold leading-[11px] text-tinta">{o.desde ?? ""}</span>}
           <span
             role="tooltip"
             className="pointer-events-none absolute bottom-full left-1/2 z-20 mb-1 hidden -translate-x-1/2 whitespace-nowrap rounded-md bg-navy px-2 py-1 text-[11px] font-semibold text-white shadow-lg group-hover:block group-focus:block"
@@ -167,6 +167,10 @@ export function SequenciaContemplacao({ versaoId, modelo, linha, faixas, tipos, 
     }
   };
 
+  // legenda: só nos grupos com mais de um sorteio (quando a quantidade sobe e quando o fidelidade libera)
+  const maisDeUmSorteio = !!modelo?.simples && Math.max(0, ...modelo.sorteios.map((s) => s.qtd)) > 1;
+  const notas = maisDeUmSorteio && modelo ? [notaSorteios(modelo), notaFidelidade(fidelidadeMeses)].filter(Boolean) : [];
+
   if (!editando) {
     return (
       <section className={CAIXA}>
@@ -193,6 +197,11 @@ export function SequenciaContemplacao({ versaoId, modelo, linha, faixas, tipos, 
             )}
           </>
         )}
+        {notas.map((n) => (
+          <p key={n} className="w-0 min-w-full text-[11px] text-tinta">
+            {n}
+          </p>
+        ))}
       </section>
     );
   }
