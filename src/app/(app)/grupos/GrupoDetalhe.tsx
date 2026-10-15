@@ -26,7 +26,8 @@ export function GrupoDetalheView({ grupo, indices, hoje, inccPadrao }: Props) {
   const realizadas = grupo.data_assembleia && grupo.data_assembleia >= hoje ? grupo.assembleia - 1 : grupo.assembleia;
   const faltam = Math.max(0, grupo.prazo_grupo_meses - realizadas);
 
-  const tipoInicial = grupo.tiposParcela.find((t) => t.disponivel && t.codigo === "NORMAL") ?? grupo.tiposParcela.find((t) => t.disponivel);
+  // parcela inicial do simulador: a menor entre as oferecidas (a menor reduzida; só Normal se não houver reduzida)
+  const tipoInicial = grupo.tiposParcela.filter((t) => t.disponivel).sort((a, b) => a.pct - b.pct)[0];
 
   return (
     <SimulacaoProvider
@@ -129,7 +130,15 @@ export function GrupoDetalheView({ grupo, indices, hoje, inccPadrao }: Props) {
 
       </div>
 
-      <SimuladorGrupo numero={grupo.numero} hoje={hoje} inccPadrao={inccPadrao} fidelidadeMeses={grupo.fidelidade_meses} />
+      <SimuladorGrupo
+        numero={grupo.numero}
+        hoje={hoje}
+        inccPadrao={inccPadrao}
+        fidelidadeMeses={grupo.fidelidade_meses ? grupo.fidelidade_meses - 1 : null}
+        mesesFaltam={faltam}
+        mesesDecorridos={realizadas}
+        taxaAdm={grupo.taxa_adm_total}
+      />
     </div>
     </SimulacaoProvider>
   );

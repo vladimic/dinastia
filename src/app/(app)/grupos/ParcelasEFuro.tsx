@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { alternarTipoParcela, definirPagamentoComFuro } from "./actions";
-import { Radio, Seletor, classeOpcao, useSimulacao } from "./SimulacaoContext";
+import { Radio, classeOpcao, useSimulacao } from "./SimulacaoContext";
 
 type Tipo = { codigo: string; descricao: string; disponivel: boolean };
 
@@ -65,8 +65,7 @@ export function TiposParcela({ versaoId, tipos }: { versaoId: number; tipos: Tip
   const [marcados, setMarcados] = useState(() => new Set(tipos.filter((t) => t.disponivel).map((t) => t.codigo)));
   const [erro, setErro] = useState(false);
   const [pendente, iniciar] = useTransition();
-  const { tipoSel, setTipoSel, modo } = useSimulacao();
-  const marcadosEmOrdem = tipos.filter((t) => marcados.has(t.codigo));
+  const { tipoSel, setTipoSel } = useSimulacao();
 
   function alternar(codigo: string, marcado: boolean) {
     setErro(false);
@@ -93,22 +92,9 @@ export function TiposParcela({ versaoId, tipos }: { versaoId: number; tipos: Tip
     });
   }
 
-  function vai(d: number) {
-    const i = Math.max(0, marcadosEmOrdem.findIndex((t) => t.codigo === tipoSel));
-    setTipoSel(marcadosEmOrdem[(i + d + marcadosEmOrdem.length) % marcadosEmOrdem.length].codigo);
-  }
-
   return (
     <section className={CAIXA + " w-[13rem]"} aria-busy={pendente}>
       <h3 className="text-sm font-bold">Tipos de parcela</h3>
-      {modo === 3 && marcadosEmOrdem.length > 0 && (
-        <Seletor
-          rotulo="Tipo de parcela do simulador"
-          texto={marcadosEmOrdem.find((t) => t.codigo === tipoSel)?.descricao ?? "—"}
-          onAnterior={() => vai(-1)}
-          onProximo={() => vai(1)}
-        />
-      )}
       <ul className="flex flex-col gap-1">
         {tipos.map((t) => {
           const on = marcados.has(t.codigo);
@@ -126,18 +112,13 @@ export function TiposParcela({ versaoId, tipos }: { versaoId: number; tipos: Tip
                 onChange={(e) => alternar(t.codigo, e.target.checked)}
                 className="h-4 w-4 shrink-0 cursor-pointer accent-[#1d5b2c]"
               />
-              {modo === 3 || !on ? (
-                <span className={classeOpcao(3, sel) + " text-[13px] " + (on ? "font-semibold text-ok" : "text-tinta/70")}>{t.descricao}</span>
-              ) : (
-                <button
-                  type="button"
-                  aria-pressed={sel}
-                  onClick={() => setTipoSel(t.codigo)}
-                  className={classeOpcao(modo, sel) + " text-[13px] " + (sel && modo === 1 ? "font-bold" : on ? "font-semibold text-ok" : "")}
-                >
-                  {modo === 2 && <Radio marcado={sel} />}
+              {on ? (
+                <button type="button" aria-pressed={sel} onClick={() => setTipoSel(t.codigo)} className={classeOpcao(sel) + " text-[13px] " + (sel ? "font-bold" : "font-semibold text-ok")}>
+                  <Radio marcado={sel} />
                   <span className="flex-1">{t.descricao}</span>
                 </button>
+              ) : (
+                <span className="flex-1 px-2 py-1 text-[13px] text-tinta/70">{t.descricao}</span>
               )}
             </li>
           );
