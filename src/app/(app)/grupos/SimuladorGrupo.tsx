@@ -313,14 +313,7 @@ export function SimuladorGrupo({
   });
 
   return (
-    <section className="flex flex-col gap-3 border-t border-borda pt-4" aria-label={`Simulador do grupo ${numero}`}>
-      <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
-        <h2 className="text-lg font-bold">Simulador · Grupo {numero}</h2>
-        <span className="flex items-center gap-1.5 rounded-full bg-laranja-claro px-2.5 py-0.5 text-[11px] font-bold text-alerta">
-          <Fic /> Valor ainda de exemplo (não calculado)
-        </span>
-      </div>
-
+    <section className="flex flex-col gap-3" aria-label={`Simulador do grupo ${numero}`}>
       {/* parâmetros da simulação (antes ficavam sob a 1ª coluna) */}
       <div className="flex flex-wrap gap-2">
         <div className={caixaParam}>
@@ -440,6 +433,9 @@ export function SimuladorGrupo({
             <span aria-hidden="true" className={inccLigado ? "" : "text-tinta/60"}>%</span>
           </div>
         </div>
+        <span className="ml-auto flex items-center gap-1.5 self-start rounded-full bg-laranja-claro px-2.5 py-0.5 text-[11px] font-bold text-alerta">
+          <Fic /> Valor ainda de exemplo (não calculado)
+        </span>
       </div>
 
       <div className="overflow-x-auto pb-2">
