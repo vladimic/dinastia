@@ -12,14 +12,14 @@ type Props = {
   grupo: GrupoDetalhe;
   indices: { sigla: string; nome: string }[];
   hoje: string;
-  inccPadrao: number;
+  padroes: { incc: number; contemplacaoMeses: number };
 };
 
 function dataLocal(ts: string) {
   return new Date(ts).toLocaleDateString("pt-BR", { timeZone: "America/Sao_Paulo" });
 }
 
-export function GrupoDetalheView({ grupo, indices, hoje, inccPadrao }: Props) {
+export function GrupoDetalheView({ grupo, indices, hoje, padroes }: Props) {
   const prazoCalculado = grupo.prazo_grupo_meses - (grupo.assembleia - 1);
   const prazoDiverge = prazoCalculado !== grupo.prazo_cota_meses;
   // a tabela vigente é da próxima assembleia enquanto a data dela não passou
@@ -133,7 +133,7 @@ export function GrupoDetalheView({ grupo, indices, hoje, inccPadrao }: Props) {
       <SimuladorGrupo
         numero={grupo.numero}
         hoje={hoje}
-        inccPadrao={inccPadrao}
+        padroes={padroes}
         fidelidadeMeses={grupo.fidelidade_meses ? grupo.fidelidade_meses - 1 : null}
         mesesFaltam={faltam}
         mesesDecorridos={realizadas}

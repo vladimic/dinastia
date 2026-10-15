@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Suspense } from "react";
-import { FAMILIAS, carregarGrupo, contarPorFamilia, listarCoresContemplacao, listarGrupos, listarIndices, carregarInccPadrao } from "@/lib/grupos";
+import { FAMILIAS, carregarGrupo, contarPorFamilia, listarCoresContemplacao, listarGrupos, listarIndices, carregarPadroesSimulador } from "@/lib/grupos";
 import { GrupoDetalheView } from "./GrupoDetalhe";
 import { GrupoChips } from "./GrupoChips";
 import { ExportarResumo } from "./ExportarResumo";
@@ -95,13 +95,13 @@ async function Conteudo({ searchParams }: { searchParams: PageProps<"/grupos">["
   const familia = familiaPedida(sp);
   const numeroGrupo = typeof sp.grupo === "string" ? Number(sp.grupo) : undefined;
 
-  const [grupos, cores, detalhe, indices, contagem, inccPadrao] = await Promise.all([
+  const [grupos, cores, detalhe, indices, contagem, padroes] = await Promise.all([
     listarGrupos(familia.slug),
     listarCoresContemplacao(),
     numeroGrupo ? carregarGrupo(numeroGrupo) : Promise.resolve(null),
     numeroGrupo ? listarIndices() : Promise.resolve([]),
     contarPorFamilia(),
-    numeroGrupo ? carregarInccPadrao() : Promise.resolve(6),
+    numeroGrupo ? carregarPadroesSimulador() : Promise.resolve({ incc: 6, contemplacaoMeses: 1 }),
   ]);
   const hoje = new Date().toISOString().slice(0, 10);
 
@@ -145,7 +145,7 @@ async function Conteudo({ searchParams }: { searchParams: PageProps<"/grupos">["
 
         <div className="pt-3">
           {detalhe ? (
-            <GrupoDetalheView grupo={detalhe} indices={indices} hoje={hoje} inccPadrao={inccPadrao} />
+            <GrupoDetalheView grupo={detalhe} indices={indices} hoje={hoje} padroes={padroes} />
           ) : numeroGrupo ? (
             <p className="py-2 text-sm font-semibold text-[#9b1c1c]">Grupo {numeroGrupo} não encontrado.</p>
           ) : grupos.length > 0 ? (

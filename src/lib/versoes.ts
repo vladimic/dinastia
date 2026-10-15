@@ -2,6 +2,14 @@
 // Regra: a cada mudança entregue, acrescentar uma entrada NO TOPO.
 export const VERSOES: { numero: string; data: string; itens: string[] }[] = [
   {
+    numero: "0048",
+    data: "15/10/2026",
+    itens: [
+      "\"Contemplação em (meses)\" virou parâmetro global (Parâmetros globais › Simulador, padrão 1; migração 0020, já aplicada). O simulador abre com esse valor e ele pode ser alterado na tela, só para aquela simulação.",
+      "Simulador: todos os boxes de parâmetros passam a ter a largura do box Contemplação em.",
+    ],
+  },
+  {
     numero: "0047",
     data: "15/10/2026",
     itens: [
