@@ -89,9 +89,12 @@ export function notaSorteios(m: ModeloSequencia): string | null {
   return `Sorteios: ${partes.join("; ")}.`;
 }
 
-// "Fidelidade libera no mês 37."
+// "Fidelidade liberado na parcela 36." O banco guarda o mês em que o FID entra na sequência (37);
+// a parcela em que ele é liberado é a anterior (36 parcelas pagas).
+export const parcelaFidelidade = (fidelidadeMeses: number) => fidelidadeMeses - 1;
+
 export function notaFidelidade(fidelidadeMeses: number | null): string | null {
-  return fidelidadeMeses ? `Fidelidade libera no mês ${fidelidadeMeses}.` : null;
+  return fidelidadeMeses ? `Fidelidade liberado na parcela ${parcelaFidelidade(fidelidadeMeses)}.` : null;
 }
 
 export type Posicao = { codigo: string; desde: number | null };
