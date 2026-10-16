@@ -1,152 +1,370 @@
+"use client";
+
+import { createContext, useContext, useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
+import type { GrupoDetalhe } from "@/lib/grupos";
 import type { PadroesSimulador } from "@/lib/simulacao";
-import { nomeFamilia, type GrupoDetalhe } from "@/lib/grupos";
-import { dataBR } from "@/lib/formato";
-import { TiposParcela } from "./ParcelasEFuro";
-import { FaixaCredito } from "./FaixaCredito";
-import { AlternarInformacoes, InformacoesGrupo, InformacoesProvider, MaisInformacoes } from "./InformacoesGrupo";
-import { SequenciaContemplacao } from "./SequenciaContemplacao";
-import { ModalidadesContemplacao } from "./ModalidadesContemplacao";
-import { LinhaCartoes } from "./LinhaCartoes";
-import { SimuladorGrupo } from "./SimuladorGrupo";
-import { SimulacaoProvider } from "./SimulacaoContext";
+import { dataBR, lerPct, milhar, pct } from "@/lib/formato";
+import { salvarCampoGrupo, type CampoGrupo } from "./actions";
+import { SimulacaoProvider, useSimulacao } from "./SimulacaoContext";
+import { DadosGrupo } from "./DadosGrupo";
+import { Simulador } from "./Simulador";
+
+// Grupos e Tabelas: um resumo fixo e duas abas (Dados do grupo · Simulador); o seletor de grupo fica no cabeçalho principal da página.
+// Os dados só ficam editáveis com a edição ligada; cada campo grava assim que é alterado, como na versão 1.
+
+export type Estado = { tipo: "ocioso" } | { tipo: "salvando" } | { tipo: "salvo" } | { tipo: "erro"; msg: string };
+export type Info = Record<CampoGrupo, string>;
+export type Aba = "dados" | "simulador";
+
+type Ctx = {
+  grupo: GrupoDetalhe;
+  familiaNome: string;
+  indices: { sigla: string; nome: string }[];
+  editando: boolean;
+  info: Info;
+  estadoInfo: Estado;
+  mudarInfo: (c: CampoGrupo, v: string) => void;
+  gravarInfo: (c: CampoGrupo, v: string) => void;
+  /** taxa de administração total já gravada (o simulador usa esta) */
+  taxaAdm: number | null;
+  creditos: number[];
+  setCreditos: (v: number[]) => void;
+  disponiveis: Set<string>;
+  setDisponiveis: (v: Set<string>) => void;
+  cotas: number;
+  setCotas: (v: number) => void;
+  meses: string;
+  setMeses: (v: string) => void;
+  realizadas: number;
+  faltam: number;
+};
+
+const DadosCtx = createContext<Ctx | null>(null);
+export function useDados() {
+  const c = useContext(DadosCtx);
+  if (!c) throw new Error("fora de <GrupoDetalhe>");
+  return c;
+}
 
 type Props = {
   grupo: GrupoDetalhe;
+  familiaNome: string;
   indices: { sigla: string; nome: string }[];
   hoje: string;
   padroes: PadroesSimulador;
+  abaInicial: Aba;
 };
 
-function dataLocal(ts: string) {
-  return new Date(ts).toLocaleDateString("pt-BR", { timeZone: "America/Sao_Paulo" });
-}
-
-export function GrupoDetalheView({ grupo, indices, hoje, padroes }: Props) {
-  const prazoCalculado = grupo.prazo_grupo_meses - (grupo.assembleia - 1);
-  const prazoDiverge = prazoCalculado !== grupo.prazo_cota_meses;
-  // a tabela vigente é da próxima assembleia enquanto a data dela não passou
-  const realizadas = grupo.data_assembleia && grupo.data_assembleia >= hoje ? grupo.assembleia - 1 : grupo.assembleia;
-  const faltam = Math.max(0, grupo.prazo_grupo_meses - realizadas);
-
-  // parcela inicial do simulador: a menor entre as oferecidas (a menor reduzida; só Normal se não houver reduzida)
-  const tipoInicial = grupo.tiposParcela.filter((t) => t.disponivel).sort((a, b) => a.pct - b.pct)[0];
-
+export function GrupoDetalhe(p: Props) {
+  const g = p.grupo;
+  // parcela inicial do simulador: a menor entre as oferecidas (como na versão 1)
+  const tipoInicial = g.tiposParcela.filter((t) => t.disponivel).sort((a, b) => a.pct - b.pct)[0];
   return (
     <SimulacaoProvider
-      key={grupo.numero}
-      creditoInicial={grupo.creditos[0] ?? null}
+      creditoInicial={g.creditos[0] ?? null}
       tipoInicial={tipoInicial?.codigo ?? null}
-      tipos={grupo.tiposParcela.map((t) => ({ codigo: t.codigo, descricao: t.descricao, pct: t.pct }))}
-      furoInicial={grupo.pagamento_com_furo}
+      tipos={g.tiposParcela.map((t) => ({ codigo: t.codigo, descricao: t.descricao, pct: t.pct }))}
+      furoInicial={g.pagamento_com_furo}
     >
-    <div data-raiz-grupo className="flex flex-col gap-4">
+      <Conteudo {...p} />
+    </SimulacaoProvider>
+  );
+}
 
-      <InformacoesProvider
-        numero={grupo.numero}
-        participantes={grupo.participantes}
-        taxaAdm={grupo.taxa_adm_total}
-        fundoReserva={grupo.fundo_reserva}
-        indice={grupo.indice}
-        mesReajuste={grupo.mes_reajuste}
-        diaVencimento={grupo.dia_vencimento}
-        primeiraCorrecao={grupo.primeira_correcao}
-        indices={indices}
-      >
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex flex-wrap items-baseline gap-x-5 gap-y-1 text-[13px]">
-          <h2 className="flex items-center gap-2 text-lg font-bold">
-            <span>
-              Grupo {grupo.numero} · {nomeFamilia(grupo.familia)}
-            </span>
-            <MaisInformacoes numero={grupo.numero} />
-            <AlternarInformacoes />
-          </h2>
-          <InformacoesGrupo />
-          <span>
-            <span className="text-tinta">Assembleia atual: </span>
-            <strong>
-              {grupo.assembleia}
-              {grupo.data_assembleia ? ` – ${dataBR(grupo.data_assembleia)}` : ""}
-            </strong>
-            {grupo.atualizado_em && (
-              <span className="ml-1.5 text-[11px] text-tinta" title={grupo.arquivo ? `Tabela: ${grupo.arquivo}` : undefined}>
-                (atualizado em: {dataLocal(grupo.atualizado_em)})
-              </span>
-            )}
-          </span>
-          <div
-            className="flex items-end gap-2 self-center"
-            title={`${realizadas} de ${grupo.prazo_grupo_meses} assembleias realizadas · faltam ${faltam}`}
-          >
-            <div className="w-72">
-              <div className="mb-0.5 flex justify-between text-[11px] leading-none">
-                <span className="font-bold text-laranja">
-                  {realizadas} {realizadas === 1 ? "realizada" : "realizadas"}
-                </span>
-                <span className="text-tinta">
-                  <strong className="text-navy">{faltam}</strong> faltam
-                </span>
-              </div>
-              <div
-                className="relative h-2 overflow-hidden rounded-full bg-lavanda"
-                role="img"
-                aria-label={`${realizadas} de ${grupo.prazo_grupo_meses} assembleias realizadas`}
+function Conteudo({ grupo: g, familiaNome, indices, hoje, padroes, abaInicial }: Props) {
+  const router = useRouter();
+  const inicial: Info = {
+    participantes: milhar(g.participantes),
+    taxa_adm_total: pct(g.taxa_adm_total),
+    fundo_reserva: pct(g.fundo_reserva),
+    indice: g.indice ?? "",
+    mes_reajuste: g.mes_reajuste ? String(g.mes_reajuste) : "",
+    dia_vencimento: g.dia_vencimento ? String(g.dia_vencimento) : "",
+  };
+  const [info, setInfo] = useState<Info>(inicial);
+  const [gravada, setGravada] = useState<Info>(inicial);
+  const [estadoInfo, setEstadoInfo] = useState<Estado>({ tipo: "ocioso" });
+  const [, iniciar] = useTransition();
+  const [editando, setEditando] = useState(false);
+  const [aba, setAba] = useState<Aba>(abaInicial);
+  const [creditos, setCreditos] = useState(g.creditos);
+  const [disponiveis, setDisponiveis] = useState(() => new Set(g.tiposParcela.filter((t) => t.disponivel).map((t) => t.codigo)));
+  const [cotas, setCotas] = useState(1);
+  const [meses, setMeses] = useState(String(padroes.contemplacaoMeses));
+
+  // a tabela vigente é da próxima assembleia enquanto a data dela não passou
+  const realizadas = g.data_assembleia && g.data_assembleia >= hoje ? g.assembleia - 1 : g.assembleia;
+  const faltam = Math.max(0, g.prazo_grupo_meses - realizadas);
+
+  function gravarInfo(campo: CampoGrupo, valor: string) {
+    if (valor === gravada[campo]) return;
+    setEstadoInfo({ tipo: "salvando" });
+    iniciar(async () => {
+      const r = await salvarCampoGrupo(g.numero, campo, valor);
+      if (r.ok) {
+        setGravada((x) => ({ ...x, [campo]: valor }));
+        setEstadoInfo({ tipo: "salvo" });
+      } else setEstadoInfo({ tipo: "erro", msg: r.erro });
+    });
+  }
+
+  function trocarAba(a: Aba) {
+    setAba(a);
+    // guarda a aba na URL (recarregar ou trocar de grupo mantém a aba)
+    const u = new URL(window.location.href);
+    if (a === "dados") u.searchParams.delete("aba");
+    else u.searchParams.set("aba", a);
+    u.searchParams.delete("lista");
+    window.history.replaceState(null, "", u);
+  }
+
+  function alternarEdicao() {
+    // ao desligar, busca de novo os dados do servidor (a sequência usa o editor da versão 1, que grava por conta própria)
+    if (editando) router.refresh();
+    setEditando(!editando);
+    setEstadoInfo({ tipo: "ocioso" });
+  }
+
+  const ctx: Ctx = {
+    grupo: g,
+    familiaNome,
+    indices,
+    editando,
+    info,
+    estadoInfo,
+    mudarInfo: (c, v) => setInfo((x) => ({ ...x, [c]: v })),
+    gravarInfo,
+    taxaAdm: lerPct(gravada.taxa_adm_total),
+    creditos,
+    setCreditos,
+    disponiveis,
+    setDisponiveis,
+    cotas,
+    setCotas,
+    meses,
+    setMeses,
+    realizadas,
+    faltam,
+  };
+
+  return (
+    <DadosCtx.Provider value={ctx}>
+      <div className="flex flex-col gap-4">
+        <Resumo />
+
+        <div className="flex flex-wrap items-end justify-between gap-3 border-b border-borda">
+          <div role="tablist" aria-label="Seções do grupo" className="-mb-px flex gap-1">
+            {(
+              [
+                ["dados", "Dados do grupo"],
+                ["simulador", "Simulador"],
+              ] as const
+            ).map(([k, rotulo]) => (
+              <button
+                key={k}
+                type="button"
+                role="tab"
+                id={`aba-${k}`}
+                aria-selected={aba === k}
+                aria-controls={`painel-${k}`}
+                onClick={() => trocarAba(k)}
+                className={
+                  "border-b-[3px] px-4 py-2.5 text-sm font-bold " +
+                  (aba === k ? "border-laranja text-navy" : "border-transparent text-tinta hover:text-navy")
+                }
               >
-                <div
-                  className="absolute inset-y-0 left-0 min-w-1.5 rounded-full bg-laranja"
-                  style={{ width: `${Math.min(100, (realizadas / grupo.prazo_grupo_meses) * 100)}%` }}
-                />
-              </div>
-            </div>
-            <span className="text-xs font-bold leading-none tabular-nums">{grupo.prazo_grupo_meses}</span>
+                {rotulo}
+              </button>
+            ))}
           </div>
+          {aba === "dados" && (
+            <div className="flex items-center gap-2.5 pb-2">
+              <span id="rotulo-edicao" className={"text-[13px] font-bold " + (editando ? "text-alerta" : "text-tinta")}>
+                {editando ? "Edição ligada" : "Edição desligada"}
+              </span>
+              <button
+                type="button"
+                role="switch"
+                aria-checked={editando}
+                aria-labelledby="rotulo-edicao"
+                onClick={alternarEdicao}
+                className={"relative h-6 w-11 shrink-0 rounded-full transition-colors " + (editando ? "bg-laranja" : "bg-[#cfcbe0]")}
+              >
+                <span className={"absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-all " + (editando ? "left-[22px]" : "left-0.5")} />
+              </button>
+            </div>
+          )}
+        </div>
+
+        {/* os dois painéis ficam montados: trocar de aba não perde o que foi digitado no simulador */}
+        <div role="tabpanel" id="painel-dados" aria-labelledby="aba-dados" hidden={aba !== "dados"}>
+          <DadosGrupo />
+        </div>
+        <div role="tabpanel" id="painel-simulador" aria-labelledby="aba-simulador" hidden={aba !== "simulador"}>
+          <Simulador hoje={hoje} padroes={padroes} />
         </div>
       </div>
-      </InformacoesProvider>
+    </DadosCtx.Provider>
+  );
+}
 
-      {prazoDiverge && (
-        <p className="text-xs font-semibold text-alerta">
-          Atenção: prazo da cota na tabela é {grupo.prazo_cota_meses} meses; pela regra (prazo − assembleia + 1) daria {prazoCalculado}.
-        </p>
-      )}
+const brl0 = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: 0, minimumFractionDigits: 0 });
+export const reais0 = (v: number) => brl0.format(Math.ceil(Number(v.toFixed(4))));
+const nf2 = new Intl.NumberFormat("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const nf0 = new Intl.NumberFormat("pt-BR", { maximumFractionDigits: 0 });
 
-      <LinhaCartoes>
-        <FaixaCredito key={`cred-${grupo.grupo_assembleia_id}`} versaoId={grupo.grupo_assembleia_id} creditos={grupo.creditos} />
-
-        <TiposParcela key={`tipos-${grupo.grupo_assembleia_id}`} versaoId={grupo.grupo_assembleia_id} tipos={grupo.tiposParcela} />
-
-        <div className="flex items-stretch gap-3">
-        <SequenciaContemplacao
-          key={`seq-${grupo.grupo_assembleia_id}`}
-          versaoId={grupo.grupo_assembleia_id}
-          modelo={grupo.sequencia.modelo}
-          linha={grupo.sequencia.linha}
-          faixas={grupo.sequencia.faixas}
-          tipos={grupo.tiposContemplacao}
-          fidelidadeMeses={grupo.fidelidade_meses}
-        />
-
-        <ModalidadesContemplacao
-          modalidades={grupo.modalidades}
-          tipos={grupo.tiposContemplacao}
-          prazoGrupo={grupo.prazo_grupo_meses}
-        />
-        </div>
-
-      </LinhaCartoes>
-
-      <SimuladorGrupo
-        numero={grupo.numero}
-        hoje={hoje}
-        padroes={padroes}
-        fidelidadeMeses={grupo.fidelidade_meses ? grupo.fidelidade_meses - 1 : null}
-        mesesFaltam={faltam}
-        mesesDecorridos={realizadas}
-        taxaAdm={grupo.taxa_adm_total}
-        prazoGrupo={grupo.prazo_grupo_meses}
-        modalidades={grupo.modalidades}
+/** Quantidade de cotas (multiplica o crédito escolhido): − número + ; o campo aceita digitar (1 a 99). */
+function Cotas({ cotas, setCotas }: { cotas: number; setCotas: (v: number) => void }) {
+  const [texto, setTexto] = useState(String(cotas));
+  const mudar = (n: number) => {
+    const v = Math.min(99, Math.max(1, n));
+    setCotas(v);
+    setTexto(String(v));
+  };
+  const botao = "flex h-7 w-7 items-center justify-center rounded-md border border-borda-campo text-[15px] font-bold hover:border-navy disabled:opacity-40";
+  return (
+    <div role="group" aria-labelledby="rotulo-cotas-grupo" className="flex items-center gap-1" title="Multiplica o crédito escolhido">
+      <button type="button" aria-label="Menos uma cota" disabled={cotas <= 1} onClick={() => mudar(cotas - 1)} className={botao}>
+        −
+      </button>
+      <input
+        inputMode="numeric"
+        aria-label="Quantidade de cotas"
+        value={texto}
+        onChange={(e) => {
+          const t = e.target.value.replace(/\D/g, "").slice(0, 2);
+          setTexto(t);
+          if (t) setCotas(Math.min(99, Math.max(1, Number(t))));
+        }}
+        onBlur={() => setTexto(String(cotas))}
+        className="h-7 w-9 rounded-md bg-transparent text-center text-[17px] font-extrabold tabular-nums outline-none focus:bg-campo focus:text-laranja"
       />
+      <button type="button" aria-label="Mais uma cota" disabled={cotas >= 99} onClick={() => mudar(cotas + 1)} className={botao}>
+        +
+      </button>
     </div>
-    </SimulacaoProvider>
+  );
+}
+
+/** Faixa fixa no topo, igual nas duas abas: o essencial do grupo. */
+function Resumo() {
+  const { grupo: g, realizadas, faltam, creditos, disponiveis, cotas, setCotas } = useDados();
+  const { furo, creditoSel, setCreditoSel, tipoSel, setTipoSel } = useSimulacao();
+  // todos os percentuais do cadastro (do maior para o menor); em verde os oferecidos pelo grupo
+  const tipos = [...g.tiposParcela].sort((a, b) => b.pct - a.pct);
+  const item = "flex min-w-0 flex-col gap-1 px-4 py-2.5";
+  const rotulo = "text-[10px] font-bold tracking-wider text-tinta uppercase";
+  const valor = "text-lg leading-tight font-bold tabular-nums";
+
+  return (
+    <section
+      aria-label="Resumo do grupo"
+      className="sticky top-0 z-10 grid grid-cols-2 divide-borda overflow-hidden rounded-2xl border border-borda bg-white shadow-[0_6px_18px_rgba(13,5,64,0.06)] sm:grid-cols-3 sm:divide-x lg:grid-cols-[auto_minmax(9.5rem,13rem)_minmax(0,1fr)_auto_auto_auto]"
+    >
+      <div className={item}>
+        <span className={rotulo}>Próxima assembleia</span>
+        <span className="flex flex-wrap items-baseline gap-x-2">
+          <span className={valor}>{g.assembleia}ª</span>
+          <span className="text-[13px] font-semibold text-tinta tabular-nums">{g.data_assembleia ? dataBR(g.data_assembleia) : "sem data"}</span>
+        </span>
+      </div>
+      <div className={item} title={`${realizadas} de ${g.prazo_grupo_meses} assembleias realizadas · faltam ${faltam}`}>
+        <span className={rotulo}>Andamento</span>
+        <div className="flex justify-between text-[11px]">
+          <span className="font-bold text-laranja">
+            {realizadas} {realizadas === 1 ? "realizada" : "realizadas"}
+          </span>
+          <span className="text-tinta">
+            <strong className="text-navy">{faltam}</strong> faltam · {g.prazo_grupo_meses}
+          </span>
+        </div>
+        <div className="relative h-2 overflow-hidden rounded-full bg-lavanda" role="img" aria-label={`${realizadas} de ${g.prazo_grupo_meses} assembleias realizadas`}>
+          <div className="absolute inset-y-0 left-0 min-w-1.5 rounded-full bg-laranja" style={{ width: `${Math.min(100, (realizadas / g.prazo_grupo_meses) * 100)}%` }} />
+        </div>
+      </div>
+      {/* ocupa o espaço que sobra: título na vertical e todos os créditos lado a lado (ordem horizontal);
+          clicar escolhe o crédito usado no simulador */}
+      <div className="col-span-2 flex min-w-0 items-stretch gap-2.5 py-2 pr-4 pl-2 sm:col-span-1">
+        <span
+          id="rotulo-creditos-grupo"
+          className="shrink-0 rotate-180 text-center text-[9px] leading-tight font-bold tracking-wider text-tinta uppercase [writing-mode:vertical-rl]"
+        >
+          Créditos
+          <br />
+          disponíveis
+        </span>
+        {creditos.length ? (
+          <div role="group" aria-labelledby="rotulo-creditos-grupo" className="flex min-w-0 flex-wrap content-center gap-x-0.5 gap-y-0">
+            {[...creditos]
+              .sort((a, b) => a - b)
+              .map((c) => {
+                const sel = c === creditoSel;
+                return (
+                  <button
+                    key={c}
+                    type="button"
+                    aria-pressed={sel}
+                    onClick={() => setCreditoSel(c)}
+                    title={`R$ ${nf2.format(c)}${sel ? " · usado no simulador" : " · usar no simulador"}`}
+                    className={
+                      "rounded-md border px-1 py-px text-[15px] leading-tight font-bold whitespace-nowrap tabular-nums " +
+                      (sel ? "border-laranja bg-laranja-claro text-navy" : "border-transparent text-ouro-texto hover:border-borda-campo hover:bg-linha")
+                    }
+                  >
+                    {nf0.format(Math.floor(c))}
+                  </button>
+                );
+              })}
+          </div>
+        ) : (
+          <span className="self-center text-[13px] text-tinta">Nenhum crédito cadastrado</span>
+        )}
+      </div>
+      <div className={item}>
+        <span id="rotulo-cotas-grupo" className={rotulo}>
+          Qtd de cotas
+        </span>
+        <Cotas cotas={cotas} setCotas={setCotas} />
+      </div>
+      <div className={item}>
+        <span id="rotulo-tipos-grupo" className={rotulo}>
+          Tipos de parcela
+        </span>
+        {/* em verde os oferecidos (clicar escolhe o tipo usado no simulador); os demais ficam apagados */}
+        <div role="group" aria-labelledby="rotulo-tipos-grupo" className="flex flex-wrap gap-1">
+          {tipos.map((t) => {
+            const on = disponiveis.has(t.codigo);
+            const sel = on && t.codigo === tipoSel;
+            return (
+              <button
+                key={t.codigo}
+                type="button"
+                disabled={!on}
+                aria-pressed={sel}
+                onClick={() => setTipoSel(t.codigo)}
+                title={!on ? `${t.descricao}: não oferecido pelo grupo` : sel ? `${t.descricao}: usado no simulador` : `${t.descricao}: usar no simulador`}
+                className={
+                  "rounded-md border px-1.5 py-0.5 text-[12px] font-bold tabular-nums " +
+                  (!on
+                    ? "cursor-not-allowed border-borda bg-linha text-tinta/50"
+                    : sel
+                      ? "border-laranja bg-laranja-claro text-navy"
+                      : "border-[#b8dcc0] bg-ok-fundo text-ok hover:border-ok")
+                }
+              >
+                {t.pct}%<span className="sr-only">{on ? " oferecido" : " não oferecido"}</span>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+      <div className={item}>
+        <span className={rotulo}>Furo</span>
+        <span className={"w-fit rounded-md border px-2 py-0.5 text-[12px] font-bold " + (furo ? "border-[#b8dcc0] bg-ok-fundo text-ok" : "border-borda bg-linha text-tinta")}>
+          {furo ? "Sim" : "Não"}
+        </span>
+      </div>
+    </section>
   );
 }

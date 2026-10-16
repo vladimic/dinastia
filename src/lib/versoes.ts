@@ -2,6 +2,17 @@
 // Regra: a cada mudança entregue, acrescentar uma entrada NO TOPO.
 export const VERSOES: { numero: string; data: string; itens: string[] }[] = [
   {
+    numero: "0071",
+    data: "16/10/2026",
+    itens: [
+      "Grupos e Tabelas: a tela nova passa a ser a oficial e única. A tela antiga (com a lista de grupos retrátil) e o item de menu \"Grupo e Tabelas ver2\" foram removidos; o endereço /grupos (login, atalho do app, link da importação) continua o mesmo.",
+      "O seletor de grupo (número, setas anterior/próximo e \"Atualizado em\") foi para o cabeçalho principal, ao lado do título; o cabeçalho continua numa linha só e a página ganha altura. Sem grupo escolhido, a lista de grupos aparece aberta no corpo da página.",
+      "A lista de grupos passa a abrir alinhada à margem esquerda do conteúdo da página.",
+      "Simulador · Validade da proposta: não pode ser anterior a hoje (o seletor de datas bloqueia os dias passados e uma data passada digitada volta para hoje); acima de 15 dias aparece o aviso, mas a data é mantida.",
+      "Dados do grupo · Modalidades de contemplação: os valores ficam centralizados na horizontal e na vertical (os rótulos da 1ª coluna ficam à esquerda, centralizados na vertical).",
+    ],
+  },
+  {
     numero: "0070",
     data: "16/10/2026",
     itens: [

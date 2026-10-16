@@ -3,11 +3,11 @@
 import { useRef, useState, useTransition } from "react";
 import { MESES } from "@/lib/formato";
 import { FIDELIDADE, SORTEIO, notaFidelidade, notaSorteios, parcelaFidelidade } from "@/lib/sequencia";
-import { alternarTipoParcela, definirPagamentoComFuro, salvarCreditos, type CampoGrupo } from "../grupos/actions";
-import { useSimulacao } from "../grupos/SimulacaoContext";
-import { ModalidadesContemplacao } from "../grupos/ModalidadesContemplacao";
-import { SequenciaContemplacao } from "../grupos/SequenciaContemplacao";
-import { useDados, type Estado } from "./GrupoV2";
+import { alternarTipoParcela, definirPagamentoComFuro, salvarCreditos, type CampoGrupo } from "./actions";
+import { useSimulacao } from "./SimulacaoContext";
+import { ModalidadesContemplacao } from "./ModalidadesContemplacao";
+import { SequenciaContemplacao } from "./SequenciaContemplacao";
+import { useDados, type Estado } from "./GrupoDetalhe";
 
 // Aba "Dados do grupo": tudo o que se sabe do grupo. Com a edição desligada é só leitura;
 // ligada, os mesmos blocos viram campos e cada alteração grava na hora.
@@ -43,7 +43,7 @@ export function DadosGrupo() {
         <Creditos key={`cred-${editando}`} />
         <Tipos />
         {/* só leitura (vem da tabela importada): o mesmo box da versão 1, esticado à largura da coluna */}
-        <div className="[&>section]:h-full [&>section]:w-full [&>section]:p-4 [&_table]:flex-1 [&_tbody_tr]:h-[32%] [&_td]:py-2.5! [&_td]:text-[13px]! [&_th]:text-[13px]!">
+        <div className="[&>section]:h-full [&>section]:w-full [&>section]:p-4 [&_table]:flex-1 [&_tbody_tr]:h-[32%] [&_td]:py-2.5! [&_td]:text-[13px]! [&_th]:text-[13px]! [&_td]:text-center! [&_td]:align-middle! [&_th]:text-center! [&_th]:align-middle! [&_td:first-child]:text-left! [&_th:first-child]:text-left!">
           <ModalidadesContemplacao modalidades={g.modalidades} tipos={g.tiposContemplacao} prazoGrupo={g.prazo_grupo_meses} />
         </div>
       </div>
@@ -390,11 +390,11 @@ function Tipos() {
         })}
       </ul>
       <div className="mt-auto flex items-center justify-between border-t border-linha pt-3">
-        <span id="furo-v2" className="text-[13px] font-bold">
+        <span id="furo-grupo" className="text-[13px] font-bold">
           Pagamento com furo
         </span>
         {editando ? (
-          <button type="button" role="switch" aria-checked={furo} aria-labelledby="furo-v2" onClick={alternarFuro} className={"relative h-5 w-9 rounded-full transition-colors " + (furo ? "bg-ok" : "bg-[#cfcbe0]")}>
+          <button type="button" role="switch" aria-checked={furo} aria-labelledby="furo-grupo" onClick={alternarFuro} className={"relative h-5 w-9 rounded-full transition-colors " + (furo ? "bg-ok" : "bg-[#cfcbe0]")}>
             <span className={"absolute top-0.5 h-4 w-4 rounded-full bg-white shadow transition-all " + (furo ? "left-[18px]" : "left-0.5")} />
           </button>
         ) : (
