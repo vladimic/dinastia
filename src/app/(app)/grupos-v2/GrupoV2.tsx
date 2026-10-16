@@ -224,10 +224,44 @@ function Conteudo({ grupo: g, familiaNome, indices, hoje, padroes, abaInicial, s
 const brl0 = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: 0, minimumFractionDigits: 0 });
 export const reais0 = (v: number) => brl0.format(Math.ceil(Number(v.toFixed(4))));
 const nf2 = new Intl.NumberFormat("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const nf0 = new Intl.NumberFormat("pt-BR", { maximumFractionDigits: 0 });
+
+/** Quantidade de cotas (multiplica o crédito escolhido): − número + ; o campo aceita digitar (1 a 99). */
+function Cotas({ cotas, setCotas }: { cotas: number; setCotas: (v: number) => void }) {
+  const [texto, setTexto] = useState(String(cotas));
+  const mudar = (n: number) => {
+    const v = Math.min(99, Math.max(1, n));
+    setCotas(v);
+    setTexto(String(v));
+  };
+  const botao = "flex h-7 w-7 items-center justify-center rounded-md border border-borda-campo text-[15px] font-bold hover:border-navy disabled:opacity-40";
+  return (
+    <div role="group" aria-labelledby="rotulo-cotas-v2" className="flex items-center gap-1" title="Multiplica o crédito escolhido">
+      <button type="button" aria-label="Menos uma cota" disabled={cotas <= 1} onClick={() => mudar(cotas - 1)} className={botao}>
+        −
+      </button>
+      <input
+        inputMode="numeric"
+        aria-label="Quantidade de cotas"
+        value={texto}
+        onChange={(e) => {
+          const t = e.target.value.replace(/\D/g, "").slice(0, 2);
+          setTexto(t);
+          if (t) setCotas(Math.min(99, Math.max(1, Number(t))));
+        }}
+        onBlur={() => setTexto(String(cotas))}
+        className="h-7 w-9 rounded-md bg-transparent text-center text-[17px] font-extrabold tabular-nums outline-none focus:bg-campo focus:text-laranja"
+      />
+      <button type="button" aria-label="Mais uma cota" disabled={cotas >= 99} onClick={() => mudar(cotas + 1)} className={botao}>
+        +
+      </button>
+    </div>
+  );
+}
 
 /** Faixa fixa no topo, igual nas duas abas: o essencial do grupo. */
 function Resumo() {
-  const { grupo: g, realizadas, faltam, creditos, disponiveis } = useDados();
+  const { grupo: g, realizadas, faltam, creditos, disponiveis, cotas, setCotas } = useDados();
   const { furo, creditoSel, setCreditoSel, tipoSel, setTipoSel } = useSimulacao();
   // todos os percentuais do cadastro (do maior para o menor); em verde os oferecidos pelo grupo
   const tipos = [...g.tiposParcela].sort((a, b) => b.pct - a.pct);
@@ -238,7 +272,7 @@ function Resumo() {
   return (
     <section
       aria-label="Resumo do grupo"
-      className="sticky top-0 z-10 grid grid-cols-2 divide-borda overflow-hidden rounded-2xl border border-borda bg-white shadow-[0_6px_18px_rgba(13,5,64,0.06)] sm:grid-cols-3 sm:divide-x lg:grid-cols-[auto_minmax(13rem,17rem)_minmax(0,1fr)_auto_auto]"
+      className="sticky top-0 z-10 grid grid-cols-2 divide-borda overflow-hidden rounded-2xl border border-borda bg-white shadow-[0_6px_18px_rgba(13,5,64,0.06)] sm:grid-cols-3 sm:divide-x lg:grid-cols-[auto_minmax(9.5rem,13rem)_minmax(0,1fr)_auto_auto_auto]"
     >
       <div className={item}>
         <span className={rotulo}>Próxima assembleia</span>
@@ -273,7 +307,7 @@ function Resumo() {
           disponíveis
         </span>
         {creditos.length ? (
-          <div role="group" aria-labelledby="rotulo-creditos-v2" className="flex min-w-0 flex-wrap content-center gap-1">
+          <div role="group" aria-labelledby="rotulo-creditos-v2" className="flex min-w-0 flex-wrap content-center gap-x-0.5 gap-y-0">
             {[...creditos]
               .sort((a, b) => a - b)
               .map((c) => {
@@ -284,13 +318,13 @@ function Resumo() {
                     type="button"
                     aria-pressed={sel}
                     onClick={() => setCreditoSel(c)}
-                    title={sel ? "Crédito usado no simulador" : "Usar este crédito no simulador"}
+                    title={`R$ ${nf2.format(c)}${sel ? " · usado no simulador" : " · usar no simulador"}`}
                     className={
-                      "rounded-md border px-1.5 py-px text-[13px] leading-tight font-bold whitespace-nowrap tabular-nums " +
+                      "rounded-md border px-1 py-px text-[15px] leading-tight font-bold whitespace-nowrap tabular-nums " +
                       (sel ? "border-laranja bg-laranja-claro text-navy" : "border-transparent text-ouro-texto hover:border-borda-campo hover:bg-linha")
                     }
                   >
-                    {nf2.format(c)}
+                    {nf0.format(Math.floor(c))}
                   </button>
                 );
               })}
@@ -298,6 +332,12 @@ function Resumo() {
         ) : (
           <span className="self-center text-[13px] text-tinta">Nenhum crédito cadastrado</span>
         )}
+      </div>
+      <div className={item}>
+        <span id="rotulo-cotas-v2" className={rotulo}>
+          Qtd de cotas
+        </span>
+        <Cotas cotas={cotas} setCotas={setCotas} />
       </div>
       <div className={item}>
         <span id="rotulo-tipos-v2" className={rotulo}>
@@ -321,7 +361,7 @@ function Resumo() {
                   (!on
                     ? "cursor-not-allowed border-borda bg-linha text-tinta/50"
                     : sel
-                      ? "border-ok bg-ok text-white"
+                      ? "border-laranja bg-laranja-claro text-navy"
                       : "border-[#b8dcc0] bg-ok-fundo text-ok hover:border-ok")
                 }
               >

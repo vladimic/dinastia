@@ -182,6 +182,8 @@ function somarDias(iso: string, dias: number) {
 }
 
 const PRE_DEFINIDOS = [1, 12, 24, 36, 48, 60, 120];
+// números de destaque da coluna de parâmetros (crédito, parcela, meses): mesma fonte e tamanho
+const GRANDE = "text-[28px] leading-none font-extrabold tracking-tight tabular-nums";
 
 /** Bloco da coluna de parâmetros */
 function Bloco({ titulo, children, id }: { titulo: React.ReactNode; children: React.ReactNode; id?: string }) {
@@ -205,9 +207,8 @@ function Par({ r, v, className = "" }: { r: string; v: React.ReactNode; classNam
 }
 
 export function SimuladorV2({ hoje, padroes }: { hoje: string; padroes: PadroesSimulador }) {
-  const { grupo: g, creditos, disponiveis, cotas, setCotas, meses, setMeses, faltam, realizadas, taxaAdm } = useDados();
-  const { creditoSel, setCreditoSel, tipoSel, setTipoSel, tipos, furo } = useSimulacao();
-  const [cotasTxt, setCotasTxt] = useState(String(cotas));
+  const { grupo: g, cotas, meses, setMeses, faltam, realizadas, taxaAdm } = useDados();
+  const { creditoSel, tipoSel, tipos, furo } = useSimulacao();
   const [vagas, setVagas] = useState("17");
   const validadeRef = useRef<HTMLInputElement>(null);
   const [validade, setValidade] = useState(() => somarDias(hoje, 7));
@@ -233,13 +234,6 @@ export function SimuladorV2({ hoje, padroes }: { hoje: string; padroes: PadroesS
   }));
   const mudarQtd = (tipo: TipoColuna) => (v: string) => setQtds((q) => ({ ...q, [tipo]: v === "" ? "" : String(limitar(tipo, Number(v))) }));
 
-  const mudarCotas = (n: number) => {
-    const v = Math.min(99, Math.max(1, n));
-    setCotas(v);
-    setCotasTxt(String(v));
-  };
-
-  const ofertados = tipos.filter((t) => disponiveis.has(t.codigo)).sort((a, b) => b.pct - a.pct);
   const tipo = tipos.find((t) => t.codigo === tipoSel);
   const mesesContemplacao = Number(meses) || 0;
   const creditoContratado = creditoSel === null ? null : creditoSel * cotas;
@@ -280,69 +274,20 @@ export function SimuladorV2({ hoje, padroes }: { hoje: string; padroes: PadroesS
   return (
     <section aria-label={`Simulador do grupo ${g.numero}`} className="grid items-start gap-4 lg:grid-cols-[19rem_minmax(0,1fr)]">
       <aside aria-label="Parâmetros da simulação" className="flex flex-col gap-4 rounded-2xl border border-borda bg-white p-4 lg:sticky lg:top-[7.5rem]">
+        {/* crédito, cotas e tipo de parcela são escolhidos no cabeçalho do grupo */}
         <Bloco titulo="Crédito contratado">
-          <div className="font-display text-[34px] leading-none font-bold tabular-nums text-ouro-texto">{creditoContratado === null ? "—" : reais0(creditoContratado)}</div>
-          <div className="flex items-center gap-2">
-            <select
-              className={campo + " flex-1"}
-              aria-label="Crédito da carta"
-              value={creditoSel ?? ""}
-              onChange={(e) => setCreditoSel(Number(e.target.value))}
-            >
-              {creditos.map((c) => (
-                <option key={c} value={c}>
-                  R$ {nf2.format(c)}
-                </option>
-              ))}
-            </select>
-            <div className="flex shrink-0 items-center gap-0.5" role="group" aria-label="Quantidade de cotas" title="Quantidade de cotas (multiplica o crédito escolhido)">
-              <button type="button" aria-label="Menos uma cota" disabled={cotas <= 1} onClick={() => mudarCotas(cotas - 1)} className="h-9 w-7 rounded-md border border-borda-campo font-bold hover:border-navy disabled:opacity-40">
-                −
-              </button>
-              <input
-                inputMode="numeric"
-                aria-label="Quantidade de cotas"
-                value={cotasTxt}
-                onChange={(e) => {
-                  const t = e.target.value.replace(/\D/g, "").slice(0, 2);
-                  setCotasTxt(t);
-                  if (t) setCotas(Math.min(99, Math.max(1, Number(t))));
-                }}
-                onBlur={() => setCotasTxt(String(cotas))}
-                className="h-9 w-8 bg-transparent text-center text-[13px] font-bold tabular-nums outline-none focus:text-laranja"
-              />
-              <button type="button" aria-label="Mais uma cota" disabled={cotas >= 99} onClick={() => mudarCotas(cotas + 1)} className="h-9 w-7 rounded-md border border-borda-campo font-bold hover:border-navy disabled:opacity-40">
-                +
-              </button>
-            </div>
-          </div>
+          <div className={GRANDE + " text-ouro-texto"}>{creditoContratado === null ? "—" : reais0(creditoContratado)}</div>
           <span className="text-[11px] text-tinta">
-            {cotas} {cotas === 1 ? "cota" : "cotas"} × crédito da carta
+            {creditoSel === null ? "Escolha um crédito no cabeçalho" : `${cotas} ${cotas === 1 ? "cota" : "cotas"} × ${reais0(creditoSel)}`}
           </span>
         </Bloco>
 
-        <Bloco titulo="Tipo de parcela" id="rotulo-tipo-v2">
-          {ofertados.length ? (
-            <div role="radiogroup" aria-labelledby="rotulo-tipo-v2" className="flex flex-wrap gap-1 rounded-xl border border-borda bg-linha p-1">
-              {ofertados.map((t) => (
-                <button
-                  key={t.codigo}
-                  type="button"
-                  role="radio"
-                  aria-checked={t.codigo === tipoSel}
-                  onClick={() => setTipoSel(t.codigo)}
-                  title={t.descricao}
-                  className={"min-h-8 flex-1 rounded-lg px-2 text-[12px] font-bold whitespace-nowrap " + (t.codigo === tipoSel ? "bg-white text-navy shadow ring-1 ring-laranja" : "text-tinta hover:text-navy")}
-                >
-                  {t.pct === 100 ? "Normal" : `${t.pct}%`}
-                </button>
-              ))}
-            </div>
-          ) : (
-            <p className="text-[12px] text-alerta">Nenhum tipo de parcela oferecido. Ligue a edição em Dados do grupo.</p>
-          )}
-          <Par r="Parcela antes da contemplação" v={base ? reais0(base.parcelaAntes) : "—"} className="text-ouro-texto" />
-          <Par r="Pagamento com furo" v={furo ? "Sim" : "Não"} />
+        <Bloco titulo="Parcela antes da contemplação">
+          <div className={GRANDE + " text-ouro-texto"}>{base ? reais0(base.parcelaAntes) : "—"}</div>
+          <span className="text-[11px] text-tinta">
+            {tipo ? `Parcela ${tipo.descricao}` : "Escolha o tipo de parcela no cabeçalho"}
+            {furo ? " · com furo" : " · sem furo"}
+          </span>
         </Bloco>
 
         {/* "Contemplação em" da proposta D: número grande, régua e atalhos */}
@@ -359,9 +304,9 @@ export function SimuladorV2({ hoje, padroes }: { hoje: string; padroes: PadroesS
               inputMode="numeric"
               value={meses}
               onChange={(e) => setMeses(e.target.value.replace(/\D/g, "").slice(0, 3))}
-              className="w-[4.5rem] border-b-2 border-borda-campo bg-transparent font-display text-[40px] leading-none font-bold tabular-nums text-laranja outline-none focus:border-laranja"
+              className={"w-[3.5ch] border-b-2 border-borda-campo bg-transparent text-laranja outline-none focus:border-laranja " + GRANDE}
             />
-            <span className="font-display text-[22px] font-bold text-laranja">meses</span>
+            <span className="text-[15px] font-bold text-laranja">meses</span>
           </div>
           <input
             type="range"
