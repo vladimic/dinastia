@@ -34,7 +34,7 @@ export function FiltroCredito({ minimo, maximo, de, ate, aoMudar, className = ""
   };
 
   const campo = (c: "de" | "ate", valor: number, rotulo: string) => (
-    <span className="block w-[4.9rem]">
+    <span className="block w-[5.3rem]">
       <input
         inputMode="numeric"
         aria-label={rotulo}
@@ -52,13 +52,13 @@ export function FiltroCredito({ minimo, maximo, de, ate, aoMudar, className = ""
             e.currentTarget.blur();
           }
         }}
-        className="h-[22px] w-full rounded-md border border-borda-campo bg-white px-1.5 text-[12px] font-semibold tabular-nums text-navy outline-none focus:border-laranja"
+        className="h-[22px] w-full rounded-full border border-borda-campo bg-white px-2 text-right text-[12px] font-semibold tabular-nums text-navy outline-none focus:border-laranja"
       />
     </span>
   );
 
   return (
-    <div role="group" aria-label="Valor do crédito" className={"flex h-[42px] w-fit shrink-0 flex-col justify-center gap-[2px] rounded-xl border border-borda-campo bg-campo px-2.5 " + className}>
+    <div role="group" aria-label="Valor do crédito" className={"flex h-[42px] w-fit shrink-0 flex-col justify-center gap-[2px] " + className}>
       <div className="flex items-center gap-1.5">
         <span className="mr-auto text-[10px] leading-none font-extrabold tracking-wider whitespace-nowrap text-tinta uppercase">Crédito</span>
         {campo("de", de, "Crédito mínimo")}

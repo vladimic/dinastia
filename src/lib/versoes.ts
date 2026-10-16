@@ -2,6 +2,14 @@
 // Regra: a cada mudança entregue, acrescentar uma entrada NO TOPO.
 export const VERSOES: { numero: string; data: string; itens: string[] }[] = [
   {
+    numero: "0076",
+    data: "16/10/2026",
+    itens: [
+      "Lista de grupos: os filtros de Crédito e Participantes saem do box e passam ao estilo leve das pílulas de Parcela (botões de participantes em pílula; campos de valor do crédito arredondados).",
+      "Filtro de crédito: os valores dos campos mínimo e máximo ficam alinhados à direita.",
+    ],
+  },
+  {
     numero: "0075",
     data: "16/10/2026",
     itens: [

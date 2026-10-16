@@ -329,7 +329,7 @@ function Lista({
           <FiltroCredito minimo={limites.minimo} maximo={limites.maximo} de={de} ate={ate} aoMudar={(a, b) => setFaixa({ de: a, ate: b })} className={ORDEM_NOVOS} />
         )}
         {valoresParticipantes.length > 0 && (
-          <div role="group" aria-labelledby="rotulo-participantes" className={"flex h-[42px] shrink-0 flex-col justify-center gap-[3px] rounded-xl border border-borda-campo bg-campo px-2.5 " + ORDEM_NOVOS}>
+          <div role="group" aria-labelledby="rotulo-participantes" className={"flex h-[42px] shrink-0 flex-col justify-center gap-[3px] " + ORDEM_NOVOS}>
             <div className="flex h-3 items-center justify-between">
               <span id="rotulo-participantes" className="text-[10px] leading-none font-extrabold tracking-wider text-tinta uppercase">
                 Participantes
@@ -345,7 +345,7 @@ function Lista({
                 ×
               </button>
             </div>
-            <div className="flex items-center gap-[3px]">
+            <div className="flex items-center gap-1">
               {valoresParticipantes.map((v) => {
                 const on = marcados.includes(v);
                 return (
@@ -355,7 +355,7 @@ function Lista({
                     aria-pressed={on}
                     onClick={() => setMarcados((m) => (m.includes(v) ? m.filter((x) => x !== v) : [...m, v]))}
                     className={
-                      "flex h-[22px] min-w-[2.5rem] items-center justify-center rounded-md border px-1 text-[12px] font-bold tabular-nums " +
+                      "flex h-[26px] min-w-[2.5rem] items-center justify-center rounded-full border px-2 text-[12px] font-bold tabular-nums " +
                       (on ? "border-laranja bg-laranja-claro text-navy" : "border-borda-campo bg-white text-navy hover:border-navy")
                     }
                   >
@@ -372,7 +372,7 @@ function Lista({
           onClick={limparTudo}
           aria-label="Limpa tudo"
           title="Limpa tudo (Parcela, Crédito e Participantes)"
-          className={"flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-borda-campo bg-white text-tinta hover:border-navy hover:text-navy disabled:cursor-default disabled:opacity-40 disabled:hover:border-borda-campo disabled:hover:text-tinta " + ORDEM_NOVOS}
+          className={"flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-borda-campo bg-white text-tinta hover:border-navy hover:text-navy disabled:cursor-default disabled:opacity-40 disabled:hover:border-borda-campo disabled:hover:text-tinta " + ORDEM_NOVOS}
         >
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
             <path d="M3 4h18l-7 8.5V19l-4 2v-8.5z" />
