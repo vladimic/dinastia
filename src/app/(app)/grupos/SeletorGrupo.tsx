@@ -66,6 +66,15 @@ export function SeletorGrupo({ familias, familia, contagem, grupos, atual, hoje 
   // ao sair da página (ela fica preservada, escondida), a lista volta fechada
   useLayoutEffect(() => () => setAberto(false), []);
 
+  // com um grupo aberto e a lista aberta, as telas Dados do grupo e Simulador ficam ocultas (globals.css: html[data-lista-aberta])
+  useLayoutEffect(() => {
+    if (!aberto || !atual) return;
+    document.documentElement.dataset.listaAberta = "";
+    return () => {
+      delete document.documentElement.dataset.listaAberta;
+    };
+  }, [aberto, atual]);
+
   useEffect(() => {
     if (!aberto || !atual) return;
     const fora = (e: MouseEvent) => {

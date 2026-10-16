@@ -141,6 +141,11 @@ body {
   font-variant-numeric: tabular-nums;
 }
 
+/* lista de grupos aberta: oculta Dados do grupo e Simulador (o estado deles é mantido) */
+html[data-lista-aberta] [data-oculta-com-lista] {
+  display: none;
+}
+
 /* slider duplo do filtro de crédito (FiltroCredito): duas barras sobrepostas, só as bolinhas recebem o mouse */
 .faixa {
   --pa: 0;
