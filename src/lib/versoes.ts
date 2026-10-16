@@ -2,6 +2,14 @@
 // Regra: a cada mudança entregue, acrescentar uma entrada NO TOPO.
 export const VERSOES: { numero: string; data: string; itens: string[] }[] = [
   {
+    numero: "0067",
+    data: "16/10/2026",
+    itens: [
+      "Grupo e Tabelas ver2 · cabeçalho do grupo: Faixa de crédito passa a se chamar Créditos disponíveis, com o título na vertical e os valores ao lado, mais próximos, em ordem horizontal e com fonte maior (sem rolagem).",
+      "Clicar num crédito ou num tipo de parcela do cabeçalho escolhe o valor usado no simulador (o escolhido fica destacado; os tipos não oferecidos ficam apagados e não podem ser escolhidos).",
+    ],
+  },
+  {
     numero: "0066",
     data: "16/10/2026",
     itens: [
