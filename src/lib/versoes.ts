@@ -2,6 +2,17 @@
 // Regra: a cada mudança entregue, acrescentar uma entrada NO TOPO.
 export const VERSOES: { numero: string; data: string; itens: string[] }[] = [
   {
+    numero: "0063",
+    data: "16/10/2026",
+    itens: [
+      "Novo item de menu Grupo e Tabelas ver2 (/grupos-v2), para comparar com a tela atual, que continua igual. Usa os mesmos dados e as mesmas gravações.",
+      "Seletor de grupo: botão com o grupo atual e setas de anterior/próximo; a lista abre larga, com busca pelo número, filtros (Furo, Parcela 70, Parcela 50 / 55), ordenação por número, tamanho ou assembleias que faltam, e o tamanho de cada grupo (participantes, com barra até 9.999).",
+      "Resumo fixo no topo (assembleia atual, andamento, crédito escolhido, parcela, taxa e índice) e duas abas: Dados do grupo e Simulador.",
+      "Dados do grupo: todas as informações do grupo em leitura; o botão Edição ligada/desligada transforma os blocos em campos (informações, faixa de crédito, tipos de parcela, furo e sequência), gravando a cada alteração.",
+      "Simulador: parâmetros numa coluna à esquerda e grade à direita; Contemplação em com número grande, régua deslizante e atalhos. Corpo da tela em tons claros, para não se confundir com o menu azul.",
+    ],
+  },
+  {
     numero: "0062",
     data: "15/10/2026",
     itens: [

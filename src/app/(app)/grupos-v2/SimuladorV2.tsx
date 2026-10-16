@@ -1,0 +1,475 @@
+"use client";
+
+import { useRef, useState } from "react";
+import { dataBR } from "@/lib/formato";
+import type { Modalidade } from "@/lib/grupos";
+import { calcularBase, calcularColuna, type Coluna as Calc, type PadroesSimulador, type TipoColuna } from "@/lib/simulacao";
+import { useSimulacao } from "../grupos/SimulacaoContext";
+import { reais0, useDados } from "./GrupoV2";
+
+// Simulador da ver2: os mesmos cálculos da versão 1 (src/lib/simulacao.ts), com os parâmetros numa coluna à esquerda
+// e a grade de resultados à direita. Só o "% Próprio" do cabeçalho de cada lance ainda é número de exemplo (bolinha amarela).
+
+const p2 = (v: number) => v.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + "%";
+const dinheiro = (v: number | null | undefined) => (v === null || v === undefined ? "—" : reais0(v));
+const nf2 = new Intl.NumberFormat("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+type Cor = "navy" | "ouro" | "laranja" | "livre";
+type Meta = { chave: string; tipo: TipoColuna; titulo: string; numero?: number; proprioPct?: number; icone?: "cadeado" | "martelo"; cor: Cor };
+
+const COLUNAS: Meta[] = [
+  { chave: "sorteio", tipo: "SOR", titulo: "Sorteio", cor: "navy" },
+  { chave: "fixo", tipo: "FIX", titulo: "Lance Fixo", numero: 1, proprioPct: 0, icone: "cadeado", cor: "navy" },
+  { chave: "limitado", tipo: "LIM", titulo: "Lance Limitado", numero: 2, proprioPct: 25, icone: "cadeado", cor: "ouro" },
+  { chave: "livre", tipo: "LIV", titulo: "Lance Livre", numero: 3, proprioPct: 35, icone: "martelo", cor: "livre" },
+  { chave: "fidelidade", tipo: "FID", titulo: "Lance Fidelidade", numero: 4, proprioPct: 42, icone: "martelo", cor: "laranja" },
+];
+
+// cor de cada coluna só na borda de cima e em fundos claros: o corpo da página fica claro, distinto do menu azul
+const BORDA: Record<Cor, string> = { navy: "border-t-navy", ouro: "border-t-ouro", laranja: "border-t-laranja", livre: "border-t-tinta" };
+const FUNDO: Record<Cor, string> = { navy: "bg-lavanda", ouro: "bg-ouro-claro", laranja: "bg-laranja-claro", livre: "bg-[#efedf5]" };
+
+type Coluna = Meta & {
+  oferecido: boolean;
+  bloqueio: string | null;
+  qtd: string | null;
+  qtdFixa: boolean;
+  calc: Calc | null;
+  prazoRestante: number;
+  concorrencia: number | null;
+  rodape: { titulo: string; texto: string };
+};
+
+function Fic() {
+  return (
+    <i
+      aria-label="Ainda não calculado"
+      title="Ainda não calculado (valor de exemplo)"
+      className="inline-block h-2 w-2 shrink-0 rounded-full bg-[#f5c400] ring-1 ring-[#b38f00]"
+    />
+  );
+}
+function Cadeado() {
+  return (
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-label="Valor fixo">
+      <rect x="5" y="11" width="14" height="9" rx="1.5" />
+      <path d="M8 11V8a4 4 0 018 0v3" />
+    </svg>
+  );
+}
+function Martelo() {
+  return (
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-label="Disputado como leilão">
+      <path d="M14 4l6 6-3 3-6-6zM11 7L4 14l3 3 7-7M3 21h10" />
+    </svg>
+  );
+}
+
+const GRADE = "grid grid-cols-[10.5rem_repeat(5,minmax(0,1fr))] gap-x-1.5";
+
+function Cabecalho({ c, aoMudarQtd }: { c: Coluna; aoMudarQtd: (v: string) => void }) {
+  return (
+    <div className={`flex min-h-[7rem] flex-col gap-1.5 rounded-t-lg border-t-4 px-2.5 py-2 ${BORDA[c.cor]} ${FUNDO[c.cor]}`}>
+      <div className="flex items-center gap-1.5">
+        {c.numero && (
+          <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded border-2 border-navy text-[11px] leading-none font-extrabold">{c.numero}</span>
+        )}
+        <span className="text-[13px] leading-tight font-extrabold">{c.titulo}</span>
+      </div>
+      {!c.numero ? (
+        <span className="mt-auto text-[11px] font-semibold text-tinta">Sem lance</span>
+      ) : (
+        <>
+          {c.oferecido && c.qtd !== null && (
+            <label className="flex items-center gap-1 text-[11px] font-semibold text-tinta" title={c.qtdFixa ? "Parcelas do lance definidas pelo grupo" : "Parcelas do lance (editável nesta simulação)"}>
+              <input
+                inputMode="numeric"
+                readOnly={c.qtdFixa}
+                value={c.qtd}
+                aria-label={`Parcelas do ${c.titulo}`}
+                onChange={(e) => aoMudarQtd(e.target.value.replace(/\D/g, "").slice(0, 3))}
+                className={"h-6 w-11 rounded border border-borda-campo px-1 text-right text-[12px] font-bold tabular-nums text-navy outline-none focus:border-laranja " + (c.qtdFixa ? "bg-linha" : "bg-white")}
+              />
+              parcelas
+            </label>
+          )}
+          <div className="text-[10px] font-bold text-tinta">
+            <div className="flex justify-between">
+              <span>Concorrência</span>
+              <span className="tabular-nums">{c.concorrencia === null ? "—" : `${c.concorrencia.toLocaleString("pt-BR", { maximumFractionDigits: 2 })}%`}</span>
+            </div>
+            <div className="mt-0.5 h-1.5 overflow-hidden rounded-full bg-white" role="img" aria-label={`Concorrência ${c.concorrencia ?? 0}%`}>
+              <div className="h-full bg-ouro" style={{ width: `${Math.min(100, (c.concorrencia ?? 0) * 3)}%` }} />
+            </div>
+          </div>
+          <div className="mt-auto flex items-center gap-1 text-[10px] font-bold whitespace-nowrap text-tinta">
+            <Fic /> {c.proprioPct}% {c.icone === "cadeado" ? <Cadeado /> : <Martelo />} próprio
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
+function Grade({ colunas, aoMudarQtd }: { colunas: Coluna[]; aoMudarQtd: (t: TipoColuna) => (v: string) => void }) {
+  const rotulo = "flex items-center px-2 text-[12px] leading-tight font-bold text-tinta";
+  const celula = "flex min-h-[2.5rem] flex-col items-center justify-center border-b border-linha px-1 text-center";
+  const valor = "text-[15px] leading-tight font-bold tabular-nums";
+  const aviso = (c: Coluna) => c.bloqueio ?? (c.oferecido ? null : "Grupo não oferece");
+  const linhasCima: { r: string; v: (c: Coluna) => string; avisar?: boolean; forte?: boolean }[] = [
+    { r: "Recurso da Carta (embutido)", v: (c) => (c.calc && c.tipo !== "SOR" ? dinheiro(c.calc.recursoCarta) : "—"), avisar: true },
+    { r: "Recurso Próprio (dinheiro)", v: (c) => (c.calc && c.tipo !== "SOR" ? dinheiro(c.calc.recursoProprio) : "—") },
+    { r: "Crédito Disponível após a Contemplação", v: (c) => dinheiro(c.calc?.creditoDisponivel), forte: true },
+    { r: "Valor da Parcela após a Contemplação", v: (c) => dinheiro(c.calc?.parcelaApos), forte: true },
+    { r: "Prazo Restante", v: (c) => (c.calc && c.prazoRestante > 0 ? String(c.prazoRestante) : "—") },
+  ];
+  const linhasBaixo: { r: string; v: (c: Coluna) => string }[] = [
+    { r: "Saldo Devedor", v: (c) => dinheiro(c.calc?.saldoDevedor) },
+    { r: "Valor Investido", v: (c) => dinheiro(c.calc?.valorInvestido) },
+    { r: "Custo Mensal", v: (c) => (c.calc?.custoMensal == null ? "—" : p2(c.calc.custoMensal * 100)) },
+    { r: "Custo Anual", v: (c) => (c.calc?.custoAnual == null ? "—" : p2(c.calc.custoAnual * 100)) },
+    { r: "Dinheiro Novo", v: (c) => dinheiro(c.calc?.dinheiroNovo) },
+  ];
+
+  return (
+    <div className="min-w-[46rem] rounded-2xl border border-borda bg-white p-2">
+      <div className={GRADE}>
+        <div aria-hidden="true" />
+        {colunas.map((c) => (
+          <Cabecalho key={c.chave} c={c} aoMudarQtd={aoMudarQtd(c.tipo)} />
+        ))}
+      </div>
+      {linhasCima.map((l) => (
+        <div key={l.r} className={GRADE}>
+          <div className={rotulo + " border-b border-linha"}>{l.r}</div>
+          {colunas.map((c) => {
+            const msg = l.avisar ? aviso(c) : null;
+            return (
+              <div key={c.chave} className={celula}>
+                {msg ? <span className="text-[10px] leading-tight text-tinta">{msg}</span> : <span className={`${valor} ${l.forte ? "text-navy" : "text-ouro-texto"}`}>{l.v(c)}</span>}
+              </div>
+            );
+          })}
+        </div>
+      ))}
+      <div className={GRADE + " py-1.5"}>
+        <div aria-hidden="true" />
+        {colunas.map((c) => (
+          <div key={c.chave} className={`flex min-h-[3.2rem] flex-col items-center justify-center rounded-md px-1.5 py-1 text-center ${FUNDO[c.cor]}`}>
+            <div className="text-[11px] font-bold">{c.rodape.titulo}</div>
+            <div className="text-[10px] text-tinta">{c.rodape.texto}</div>
+          </div>
+        ))}
+      </div>
+      {linhasBaixo.map((l) => (
+        <div key={l.r} className={GRADE}>
+          <div className={rotulo + " rounded-md bg-linha text-navy"}>{l.r}</div>
+          {colunas.map((c) => (
+            <div key={c.chave} className={celula}>
+              <span className={`${valor} text-ouro-texto`}>{l.v(c)}</span>
+            </div>
+          ))}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function somarDias(iso: string, dias: number) {
+  const d = new Date(iso + "T00:00:00Z");
+  d.setUTCDate(d.getUTCDate() + dias);
+  return d.toISOString().slice(0, 10);
+}
+
+const PRE_DEFINIDOS = [1, 12, 24, 36, 48, 60, 120];
+
+/** Bloco da coluna de parâmetros */
+function Bloco({ titulo, children, id }: { titulo: React.ReactNode; children: React.ReactNode; id?: string }) {
+  return (
+    <div className="flex flex-col gap-1.5 border-b border-linha pb-4 last:border-b-0 last:pb-0">
+      <h3 id={id} className="text-[10px] font-bold tracking-[0.1em] text-ouro-texto uppercase">
+        {titulo}
+      </h3>
+      {children}
+    </div>
+  );
+}
+
+function Par({ r, v, className = "" }: { r: string; v: React.ReactNode; className?: string }) {
+  return (
+    <div className="flex items-baseline justify-between gap-3 text-[13px]">
+      <span className="text-tinta">{r}</span>
+      <span className={"font-bold tabular-nums " + className}>{v}</span>
+    </div>
+  );
+}
+
+export function SimuladorV2({ hoje, padroes }: { hoje: string; padroes: PadroesSimulador }) {
+  const { grupo: g, creditos, disponiveis, cotas, setCotas, meses, setMeses, faltam, realizadas, taxaAdm } = useDados();
+  const { creditoSel, setCreditoSel, tipoSel, setTipoSel, tipos, furo } = useSimulacao();
+  const [cotasTxt, setCotasTxt] = useState(String(cotas));
+  const [vagas, setVagas] = useState("17");
+  const validadeRef = useRef<HTMLInputElement>(null);
+  const [validade, setValidade] = useState(() => somarDias(hoje, 7));
+  const [inccLigado, setInccLigado] = useState(true);
+  const [incc, setIncc] = useState(() => nf2.format(padroes.incc));
+
+  // parcela em que a fidelidade libera (36), e não o mês em que entra na sequência (37)
+  const fidelidadeMeses = g.fidelidade_meses ? g.fidelidade_meses - 1 : null;
+  const prazoGrupo = g.prazo_grupo_meses;
+  const taxaMensal = taxaAdm !== null && faltam > 0 ? taxaAdm / faltam : null;
+
+  const porTipo = new Map(g.modalidades.map((m) => [m.tipo as string, m]));
+  const tetoQtd = (tipo: string) => porTipo.get(tipo)?.max_parcelas_lance ?? null;
+  const limitar = (tipo: string, n: number) => {
+    const teto = tetoQtd(tipo);
+    return teto !== null && n > teto ? teto : n;
+  };
+  const [qtds, setQtds] = useState<Record<string, string>>(() => ({
+    FIX: String(tetoQtd("FIX") ?? 0),
+    LIM: String(tetoQtd("LIM") ?? 0),
+    LIV: String(limitar("LIV", padroes.lanceLivreParcelas)),
+    FID: String(limitar("FID", padroes.lanceFidelidadeParcelas)),
+  }));
+  const mudarQtd = (tipo: TipoColuna) => (v: string) => setQtds((q) => ({ ...q, [tipo]: v === "" ? "" : String(limitar(tipo, Number(v))) }));
+
+  const mudarCotas = (n: number) => {
+    const v = Math.min(99, Math.max(1, n));
+    setCotas(v);
+    setCotasTxt(String(v));
+  };
+
+  const ofertados = tipos.filter((t) => disponiveis.has(t.codigo)).sort((a, b) => b.pct - a.pct);
+  const tipo = tipos.find((t) => t.codigo === tipoSel);
+  const mesesContemplacao = Number(meses) || 0;
+  const creditoContratado = creditoSel === null ? null : creditoSel * cotas;
+  const maxMeses = Math.max(1, faltam);
+
+  const base =
+    creditoContratado !== null && taxaAdm !== null && tipo
+      ? calcularBase({ credito: creditoContratado, taxaAdmPct: taxaAdm, pctParcela: tipo.pct, prazoGrupo, mesesFaltam: faltam, furo, mesesContemplacao })
+      : null;
+
+  const colunas: Coluna[] = COLUNAS.map((c) => {
+    const m = porTipo.get(c.tipo);
+    const oferecido = c.tipo === "SOR" || Boolean(m);
+    const bloqueio =
+      c.tipo === "FID" && oferecido && fidelidadeMeses !== null && mesesContemplacao < fidelidadeMeses ? `Disponível a partir de ${fidelidadeMeses} meses` : null;
+    const qtd = c.tipo === "SOR" ? null : qtds[c.tipo];
+    const calc =
+      !base || !oferecido || bloqueio
+        ? null
+        : c.tipo === "SOR"
+          ? calcularColuna(base, creditoContratado as number, null)
+          : calcularColuna(base, creditoContratado as number, { qtdParcelas: Number(qtd) || 0, regra: m as Modalidade });
+    return {
+      ...c,
+      oferecido,
+      bloqueio,
+      qtd,
+      qtdFixa: c.tipo === "FIX" || c.tipo === "LIM",
+      calc,
+      prazoRestante: base?.prazoRestante ?? 0,
+      concorrencia: c.tipo === "SOR" ? null : padroes.concorrencia[c.tipo],
+      rodape: padroes.rodape[c.tipo],
+    };
+  });
+
+  const campo = "h-9 w-full rounded-lg border border-borda-campo bg-campo px-2.5 text-[13px] font-bold text-navy outline-none focus:border-laranja focus:bg-white";
+
+  return (
+    <section aria-label={`Simulador do grupo ${g.numero}`} className="grid items-start gap-4 lg:grid-cols-[19rem_minmax(0,1fr)]">
+      <aside aria-label="Parâmetros da simulação" className="flex flex-col gap-4 rounded-2xl border border-borda bg-white p-4 lg:sticky lg:top-[7.5rem]">
+        <Bloco titulo="Crédito contratado">
+          <div className="font-display text-[34px] leading-none font-bold tabular-nums text-ouro-texto">{creditoContratado === null ? "—" : reais0(creditoContratado)}</div>
+          <div className="flex items-center gap-2">
+            <select
+              className={campo + " flex-1"}
+              aria-label="Crédito da carta"
+              value={creditoSel ?? ""}
+              onChange={(e) => setCreditoSel(Number(e.target.value))}
+            >
+              {creditos.map((c) => (
+                <option key={c} value={c}>
+                  R$ {nf2.format(c)}
+                </option>
+              ))}
+            </select>
+            <div className="flex shrink-0 items-center gap-0.5" role="group" aria-label="Quantidade de cotas" title="Quantidade de cotas (multiplica o crédito escolhido)">
+              <button type="button" aria-label="Menos uma cota" disabled={cotas <= 1} onClick={() => mudarCotas(cotas - 1)} className="h-9 w-7 rounded-md border border-borda-campo font-bold hover:border-navy disabled:opacity-40">
+                −
+              </button>
+              <input
+                inputMode="numeric"
+                aria-label="Quantidade de cotas"
+                value={cotasTxt}
+                onChange={(e) => {
+                  const t = e.target.value.replace(/\D/g, "").slice(0, 2);
+                  setCotasTxt(t);
+                  if (t) setCotas(Math.min(99, Math.max(1, Number(t))));
+                }}
+                onBlur={() => setCotasTxt(String(cotas))}
+                className="h-9 w-8 bg-transparent text-center text-[13px] font-bold tabular-nums outline-none focus:text-laranja"
+              />
+              <button type="button" aria-label="Mais uma cota" disabled={cotas >= 99} onClick={() => mudarCotas(cotas + 1)} className="h-9 w-7 rounded-md border border-borda-campo font-bold hover:border-navy disabled:opacity-40">
+                +
+              </button>
+            </div>
+          </div>
+          <span className="text-[11px] text-tinta">
+            {cotas} {cotas === 1 ? "cota" : "cotas"} × crédito da carta
+          </span>
+        </Bloco>
+
+        <Bloco titulo="Tipo de parcela" id="rotulo-tipo-v2">
+          {ofertados.length ? (
+            <div role="radiogroup" aria-labelledby="rotulo-tipo-v2" className="flex flex-wrap gap-1 rounded-xl border border-borda bg-linha p-1">
+              {ofertados.map((t) => (
+                <button
+                  key={t.codigo}
+                  type="button"
+                  role="radio"
+                  aria-checked={t.codigo === tipoSel}
+                  onClick={() => setTipoSel(t.codigo)}
+                  title={t.descricao}
+                  className={"min-h-8 flex-1 rounded-lg px-2 text-[12px] font-bold whitespace-nowrap " + (t.codigo === tipoSel ? "bg-white text-navy shadow ring-1 ring-laranja" : "text-tinta hover:text-navy")}
+                >
+                  {t.pct === 100 ? "Normal" : `${t.pct}%`}
+                </button>
+              ))}
+            </div>
+          ) : (
+            <p className="text-[12px] text-alerta">Nenhum tipo de parcela oferecido. Ligue a edição em Dados do grupo.</p>
+          )}
+          <Par r="Parcela antes da contemplação" v={base ? reais0(base.parcelaAntes) : "—"} className="text-ouro-texto" />
+          <Par r="Pagamento com furo" v={furo ? "Sim" : "Não"} />
+        </Bloco>
+
+        {/* "Contemplação em" da proposta D: número grande, régua e atalhos */}
+        <Bloco
+          titulo={
+            <label htmlFor="meses-v2" className="flex items-baseline gap-2">
+              Contemplação em
+            </label>
+          }
+        >
+          <div className="flex items-baseline gap-2">
+            <input
+              id="meses-v2"
+              inputMode="numeric"
+              value={meses}
+              onChange={(e) => setMeses(e.target.value.replace(/\D/g, "").slice(0, 3))}
+              className="w-[4.5rem] border-b-2 border-borda-campo bg-transparent font-display text-[40px] leading-none font-bold tabular-nums text-laranja outline-none focus:border-laranja"
+            />
+            <span className="font-display text-[22px] font-bold text-laranja">meses</span>
+          </div>
+          <input
+            type="range"
+            min={1}
+            max={maxMeses}
+            value={Math.min(Math.max(1, mesesContemplacao), maxMeses)}
+            onChange={(e) => setMeses(e.target.value)}
+            aria-label="Contemplação em meses"
+            aria-valuetext={`${mesesContemplacao} meses`}
+            className="h-7 w-full cursor-pointer accent-[#ff751f]"
+          />
+          <div className="flex justify-between text-[10px] text-tinta tabular-nums">
+            <span>1</span>
+            <span>{Math.round(maxMeses / 2)}</span>
+            <span>{maxMeses} (fim)</span>
+          </div>
+          <div className="flex gap-1" role="group" aria-label="Atalhos de meses">
+            {PRE_DEFINIDOS.filter((m) => m <= maxMeses).map((m) => (
+              <button
+                key={m}
+                type="button"
+                aria-pressed={Number(meses) === m && meses !== ""}
+                onClick={() => setMeses(String(m))}
+                className={
+                  "h-7 flex-1 rounded-md text-[11px] font-bold tabular-nums " +
+                  (Number(meses) === m && meses !== "" ? "border border-laranja bg-laranja-claro text-navy" : "border border-borda-campo hover:border-navy")
+                }
+              >
+                {m === 1 ? "01" : m}
+              </button>
+            ))}
+          </div>
+          {fidelidadeMeses !== null && mesesContemplacao < fidelidadeMeses && (
+            <p className="text-[11px] text-tinta">Lance fidelidade só a partir de {fidelidadeMeses} meses.</p>
+          )}
+        </Bloco>
+
+        <Bloco titulo="Grupo">
+          <Par r="Meses para terminar" v={faltam} />
+          <Par r="Meses decorridos" v={String(realizadas).padStart(2, "0")} />
+          <Par r="Fidelidade em" v={fidelidadeMeses ? `${fidelidadeMeses} meses` : "—"} />
+          <Par r="Taxa de adm. mensal" v={taxaMensal === null ? "—" : p2(taxaMensal)} />
+          <Par r="Parcela para lance" v={base ? reais0(base.parcelaLance) : "—"} />
+        </Bloco>
+
+        <Bloco titulo="Proposta">
+          <div className="grid grid-cols-2 gap-2">
+            <label className="flex flex-col gap-1 text-[11px] font-semibold text-tinta">
+              Vagas
+              <input className={campo + " text-[#c62828]"} inputMode="numeric" value={vagas} onChange={(e) => setVagas(e.target.value.replace(/\D/g, "").slice(0, 4))} />
+            </label>
+            <div className="relative flex flex-col gap-1 text-[11px] font-semibold text-tinta">
+              <span>Validade</span>
+              <button type="button" onClick={() => validadeRef.current?.showPicker?.()} className={campo + " flex items-center justify-between text-left text-[#c62828]"} aria-label={`Validade ${dataBR(validade)}: trocar a data`}>
+                {dataBR(validade)}
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true" className="text-tinta">
+                  <rect x="3.5" y="5" width="17" height="15" rx="2" />
+                  <path d="M3.5 10h17M8 3v4M16 3v4" />
+                </svg>
+              </button>
+              <input
+                ref={validadeRef}
+                type="date"
+                tabIndex={-1}
+                aria-hidden="true"
+                className="pointer-events-none absolute bottom-0 h-0 w-0 opacity-0"
+                value={validade}
+                onChange={(e) => e.target.value && setValidade(e.target.value)}
+              />
+            </div>
+          </div>
+          <div className="flex items-center justify-between gap-2 pt-1">
+            <label htmlFor="incc-v2" className="text-[13px] font-bold">
+              INCC
+            </label>
+            <div className="flex items-center gap-2">
+              <input
+                id="incc-v2"
+                className={campo + " !w-20 text-right" + (inccLigado ? "" : " text-tinta/60")}
+                inputMode="decimal"
+                readOnly={!inccLigado}
+                value={inccLigado ? incc : "0,00"}
+                title="Vem de Parâmetros globais; aqui pode ser alterado só para esta simulação"
+                onChange={(e) => setIncc(e.target.value.replace(/[^\d,]/g, "").slice(0, 6))}
+                onBlur={() => {
+                  const n = Number(incc.replace(",", "."));
+                  setIncc(nf2.format(Number.isFinite(n) && incc !== "" ? n : padroes.incc));
+                }}
+              />
+              <span className="text-[13px] font-bold">%</span>
+              <button
+                type="button"
+                role="switch"
+                aria-checked={inccLigado}
+                aria-label="Considerar o INCC (desligado = 0%)"
+                onClick={() => setInccLigado((v) => !v)}
+                className={"relative h-5 w-9 shrink-0 rounded-full transition-colors " + (inccLigado ? "bg-ok" : "bg-[#cfcbe0]")}
+              >
+                <span className={"absolute top-0.5 h-4 w-4 rounded-full bg-white shadow transition-all " + (inccLigado ? "left-[18px]" : "left-0.5")} />
+              </button>
+            </div>
+          </div>
+        </Bloco>
+      </aside>
+
+      <div className="min-w-0 overflow-x-auto pb-2">
+        <Grade colunas={colunas} aoMudarQtd={mudarQtd} />
+      </div>
+    </section>
+  );
+}
