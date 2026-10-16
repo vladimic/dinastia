@@ -228,7 +228,7 @@ const nf2 = new Intl.NumberFormat("pt-BR", { minimumFractionDigits: 2, maximumFr
 /** Faixa fixa no topo, igual nas duas abas: o essencial do grupo. */
 function Resumo() {
   const { grupo: g, realizadas, faltam, creditos, disponiveis } = useDados();
-  const { furo } = useSimulacao();
+  const { furo, creditoSel, setCreditoSel, tipoSel, setTipoSel } = useSimulacao();
   // todos os percentuais do cadastro (do maior para o menor); em verde os oferecidos pelo grupo
   const tipos = [...g.tiposParcela].sort((a, b) => b.pct - a.pct);
   const item = "flex min-w-0 flex-col gap-1 px-4 py-2.5";
@@ -261,44 +261,75 @@ function Resumo() {
           <div className="absolute inset-y-0 left-0 min-w-1.5 rounded-full bg-laranja" style={{ width: `${Math.min(100, (realizadas / g.prazo_grupo_meses) * 100)}%` }} />
         </div>
       </div>
-      {/* ocupa o espaço que sobra: todos os créditos do grupo, em até três linhas (colunas de cima para baixo) */}
-      <div className={item + " col-span-2 sm:col-span-1"}>
-        <span className={rotulo}>
-          Faixa de crédito (R$) <span className="font-semibold normal-case">· {creditos.length} {creditos.length === 1 ? "valor" : "valores"}</span>
+      {/* ocupa o espaço que sobra: título na vertical e todos os créditos lado a lado (ordem horizontal);
+          clicar escolhe o crédito usado no simulador */}
+      <div className="col-span-2 flex min-w-0 items-stretch gap-2.5 py-2 pr-4 pl-2 sm:col-span-1">
+        <span
+          id="rotulo-creditos-v2"
+          className="shrink-0 rotate-180 text-center text-[9px] leading-tight font-bold tracking-wider text-tinta uppercase [writing-mode:vertical-rl]"
+        >
+          Créditos
+          <br />
+          disponíveis
         </span>
         {creditos.length ? (
-          <ul
-            className="m-0 grid list-none gap-x-4 gap-y-0.5 overflow-x-auto p-0"
-            style={{ gridAutoFlow: "column", gridTemplateRows: `repeat(${Math.min(3, creditos.length)}, auto)` }}
-          >
+          <div role="group" aria-labelledby="rotulo-creditos-v2" className="flex min-w-0 flex-wrap content-center gap-1">
             {[...creditos]
               .sort((a, b) => a - b)
-              .map((c) => (
-                <li key={c} className="text-[12px] leading-[1.25] font-bold whitespace-nowrap text-ouro-texto tabular-nums">
-                  {nf2.format(c)}
-                </li>
-              ))}
-          </ul>
+              .map((c) => {
+                const sel = c === creditoSel;
+                return (
+                  <button
+                    key={c}
+                    type="button"
+                    aria-pressed={sel}
+                    onClick={() => setCreditoSel(c)}
+                    title={sel ? "Crédito usado no simulador" : "Usar este crédito no simulador"}
+                    className={
+                      "rounded-md border px-1.5 py-px text-[13px] leading-tight font-bold whitespace-nowrap tabular-nums " +
+                      (sel ? "border-laranja bg-laranja-claro text-navy" : "border-transparent text-ouro-texto hover:border-borda-campo hover:bg-linha")
+                    }
+                  >
+                    {nf2.format(c)}
+                  </button>
+                );
+              })}
+          </div>
         ) : (
-          <span className="text-[13px] text-tinta">—</span>
+          <span className="self-center text-[13px] text-tinta">Nenhum crédito cadastrado</span>
         )}
       </div>
       <div className={item}>
-        <span className={rotulo}>Tipos de parcela</span>
-        <ul className="m-0 flex list-none flex-wrap gap-1 p-0">
+        <span id="rotulo-tipos-v2" className={rotulo}>
+          Tipos de parcela
+        </span>
+        {/* em verde os oferecidos (clicar escolhe o tipo usado no simulador); os demais ficam apagados */}
+        <div role="group" aria-labelledby="rotulo-tipos-v2" className="flex flex-wrap gap-1">
           {tipos.map((t) => {
             const on = disponiveis.has(t.codigo);
+            const sel = on && t.codigo === tipoSel;
             return (
-              <li
+              <button
                 key={t.codigo}
-                title={`${t.descricao}: ${on ? "oferecido" : "não oferecido"}`}
-                className={"rounded-md border px-1.5 py-0.5 text-[12px] font-bold tabular-nums " + (on ? "border-[#b8dcc0] bg-ok-fundo text-ok" : "border-borda bg-linha text-tinta/60")}
+                type="button"
+                disabled={!on}
+                aria-pressed={sel}
+                onClick={() => setTipoSel(t.codigo)}
+                title={!on ? `${t.descricao}: não oferecido pelo grupo` : sel ? `${t.descricao}: usado no simulador` : `${t.descricao}: usar no simulador`}
+                className={
+                  "rounded-md border px-1.5 py-0.5 text-[12px] font-bold tabular-nums " +
+                  (!on
+                    ? "cursor-not-allowed border-borda bg-linha text-tinta/50"
+                    : sel
+                      ? "border-ok bg-ok text-white"
+                      : "border-[#b8dcc0] bg-ok-fundo text-ok hover:border-ok")
+                }
               >
                 {t.pct}%<span className="sr-only">{on ? " oferecido" : " não oferecido"}</span>
-              </li>
+              </button>
             );
           })}
-        </ul>
+        </div>
       </div>
       <div className={item}>
         <span className={rotulo}>Furo</span>
