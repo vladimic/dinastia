@@ -2,6 +2,14 @@
 // Regra: a cada mudança entregue, acrescentar uma entrada NO TOPO.
 export const VERSOES: { numero: string; data: string; itens: string[] }[] = [
   {
+    numero: "0075",
+    data: "16/10/2026",
+    itens: [
+      "Grupos e Tabelas: ao abrir a lista de grupos (clicando no grupo, no cabeçalho), as telas Dados do grupo e Simulador (com o resumo) ficam ocultas até escolher o grupo; o que já foi digitado no simulador é mantido.",
+      "Filtro de crédito: sai o \"R$\" do rótulo e o × de limpar volta para o lado direito, dentro do box, com os dois valores um pouco mais para a esquerda.",
+    ],
+  },
+  {
     numero: "0074",
     data: "16/10/2026",
     itens: [

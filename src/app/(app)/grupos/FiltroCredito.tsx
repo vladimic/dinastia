@@ -60,22 +60,20 @@ export function FiltroCredito({ minimo, maximo, de, ate, aoMudar, className = ""
   return (
     <div role="group" aria-label="Valor do crédito" className={"flex h-[42px] w-fit shrink-0 flex-col justify-center gap-[2px] rounded-xl border border-borda-campo bg-campo px-2.5 " + className}>
       <div className="flex items-center gap-1.5">
-        <span className="mr-auto flex items-center gap-0.5 text-[10px] leading-none font-extrabold tracking-wider whitespace-nowrap text-tinta uppercase">
-          Crédito R$
-          <button
-            type="button"
-            aria-label="Limpar filtro de crédito"
-            aria-hidden={!ativo}
-            tabIndex={ativo ? 0 : -1}
-            onClick={() => aoMudar(minimo, maximo)}
-            className={"w-3 text-[14px] leading-none font-normal normal-case hover:text-navy " + (ativo ? "" : "invisible")}
-          >
-            ×
-          </button>
-        </span>
+        <span className="mr-auto text-[10px] leading-none font-extrabold tracking-wider whitespace-nowrap text-tinta uppercase">Crédito</span>
         {campo("de", de, "Crédito mínimo")}
         <span className="text-[11px] text-tinta">até</span>
         {campo("ate", ate, "Crédito máximo")}
+        <button
+          type="button"
+          aria-label="Limpar filtro de crédito"
+          aria-hidden={!ativo}
+          tabIndex={ativo ? 0 : -1}
+          onClick={() => aoMudar(minimo, maximo)}
+          className={"w-3 text-[14px] leading-none text-tinta hover:text-navy " + (ativo ? "" : "invisible")}
+        >
+          ×
+        </button>
       </div>
       <div className="faixa" style={{ "--pa": pa, "--pb": pb } as CSSProperties}>
         <span className="faixa-trilho" />

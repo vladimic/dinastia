@@ -150,7 +150,8 @@ function Conteudo({ grupo: g, familiaNome, indices, hoje, padroes, abaInicial }:
 
   return (
     <DadosCtx.Provider value={ctx}>
-      <div className="flex flex-col gap-4">
+      {/* some enquanto a lista de grupos está aberta (ver SeletorGrupo e globals.css); o estado do simulador é mantido */}
+      <div data-oculta-com-lista className="flex flex-col gap-4">
         <Resumo />
 
         <div className="flex flex-wrap items-end justify-between gap-3 border-b border-borda">
