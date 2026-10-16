@@ -72,8 +72,12 @@ export function SeletorGrupo({ familias, familia, contagem, grupos, atual, hoje 
   // logo abaixo do botão; acompanha a rolagem da página enquanto estiver aberta
   useLayoutEffect(() => {
     if (!aberto) return;
+    // borda esquerda alinhada ao botão do grupo selecionado; a direita vai até a margem da tela
     const posicionar = () => {
-      if (botao.current && painel.current) painel.current.style.top = `${Math.round(botao.current.getBoundingClientRect().bottom + 8)}px`;
+      if (!botao.current || !painel.current) return;
+      const r = botao.current.getBoundingClientRect();
+      painel.current.style.top = `${Math.round(r.bottom + 8)}px`;
+      painel.current.style.left = `${Math.round(Math.max(16, r.left))}px`;
     };
     posicionar();
     window.addEventListener("scroll", posicionar, { passive: true });
@@ -159,7 +163,7 @@ export function SeletorGrupo({ familias, familia, contagem, grupos, atual, hoje 
           ref={painel}
           role="dialog"
           aria-label={`Escolher grupo · ${nomeFamilia}`}
-          className="fixed inset-x-4 z-40 mx-auto max-w-[96rem] rounded-2xl border border-borda-campo bg-white p-4 shadow-[0_24px_60px_rgba(13,5,64,0.28)]"
+          className="fixed right-4 left-4 z-40 rounded-2xl border border-borda-campo bg-white p-4 shadow-[0_24px_60px_rgba(13,5,64,0.28)]"
         >
           {lista}
         </div>
@@ -211,7 +215,7 @@ function Lista({
   return (
     <div className="flex flex-col gap-3">
       {/* cabeçalho da lista numa linha só: família, busca, filtros e ordenação */}
-      <div className="flex flex-wrap items-center gap-x-4 gap-y-2 xl:flex-nowrap">
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
         <nav aria-label="Família de produto" className="flex shrink-0 flex-wrap gap-1 rounded-xl border border-borda bg-linha p-1">
           {familias.map((f) => {
             const on = f.slug === familia;
@@ -231,11 +235,11 @@ function Lista({
           type="search"
           autoFocus={focar}
           inputMode="numeric"
-          placeholder="Número do grupo"
+          placeholder="Nº do grupo"
           aria-label="Buscar grupo pelo número"
           value={busca}
           onChange={(e) => setBusca(e.target.value)}
-          className="h-9 w-40 shrink-0 rounded-lg border border-borda-campo bg-campo px-3 text-[13px] font-semibold text-navy outline-none focus:border-laranja focus:bg-white"
+          className="h-9 w-36 shrink-0 rounded-lg border border-borda-campo bg-campo px-3 text-[13px] font-semibold text-navy outline-none focus:border-laranja focus:bg-white"
         />
         <div className="flex shrink-0 flex-wrap gap-1.5" role="group" aria-label="Filtros">
           <button type="button" aria-pressed={filtros.furo} onClick={() => setFiltros((f) => ({ ...f, furo: !f.furo }))} className={chip(filtros.furo)}>
@@ -248,18 +252,16 @@ function Lista({
             <i aria-hidden="true" className="h-2 w-2 rounded-full bg-reduzida" /> Parcela 50 / 55
           </button>
         </div>
-        <label className="ml-auto flex shrink-0 items-center gap-2 text-[12px] font-semibold whitespace-nowrap text-tinta">
-          Ordenar por
-          <select
-            value={ordem}
-            onChange={(e) => setOrdem(e.target.value as Ordem)}
-            className="h-9 rounded-lg border border-borda-campo bg-campo px-2 text-[13px] font-bold text-navy outline-none focus:border-laranja"
-          >
-            <option value="numero">Número</option>
-            <option value="tamanho">Tamanho do grupo</option>
-            <option value="faltam">Menos assembleias</option>
-          </select>
-        </label>
+        <select
+          value={ordem}
+          aria-label="Ordenar grupos"
+          onChange={(e) => setOrdem(e.target.value as Ordem)}
+          className="ml-auto h-9 shrink-0 rounded-lg border border-borda-campo bg-campo px-2 text-[13px] font-bold text-navy outline-none focus:border-laranja"
+        >
+          <option value="numero">Ordenar: número</option>
+          <option value="tamanho">Ordenar: tamanho</option>
+          <option value="faltam">Ordenar: faltam menos</option>
+        </select>
       </div>
 
       {grupos.length === 0 ? (
@@ -267,7 +269,7 @@ function Lista({
       ) : visiveis.length === 0 ? (
         <p className="px-1 py-3 text-sm text-tinta">Nenhum grupo com esses filtros.</p>
       ) : (
-        <ul className="m-0 grid max-h-[min(60vh,34rem)] list-none grid-cols-[repeat(auto-fill,minmax(6.5rem,1fr))] gap-1.5 overflow-auto p-0.5">
+        <ul className="m-0 grid max-h-[min(60vh,34rem)] list-none grid-cols-[repeat(auto-fill,minmax(5.75rem,1fr))] gap-1.5 overflow-auto p-0.5">
           {visiveis.map((g) => {
             const sel = g.numero === ativo;
             const r = realizadas(g);
@@ -282,17 +284,17 @@ function Lista({
                   aria-current={sel ? "true" : undefined}
                   title={`Grupo ${g.numero} · ${r} realizadas, faltam ${faltam(g)}, de ${g.prazo} assembleias · ${credito}${tam ? ` · ${tam.toLocaleString("pt-BR")} participantes` : ""}`}
                   className={
-                    "relative flex min-w-0 flex-col gap-1 rounded-xl border px-2.5 pt-1.5 pb-2 " +
+                    "relative flex min-w-0 flex-col gap-1 rounded-xl border px-2 pt-1.5 pb-2 " +
                     (sel ? "border-navy bg-lavanda ring-2 ring-laranja" : "border-borda-campo bg-white hover:border-navy")
                   }
                 >
                   {/* 1ª linha: número e sinalizadores · 2ª: realizadas/faltam::prazo (ex.: 80/160::240) · 3ª: participantes */}
                   <span className="flex items-center justify-between gap-1">
-                    <span className="text-[15px] leading-tight font-extrabold tabular-nums">{g.numero}</span>
-                    <span aria-hidden="true" className="flex shrink-0 gap-[3px]">
-                      {g.furo && <i className="h-2 w-2 rounded-full bg-furo" />}
-                      {tem70(g) && <i className="h-2 w-2 rounded-full bg-setenta" />}
-                      {temAte55(g) && <i className="h-2 w-2 rounded-full bg-reduzida" />}
+                    <span className="text-[14px] leading-tight font-extrabold tabular-nums">{g.numero}</span>
+                    <span aria-hidden="true" className="flex shrink-0 gap-[2px]">
+                      {g.furo && <i className="h-[7px] w-[7px] rounded-full bg-furo" />}
+                      {tem70(g) && <i className="h-[7px] w-[7px] rounded-full bg-setenta" />}
+                      {temAte55(g) && <i className="h-[7px] w-[7px] rounded-full bg-reduzida" />}
                     </span>
                   </span>
                   <span className="truncate text-[10px] leading-none font-semibold text-tinta tabular-nums">
