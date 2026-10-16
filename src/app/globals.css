@@ -140,3 +140,77 @@ body {
   text-align: right;
   font-variant-numeric: tabular-nums;
 }
+
+/* slider duplo do filtro de crédito (FiltroCredito): duas barras sobrepostas, só as bolinhas recebem o mouse */
+.faixa {
+  --pa: 0;
+  --pb: 1;
+  --bolinha: 16px;
+  position: relative;
+  height: var(--bolinha);
+  width: 100%;
+}
+.faixa-trilho,
+.faixa-preenchido {
+  position: absolute;
+  top: calc(var(--bolinha) / 2 - 2px);
+  height: 4px;
+  border-radius: 2px;
+}
+.faixa-trilho {
+  left: 0;
+  right: 0;
+  background: var(--color-borda-campo);
+}
+.faixa-preenchido {
+  left: calc(var(--pa) * (100% - var(--bolinha)) + var(--bolinha) / 2);
+  width: calc((var(--pb) - var(--pa)) * (100% - var(--bolinha)));
+  background: var(--color-navy);
+}
+.faixa input[type="range"] {
+  position: absolute;
+  inset: 0 auto auto 0;
+  width: 100%;
+  height: var(--bolinha);
+  margin: 0;
+  background: none;
+  pointer-events: none;
+  appearance: none;
+}
+.faixa input[type="range"]::-webkit-slider-runnable-track {
+  background: none;
+  height: var(--bolinha);
+}
+.faixa input[type="range"]::-moz-range-track {
+  background: none;
+  height: var(--bolinha);
+}
+.faixa input[type="range"]::-webkit-slider-thumb {
+  appearance: none;
+  pointer-events: auto;
+  width: var(--bolinha);
+  height: var(--bolinha);
+  border-radius: 50%;
+  cursor: grab;
+  background: #fff;
+  border: 2px solid var(--color-navy);
+  box-shadow: 0 1px 3px rgba(13, 5, 64, 0.25);
+}
+.faixa input[type="range"]::-moz-range-thumb {
+  pointer-events: auto;
+  width: calc(var(--bolinha) - 4px);
+  height: calc(var(--bolinha) - 4px);
+  border-radius: 50%;
+  cursor: grab;
+  background: #fff;
+  border: 2px solid var(--color-navy);
+  box-shadow: 0 1px 3px rgba(13, 5, 64, 0.25);
+}
+.faixa input[type="range"]:focus-visible::-webkit-slider-thumb {
+  outline: 2px solid var(--color-laranja);
+  outline-offset: 2px;
+}
+.faixa input[type="range"]:focus-visible::-moz-range-thumb {
+  outline: 2px solid var(--color-laranja);
+  outline-offset: 2px;
+}

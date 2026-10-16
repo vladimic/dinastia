@@ -2,10 +2,11 @@
 
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { FiltroCredito } from "./FiltroCredito";
 
 // Seletor de grupo (fica no cabeçalho principal da tela): um botão com o grupo atual que abre a lista (larga) da família, com busca, filtros,
-// ordenação e o tamanho de cada grupo (participantes). Sem grupo escolhido, a lista aparece aberta na página.
+// ordenação e o tamanho de cada grupo (participantes). Os filtros são: parcela, valor do crédito (slider duplo) e participantes. Sem grupo escolhido, a lista aparece aberta na página.
 // O número do grupo no botão é um campo: digitar outro número e Enter abre esse grupo.
 
 export type ItemGrupo = {
@@ -121,7 +122,6 @@ export function SeletorGrupo({ familias, familia, contagem, grupos, atual, hoje 
       linkGrupo={linkGrupo}
       linkFamilia={(slug) => href({ familia: slug, grupo: atual?.numero, aba, lista: atual ? 1 : undefined })}
       aoEscolher={() => setAberto(false)}
-      focar={Boolean(atual)}
     />
   );
 
@@ -220,7 +220,6 @@ function Lista({
   linkGrupo,
   linkFamilia,
   aoEscolher,
-  focar,
 }: {
   familias: readonly Familia[];
   familia: string;
@@ -231,18 +230,46 @@ function Lista({
   linkGrupo: (n: number) => string;
   linkFamilia: (slug: string) => string;
   aoEscolher: () => void;
-  focar: boolean;
 }) {
-  const [busca, setBusca] = useState("");
   const [filtros, setFiltros] = useState({ furo: false, r70: false, r55: false });
   const [ordem, setOrdem] = useState<Ordem>("numero");
+  // faixa de crédito escolhida (null = toda a faixa da família) e participantes marcados (vazio = todos)
+  const [faixa, setFaixa] = useState<{ de: number; ate: number } | null>(null);
+  const [marcados, setMarcados] = useState<number[]>([]);
+  // trocou de família: os limites e os valores mudam, então os dois filtros voltam ao início
+  const [familiaDoFiltro, setFamiliaDoFiltro] = useState(familia);
+  if (familiaDoFiltro !== familia) {
+    setFamiliaDoFiltro(familia);
+    setFaixa(null);
+    setMarcados([]);
+  }
+
+  // do menor ao maior crédito de todos os grupos da família (em múltiplos de R$ 1.000)
+  const limites = useMemo(() => {
+    const mins = grupos.flatMap((g) => (g.min !== null && g.max !== null ? [g.min] : []));
+    const maxs = grupos.flatMap((g) => (g.min !== null && g.max !== null ? [g.max] : []));
+    if (!mins.length) return null;
+    return { minimo: Math.floor(Math.min(...mins) / 1000) * 1000, maximo: Math.ceil(Math.max(...maxs) / 1000) * 1000 };
+  }, [grupos]);
+  const valoresParticipantes = useMemo(() => [...new Set(grupos.flatMap((g) => (g.participantes ? [g.participantes] : [])))].sort((a, b) => a - b), [grupos]);
+  const de = limites ? Math.max(limites.minimo, Math.min(faixa?.de ?? limites.minimo, limites.maximo)) : 0;
+  const ate = limites ? Math.max(de, Math.min(faixa?.ate ?? limites.maximo, limites.maximo)) : 0;
+  const filtraCredito = limites !== null && (de > limites.minimo || ate < limites.maximo);
 
   const realizadas = (g: ItemGrupo) => (g.data && g.data >= hoje ? g.assembleia - 1 : g.assembleia);
   const faltam = (g: ItemGrupo) => Math.max(0, g.prazo - realizadas(g));
 
-  const q = busca.replace(/\D/g, "");
+  // o grupo entra na faixa quando algum crédito dele cai dentro dela (os grupos têm um menor e um maior crédito)
+  const noCredito = (g: ItemGrupo) => !filtraCredito || (g.min !== null && g.max !== null && g.max >= de && g.min <= ate);
   const visiveis = grupos
-    .filter((g) => (!q || String(g.numero).includes(q)) && (!filtros.furo || g.furo) && (!filtros.r70 || tem70(g)) && (!filtros.r55 || temAte55(g)))
+    .filter(
+      (g) =>
+        noCredito(g) &&
+        (!marcados.length || (g.participantes !== null && marcados.includes(g.participantes))) &&
+        (!filtros.furo || g.furo) &&
+        (!filtros.r70 || tem70(g)) &&
+        (!filtros.r55 || temAte55(g)),
+    )
     .sort((a, b) =>
       ordem === "tamanho" ? (b.participantes ?? 0) - (a.participantes ?? 0) || a.numero - b.numero : ordem === "faltam" ? faltam(a) - faltam(b) || a.numero - b.numero : a.numero - b.numero,
     );
@@ -269,16 +296,6 @@ function Lista({
             );
           })}
         </nav>
-        <input
-          type="search"
-          autoFocus={focar}
-          inputMode="numeric"
-          placeholder="Nº do grupo"
-          aria-label="Buscar grupo pelo número"
-          value={busca}
-          onChange={(e) => setBusca(e.target.value)}
-          className="h-9 w-36 shrink-0 rounded-lg border border-borda-campo bg-campo px-3 text-[13px] font-semibold text-navy outline-none focus:border-laranja focus:bg-white"
-        />
         <div className="flex shrink-0 flex-wrap gap-1.5" role="group" aria-label="Filtros">
           <button type="button" aria-pressed={filtros.furo} onClick={() => setFiltros((f) => ({ ...f, furo: !f.furo }))} className={chip(filtros.furo)}>
             <i aria-hidden="true" className="h-2 w-2 rounded-full bg-furo" /> Furo
@@ -290,6 +307,35 @@ function Lista({
             <i aria-hidden="true" className="h-2 w-2 rounded-full bg-reduzida" /> Parcela 50 / 55
           </button>
         </div>
+        {limites && (
+          <FiltroCredito minimo={limites.minimo} maximo={limites.maximo} de={de} ate={ate} aoMudar={(a, b) => setFaixa({ de: a, ate: b })} />
+        )}
+        {valoresParticipantes.length > 0 && (
+          <div role="group" aria-labelledby="rotulo-participantes" className="flex h-[42px] shrink-0 flex-col justify-center gap-1">
+            <span id="rotulo-participantes" className="text-[10px] leading-none font-extrabold tracking-wider text-tinta uppercase">
+              Participantes
+            </span>
+            <div className="flex gap-1">
+              {valoresParticipantes.map((v) => {
+                const on = marcados.includes(v);
+                return (
+                  <button
+                    key={v}
+                    type="button"
+                    aria-pressed={on}
+                    onClick={() => setMarcados((m) => (m.includes(v) ? m.filter((x) => x !== v) : [...m, v]))}
+                    className={
+                      "flex h-[26px] min-w-[3.25rem] items-center justify-center rounded-lg border px-2 text-[12px] font-bold tabular-nums " +
+                      (on ? "border-navy bg-navy text-white" : "border-borda-campo bg-white text-navy hover:border-navy")
+                    }
+                  >
+                    {v.toLocaleString("pt-BR", { useGrouping: false })}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
         <select
           value={ordem}
           aria-label="Ordenar grupos"

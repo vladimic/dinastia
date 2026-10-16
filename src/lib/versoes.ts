@@ -2,6 +2,15 @@
 // Regra: a cada mudança entregue, acrescentar uma entrada NO TOPO.
 export const VERSOES: { numero: string; data: string; itens: string[] }[] = [
   {
+    numero: "0072",
+    data: "16/10/2026",
+    itens: [
+      "Lista de grupos: novo filtro de valor do crédito (slider duplo, do menor ao maior crédito da família), com os valores mínimo e máximo também digitáveis. O grupo aparece quando algum crédito dele cai dentro da faixa.",
+      "Lista de grupos: novo filtro de participantes (um botão para cada valor existente na família; dá para marcar mais de um).",
+      "Lista de grupos: sai o campo \"Nº do grupo\" (o número continua digitável no botão do grupo, no cabeçalho). Os dois filtros novos ficam entre Parcela 50 / 55 e Ordenar, sem aumentar a altura do cabeçalho da lista.",
+    ],
+  },
+  {
     numero: "0071",
     data: "16/10/2026",
     itens: [
