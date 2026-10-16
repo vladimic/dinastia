@@ -38,12 +38,12 @@ export function DadosGrupo() {
         </p>
       )}
       {/* informações · faixa de crédito · tipos de parcela · modalidades (informações e faixa mais estreitas) */}
-      <div className="grid items-start gap-4 lg:grid-cols-2 xl:grid-cols-[minmax(0,1fr)_minmax(0,0.85fr)_minmax(0,0.8fr)_minmax(0,1.35fr)]">
+      <div className="grid gap-4 lg:grid-cols-2 xl:grid-cols-[minmax(0,1fr)_minmax(0,0.85fr)_minmax(0,0.8fr)_minmax(0,1.35fr)]">
         <Informacoes />
         <Creditos key={`cred-${editando}`} />
         <Tipos />
         {/* só leitura (vem da tabela importada): o mesmo box da versão 1, esticado à largura da coluna */}
-        <div className="[&>section]:w-full [&>section]:p-4">
+        <div className="[&>section]:h-full [&>section]:w-full [&>section]:p-4 [&_table]:flex-1 [&_tbody_tr]:h-[32%] [&_td]:py-2.5! [&_td]:text-[13px]! [&_th]:text-[13px]!">
           <ModalidadesContemplacao modalidades={g.modalidades} tipos={g.tiposContemplacao} prazoGrupo={g.prazo_grupo_meses} />
         </div>
       </div>
@@ -130,7 +130,7 @@ function Informacoes() {
             <span title={nomeIndice}>{info.indice || "—"}</span>
           )}
         </Campo>
-        <Campo rotulo="Reajuste anual em">
+        <Campo rotulo="Reajuste em">
           {editando ? (
             <select className={campo} aria-label="Mês do reajuste anual" value={info.mes_reajuste} onChange={escolhe("mes_reajuste")}>
               <option value="">—</option>
@@ -157,7 +157,6 @@ function Informacoes() {
           {g.primeira_correcao ? <span className="capitalize">{`${MESES[Number(g.primeira_correcao.slice(5, 7)) - 1]}/${g.primeira_correcao.slice(0, 4)}`}</span> : "—"}
         </Campo>
         <Campo rotulo="Fidelidade libera">{g.fidelidade_meses ? `parcela ${parcelaFidelidade(g.fidelidade_meses)}` : "sem fidelidade"}</Campo>
-        <Campo rotulo="Versões da tabela">{g.totalVersoes}</Campo>
       </dl>
     </section>
   );
@@ -259,9 +258,10 @@ function Creditos() {
         {editando && <Status estado={estado} />}
       </div>
       {!editando ? (
-        <ul className="m-0 grid list-none gap-x-6 gap-y-1 p-0" style={grade}>
+        // leitura: os valores se distribuem por toda a altura do box (que acompanha o box mais alto da linha)
+        <ul className="m-0 grid flex-1 list-none gap-x-6 p-0" style={{ ...grade, gridTemplateRows: `repeat(${Math.max(1, porColuna)}, minmax(0, 1fr))` }}>
           {creditos.map((c) => (
-            <li key={c} className="border-b border-linha py-1 text-right text-[14px] font-bold tabular-nums">
+            <li key={c} className="flex items-center justify-end border-b border-linha text-[16px] font-bold tabular-nums">
               {numero.format(c)}
             </li>
           ))}

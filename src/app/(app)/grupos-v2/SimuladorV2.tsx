@@ -1,7 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
-import { dataBR } from "@/lib/formato";
+import { useState } from "react";
 import type { Modalidade } from "@/lib/grupos";
 import { calcularBase, calcularColuna, type Coluna as Calc, type PadroesSimulador, type TipoColuna } from "@/lib/simulacao";
 import { useSimulacao } from "../grupos/SimulacaoContext";
@@ -186,13 +185,46 @@ const PRE_DEFINIDOS = [1, 12, 24, 36, 48, 60, 120];
 const GRANDE = "text-[28px] leading-none font-extrabold tracking-tight tabular-nums";
 
 /** Bloco da coluna de parâmetros */
-function Bloco({ titulo, children, id, junto }: { titulo: React.ReactNode; children: React.ReactNode; id?: string; junto?: boolean }) {
-  // junto = sem a linha e sem o espaço de baixo (o bloco seguinte "cola" neste)
+function Bloco({ titulo, children, id, junto, compacto }: { titulo: React.ReactNode; children: React.ReactNode; id?: string; junto?: boolean; compacto?: boolean }) {
+  // junto = sem a linha e sem o espaço de baixo (o bloco seguinte "cola" neste); compacto = menos espaço entre os itens
   return (
-    <div className={"flex flex-col gap-1.5 " + (junto ? "-mb-1" : "border-b border-linha pb-4 last:border-b-0 last:pb-0")}>
+    <div className={(compacto ? "flex flex-col gap-1 " : "flex flex-col gap-1.5 ") + (junto ? "-mb-1" : "border-b border-linha pb-4 last:border-b-0 last:pb-0")}>
       <h3 id={id} className="text-[10px] font-bold tracking-[0.1em] text-ouro-texto uppercase">
         {titulo}
       </h3>
+      {children}
+    </div>
+  );
+}
+
+// campo "só com o risco embaixo" (como o Contemplação em)
+const RISCO = "border-b-2 border-borda-campo bg-transparent text-right text-[13px] font-bold tabular-nums outline-none focus:border-laranja";
+
+function Interruptor({ ligado, rotulo, aoAlternar }: { ligado: boolean; rotulo: string; aoAlternar: () => void }) {
+  return (
+    <button
+      type="button"
+      role="switch"
+      aria-checked={ligado}
+      aria-label={rotulo}
+      onClick={aoAlternar}
+      className={"relative h-5 w-9 shrink-0 rounded-full transition-colors " + (ligado ? "bg-ok" : "bg-[#cfcbe0]")}
+    >
+      <span className={"absolute top-0.5 h-4 w-4 rounded-full bg-white shadow transition-all " + (ligado ? "left-[18px]" : "left-0.5")} />
+    </button>
+  );
+}
+
+/** Linha de rótulo à esquerda e valor à direita; `interruptor` fica logo depois do rótulo. */
+function Linha({ r, htmlFor, interruptor, children }: { r: string; htmlFor?: string; interruptor?: React.ReactNode; children?: React.ReactNode }) {
+  return (
+    <div className="flex min-h-7 items-center justify-between gap-3 text-[13px]">
+      <span className="flex items-center gap-2">
+        <label htmlFor={htmlFor} className="text-tinta">
+          {r}
+        </label>
+        {interruptor}
+      </span>
       {children}
     </div>
   );
@@ -211,9 +243,9 @@ export function SimuladorV2({ hoje, padroes }: { hoje: string; padroes: PadroesS
   const { grupo: g, cotas, meses, setMeses, faltam, taxaAdm } = useDados();
   const { creditoSel, tipoSel, tipos, furo } = useSimulacao();
   const [vagas, setVagas] = useState("17");
-  const validadeRef = useRef<HTMLInputElement>(null);
   const [validade, setValidade] = useState(() => somarDias(hoje, 7));
-  const [inccLigado, setInccLigado] = useState(true);
+  const [inccLigado, setInccLigado] = useState(false); // padrão: desligado
+  const [seguroLigado, setSeguroLigado] = useState(false); // padrão: desligado
   const [incc, setIncc] = useState(() => nf2.format(padroes.incc));
 
   // parcela em que a fidelidade libera (36), e não o mês em que entra na sequência (37)
@@ -270,7 +302,6 @@ export function SimuladorV2({ hoje, padroes }: { hoje: string; padroes: PadroesS
     };
   });
 
-  const campo = "h-9 w-full rounded-lg border border-borda-campo bg-campo px-2.5 text-[13px] font-bold text-navy outline-none focus:border-laranja focus:bg-white";
 
   return (
     <section aria-label={`Simulador do grupo ${g.numero}`} className="grid items-start gap-4 lg:grid-cols-[19rem_minmax(0,1fr)]">
@@ -293,6 +324,7 @@ export function SimuladorV2({ hoje, padroes }: { hoje: string; padroes: PadroesS
 
         {/* "Contemplação em" da proposta D: número grande, régua e atalhos */}
         <Bloco
+          compacto
           titulo={
             <label htmlFor="meses-v2" className="flex items-baseline gap-2">
               Contemplação em
@@ -309,80 +341,72 @@ export function SimuladorV2({ hoje, padroes }: { hoje: string; padroes: PadroesS
             />
             <span className="text-[15px] font-bold text-laranja">meses</span>
           </div>
-          <div className="text-right text-[11px] font-semibold text-tinta tabular-nums">
-            fim: {maxMeses} {maxMeses === 1 ? "mês" : "meses"}
-          </div>
-          <input
-            type="range"
-            min={1}
-            max={maxMeses}
-            value={Math.min(Math.max(1, mesesContemplacao), maxMeses)}
-            onChange={(e) => setMeses(e.target.value)}
-            aria-label="Contemplação em meses"
-            aria-valuetext={`${mesesContemplacao} meses`}
-            className="h-7 w-full cursor-pointer accent-[#ff751f]"
-          />
-          <div className="flex gap-1" role="group" aria-label="Atalhos de meses">
-            {PRE_DEFINIDOS.filter((m) => m <= maxMeses).map((m) => (
-              <button
-                key={m}
-                type="button"
-                aria-pressed={Number(meses) === m && meses !== ""}
-                onClick={() => setMeses(String(m))}
-                className={
-                  "h-7 flex-1 rounded-md text-[11px] font-bold tabular-nums " +
-                  (Number(meses) === m && meses !== "" ? "border border-laranja bg-laranja-claro text-navy" : "border border-borda-campo hover:border-navy")
-                }
-              >
-                {m === 1 ? "01" : m}
-              </button>
-            ))}
+          {/* fim, régua e atalhos colados uns nos outros */}
+          <div className="flex flex-col">
+            <div className="text-right text-[11px] leading-none font-semibold text-tinta tabular-nums">
+              fim: {maxMeses} {maxMeses === 1 ? "mês" : "meses"}
+            </div>
+            <input
+              type="range"
+              min={1}
+              max={maxMeses}
+              value={Math.min(Math.max(1, mesesContemplacao), maxMeses)}
+              onChange={(e) => setMeses(e.target.value)}
+              aria-label="Contemplação em meses"
+              aria-valuetext={`${mesesContemplacao} meses`}
+              className="h-5 w-full cursor-pointer accent-[#ff751f]"
+            />
+            <div className="flex gap-1" role="group" aria-label="Atalhos de meses">
+              {PRE_DEFINIDOS.filter((m) => m <= maxMeses).map((m) => (
+                <button
+                  key={m}
+                  type="button"
+                  aria-pressed={Number(meses) === m && meses !== ""}
+                  onClick={() => setMeses(String(m))}
+                  className={
+                    "h-6 flex-1 rounded-md text-[11px] font-bold tabular-nums " +
+                    (Number(meses) === m && meses !== "" ? "border border-laranja bg-laranja-claro text-navy" : "border border-borda-campo hover:border-navy")
+                  }
+                >
+                  {m === 1 ? "01" : m}
+                </button>
+              ))}
+            </div>
           </div>
           {fidelidadeMeses !== null && mesesContemplacao < fidelidadeMeses && (
             <p className="text-[11px] text-tinta">Lance fidelidade só a partir de {fidelidadeMeses} meses.</p>
           )}
         </Bloco>
 
-        <Bloco titulo="Grupo">
+        <Bloco titulo="Informações complementares">
           <Par r="Fidelidade em" v={fidelidadeMeses ? `${fidelidadeMeses} meses` : "—"} />
           <Par r="Taxa de adm. mensal" v={taxaMensal === null ? "—" : p2(taxaMensal)} />
           <Par r="Parcela para lance" v={base ? reais0(base.parcelaLance) : "—"} />
         </Bloco>
 
+        {/* mesmo desenho de Informações complementares: rótulo à esquerda, valor à direita; campos só com o risco embaixo */}
         <Bloco titulo="Proposta">
-          <div className="grid grid-cols-2 gap-2">
-            <label className="flex flex-col gap-1 text-[11px] font-semibold text-tinta">
-              Vagas
-              <input className={campo + " text-[#c62828]"} inputMode="numeric" value={vagas} onChange={(e) => setVagas(e.target.value.replace(/\D/g, "").slice(0, 4))} />
-            </label>
-            <div className="relative flex flex-col gap-1 text-[11px] font-semibold text-tinta">
-              <span>Validade</span>
-              <button type="button" onClick={() => validadeRef.current?.showPicker?.()} className={campo + " flex items-center justify-between text-left text-[#c62828]"} aria-label={`Validade ${dataBR(validade)}: trocar a data`}>
-                {dataBR(validade)}
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true" className="text-tinta">
-                  <rect x="3.5" y="5" width="17" height="15" rx="2" />
-                  <path d="M3.5 10h17M8 3v4M16 3v4" />
-                </svg>
-              </button>
-              <input
-                ref={validadeRef}
-                type="date"
-                tabIndex={-1}
-                aria-hidden="true"
-                className="pointer-events-none absolute bottom-0 h-0 w-0 opacity-0"
-                value={validade}
-                onChange={(e) => e.target.value && setValidade(e.target.value)}
-              />
-            </div>
-          </div>
-          <div className="flex items-center justify-between gap-2 pt-1">
-            <label htmlFor="incc-v2" className="text-[13px] font-bold">
-              INCC
-            </label>
-            <div className="flex items-center gap-2">
+          <Linha r="Vagas" htmlFor="vagas-v2">
+            <input id="vagas-v2" className={RISCO + " w-16 text-[#c62828]"} inputMode="numeric" value={vagas} onChange={(e) => setVagas(e.target.value.replace(/\D/g, "").slice(0, 4))} />
+          </Linha>
+          <Linha r="Validade" htmlFor="validade-v2">
+            <input
+              id="validade-v2"
+              type="date"
+              className={RISCO + " w-[8.5rem] text-[#c62828]"}
+              value={validade}
+              onChange={(e) => e.target.value && setValidade(e.target.value)}
+            />
+          </Linha>
+          <Linha
+            r="INCC"
+            interruptor={<Interruptor ligado={inccLigado} rotulo="Considerar o INCC (desligado = 0%)" aoAlternar={() => setInccLigado((v) => !v)} />}
+          >
+            <span className="flex items-baseline gap-1">
               <input
                 id="incc-v2"
-                className={campo + " !w-20 text-right" + (inccLigado ? "" : " text-tinta/60")}
+                aria-label="INCC (% ao ano)"
+                className={RISCO + " w-16" + (inccLigado ? "" : " text-tinta/60")}
                 inputMode="decimal"
                 readOnly={!inccLigado}
                 value={inccLigado ? incc : "0,00"}
@@ -393,19 +417,10 @@ export function SimuladorV2({ hoje, padroes }: { hoje: string; padroes: PadroesS
                   setIncc(nf2.format(Number.isFinite(n) && incc !== "" ? n : padroes.incc));
                 }}
               />
-              <span className="text-[13px] font-bold">%</span>
-              <button
-                type="button"
-                role="switch"
-                aria-checked={inccLigado}
-                aria-label="Considerar o INCC (desligado = 0%)"
-                onClick={() => setInccLigado((v) => !v)}
-                className={"relative h-5 w-9 shrink-0 rounded-full transition-colors " + (inccLigado ? "bg-ok" : "bg-[#cfcbe0]")}
-              >
-                <span className={"absolute top-0.5 h-4 w-4 rounded-full bg-white shadow transition-all " + (inccLigado ? "left-[18px]" : "left-0.5")} />
-              </button>
-            </div>
-          </div>
+              <span className="font-bold">%</span>
+            </span>
+          </Linha>
+          <Linha r="Seguro" interruptor={<Interruptor ligado={seguroLigado} rotulo="Seguro" aoAlternar={() => setSeguroLigado((v) => !v)} />} />
         </Bloco>
       </aside>
 

@@ -2,6 +2,15 @@
 // Regra: a cada mudança entregue, acrescentar uma entrada NO TOPO.
 export const VERSOES: { numero: string; data: string; itens: string[] }[] = [
   {
+    numero: "0070",
+    data: "16/10/2026",
+    itens: [
+      "Grupo e Tabelas ver2 · Dados do grupo: os quatro boxes da linha têm a mesma altura (a do box Tipos de parcela). Sai o campo Versões da tabela de Informações do grupo; Faixa de crédito e Modalidades de contemplação se expandem por toda a altura (valores maiores e linhas iguais).",
+      "Simulador · Contemplação em: o \"fim: x meses\" e os atalhos de meses ficam colados à barra, e o bloco ocupa menos espaço. O bloco Grupo passa a se chamar Informações complementares.",
+      "Simulador · Proposta: mesmo desenho de Informações complementares (rótulo à esquerda, valor à direita); Vagas e Validade sem box, só com o risco embaixo, como o Contemplação em; o interruptor do INCC fica logo ao lado da palavra e o valor no final da linha; novo parâmetro Seguro (só liga/desliga). INCC e Seguro começam sempre desligados.",
+    ],
+  },
+  {
     numero: "0069",
     data: "16/10/2026",
     itens: [
