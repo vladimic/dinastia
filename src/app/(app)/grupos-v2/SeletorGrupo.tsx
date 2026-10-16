@@ -246,7 +246,7 @@ function Lista({
       ) : visiveis.length === 0 ? (
         <p className="px-1 py-3 text-sm text-tinta">Nenhum grupo com esses filtros.</p>
       ) : (
-        <ul className="m-0 grid max-h-[min(60vh,34rem)] list-none grid-cols-[repeat(auto-fill,minmax(6.25rem,1fr))] gap-1.5 overflow-auto p-0.5">
+        <ul className="m-0 grid max-h-[min(60vh,34rem)] list-none grid-cols-[repeat(auto-fill,minmax(7rem,1fr))] gap-1.5 overflow-auto p-0.5">
           {visiveis.map((g) => {
             const sel = g.numero === ativo;
             const r = realizadas(g);
@@ -259,24 +259,25 @@ function Lista({
                   href={linkGrupo(g.numero)}
                   onClick={aoEscolher}
                   aria-current={sel ? "true" : undefined}
-                  title={`Grupo ${g.numero} · ${r}/${g.prazo} assembleias (faltam ${faltam(g)}) · ${credito}${tam ? ` · ${tam.toLocaleString("pt-BR")} participantes` : ""}`}
+                  title={`Grupo ${g.numero} · ${r} realizadas, faltam ${faltam(g)}, de ${g.prazo} assembleias · ${credito}${tam ? ` · ${tam.toLocaleString("pt-BR")} participantes` : ""}`}
                   className={
-                    "relative flex flex-col gap-1 rounded-xl border px-2.5 pt-1.5 pb-2 " +
+                    "relative flex flex-col gap-1.5 rounded-xl border px-2.5 pt-1.5 pb-2 " +
                     (sel ? "border-navy bg-lavanda ring-2 ring-laranja" : "border-borda-campo bg-white hover:border-navy")
                   }
                 >
-                  <span className="flex items-start justify-between gap-1">
+                  {/* realizadas/faltam::prazo, ex.: 80/160::240 */}
+                  <span className="flex items-baseline justify-between gap-1">
                     <span className="text-[15px] leading-tight font-extrabold tabular-nums">{g.numero}</span>
-                    <span aria-hidden="true" className="flex gap-[3px] pt-1">
+                    <span className="text-[10px] leading-none font-semibold whitespace-nowrap text-tinta tabular-nums">
+                      {r}/{faltam(g)}::{g.prazo}
+                    </span>
+                  </span>
+                  <span className="flex items-center gap-1.5">
+                    <span aria-hidden="true" className="flex gap-[3px]">
                       {g.furo && <i className="h-2 w-2 rounded-full bg-furo" />}
                       {tem70(g) && <i className="h-2 w-2 rounded-full bg-setenta" />}
                       {temAte55(g) && <i className="h-2 w-2 rounded-full bg-reduzida" />}
                     </span>
-                  </span>
-                  <span className="text-[10px] leading-none text-tinta tabular-nums">
-                    {r}/{g.prazo} assembleias
-                  </span>
-                  <span className="flex items-center gap-1.5">
                     <span className="relative h-1.5 flex-1 overflow-hidden rounded-full bg-lavanda" aria-hidden="true">
                       {tam ? <span className="absolute inset-y-0 left-0 rounded-full bg-[#8b83c9]" style={{ width: `${Math.min(100, (tam / PARTICIPANTES_MAX) * 100)}%` }} /> : null}
                     </span>
@@ -293,23 +294,6 @@ function Lista({
         </ul>
       )}
 
-      <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-[11px] text-tinta">
-        <span className="flex items-center gap-1.5">
-          <i aria-hidden="true" className="h-2 w-2 rounded-full bg-furo" /> Furo
-        </span>
-        <span className="flex items-center gap-1.5">
-          <i aria-hidden="true" className="h-2 w-2 rounded-full bg-setenta" /> Parcela 70
-        </span>
-        <span className="flex items-center gap-1.5">
-          <i aria-hidden="true" className="h-2 w-2 rounded-full bg-reduzida" /> Parcela 50 / 55
-        </span>
-        <span className="flex items-center gap-1.5">
-          <i aria-hidden="true" className="h-1.5 w-6 rounded-full bg-[#8b83c9]" /> Tamanho do grupo (participantes; barra cheia = 9.999)
-        </span>
-        <span>
-          {visiveis.length} de {grupos.length} grupos
-        </span>
-      </div>
     </div>
   );
 }

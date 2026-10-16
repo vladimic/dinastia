@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, useState, useTransition } from "react";
-import { MESES, dataBR } from "@/lib/formato";
+import { MESES } from "@/lib/formato";
 import { FIDELIDADE, SORTEIO, notaFidelidade, notaSorteios, parcelaFidelidade } from "@/lib/sequencia";
 import { alternarTipoParcela, definirPagamentoComFuro, salvarCreditos, type CampoGrupo } from "../grupos/actions";
 import { useSimulacao } from "../grupos/SimulacaoContext";
@@ -37,17 +37,18 @@ export function DadosGrupo() {
           Edição ligada: cada alteração é gravada assim que você sai do campo. Desligue para voltar à leitura.
         </p>
       )}
-      <Informacoes />
-      <div className="grid items-start gap-4 lg:grid-cols-2">
+      {/* três colunas iguais: informações · faixa de crédito · modalidades */}
+      <div className="grid items-start gap-4 lg:grid-cols-2 xl:grid-cols-3">
+        <Informacoes />
         <Creditos key={`cred-${editando}`} />
-        <Tipos />
-      </div>
-      <div className="grid items-start gap-4 xl:grid-cols-[minmax(0,1fr)_26rem]">
-        <Sequencia />
         {/* só leitura (vem da tabela importada): o mesmo box da versão 1, esticado à largura da coluna */}
-        <div className="[&>section]:w-full [&>section]:p-4">
+        <div className="lg:col-span-2 xl:col-span-1 [&>section]:w-full [&>section]:p-4">
           <ModalidadesContemplacao modalidades={g.modalidades} tipos={g.tiposContemplacao} prazoGrupo={g.prazo_grupo_meses} />
         </div>
+      </div>
+      <div className="grid items-start gap-4 xl:grid-cols-[minmax(0,1fr)_minmax(0,2fr)]">
+        <Tipos />
+        <Sequencia />
       </div>
     </div>
   );
@@ -55,9 +56,9 @@ export function DadosGrupo() {
 
 /* ---------------- informações ---------------- */
 
-function Campo({ rotulo, children, largo }: { rotulo: string; children: React.ReactNode; largo?: boolean }) {
+function Campo({ rotulo, children }: { rotulo: string; children: React.ReactNode }) {
   return (
-    <div className={"flex min-w-0 flex-col gap-1 " + (largo ? "sm:col-span-2" : "")}>
+    <div className="flex min-w-0 flex-col gap-1">
       <dt className="text-[10px] font-bold tracking-wider text-tinta uppercase">{rotulo}</dt>
       <dd className="m-0 min-h-[30px] text-[15px] font-bold tabular-nums">{children}</dd>
     </div>
@@ -76,7 +77,6 @@ function Informacoes() {
   const semFundo = info.fundo_reserva === "";
   const nomeIndice = indices.find((i) => i.sigla === info.indice)?.nome;
   const mes = info.mes_reajuste ? MESES[Number(info.mes_reajuste) - 1] : "";
-  const prazoCalculado = g.prazo_grupo_meses - (g.assembleia - 1);
   const campo = "campo-sm !w-full";
 
   return (
@@ -85,7 +85,7 @@ function Informacoes() {
         <h3 className="text-sm font-bold">Informações do grupo</h3>
         <Status estado={estadoInfo} />
       </div>
-      <dl className="m-0 grid grid-cols-2 gap-x-5 gap-y-3 sm:grid-cols-3 lg:grid-cols-6">
+      <dl className="m-0 grid grid-cols-2 gap-x-5 gap-y-3">
         <Campo rotulo="Participantes">
           {editando ? (
             <input className={campo} inputMode="numeric" aria-label="Participantes" value={info.participantes} onChange={muda("participantes")} onBlur={sai("participantes")} onKeyDown={enter} />
@@ -154,41 +154,12 @@ function Informacoes() {
           )}
         </Campo>
 
-        {/* dados que vêm da tabela importada: sempre só leitura */}
-        <Campo rotulo="Prazo do grupo">{g.prazo_grupo_meses} meses</Campo>
-        <Campo rotulo="Prazo da cota">
-          {g.prazo_cota_meses} meses
-          {prazoCalculado !== g.prazo_cota_meses && (
-            <span className="block text-[11px] font-semibold text-alerta">pela regra daria {prazoCalculado}</span>
-          )}
-        </Campo>
+        {/* vêm da tabela importada: sempre só leitura */}
         <Campo rotulo="1ª correção">
           {g.primeira_correcao ? <span className="capitalize">{`${MESES[Number(g.primeira_correcao.slice(5, 7)) - 1]}/${g.primeira_correcao.slice(0, 4)}`}</span> : "—"}
         </Campo>
         <Campo rotulo="Fidelidade libera">{g.fidelidade_meses ? `parcela ${parcelaFidelidade(g.fidelidade_meses)}` : "sem fidelidade"}</Campo>
         <Campo rotulo="Versões da tabela">{g.totalVersoes}</Campo>
-        <Campo rotulo="Aprovada">
-          {g.aprovado_em ? (
-            <span className="text-[13px]">
-              {dataBR(g.aprovado_em)}
-              {g.aprovado_por ? ` · ${g.aprovado_por}` : ""}
-            </span>
-          ) : (
-            "—"
-          )}
-        </Campo>
-        {g.arquivo && (
-          <Campo rotulo="Arquivo da tabela" largo>
-            <span className="block truncate text-[13px] font-semibold" title={g.arquivo}>
-              {g.arquivo}
-            </span>
-          </Campo>
-        )}
-        {g.observacoes && (
-          <Campo rotulo="Observações" largo>
-            <span className="block text-[13px] font-medium whitespace-pre-line">{g.observacoes}</span>
-          </Campo>
-        )}
       </dl>
     </section>
   );

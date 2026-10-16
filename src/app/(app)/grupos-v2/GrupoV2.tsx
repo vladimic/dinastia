@@ -3,7 +3,7 @@
 import { createContext, useContext, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import type { GrupoDetalhe } from "@/lib/grupos";
-import { calcularBase, type PadroesSimulador } from "@/lib/simulacao";
+import type { PadroesSimulador } from "@/lib/simulacao";
 import { dataBR, lerPct, milhar, pct } from "@/lib/formato";
 import { salvarCampoGrupo, type CampoGrupo } from "../grupos/actions";
 import { SimulacaoProvider, useSimulacao } from "../grupos/SimulacaoContext";
@@ -155,13 +155,6 @@ function Conteudo({ grupo: g, familiaNome, indices, hoje, padroes, abaInicial, s
         <div className="flex flex-wrap items-center gap-x-6 gap-y-2">
           {seletor}
           <div className="flex flex-col gap-0.5 text-[13px]">
-            <span>
-              <span className="text-tinta">Assembleia atual: </span>
-              <strong>
-                {g.assembleia}
-                {g.data_assembleia ? ` – ${dataBR(g.data_assembleia)}` : ""}
-              </strong>
-            </span>
             {g.atualizado_em && (
               <span className="text-[11px] text-tinta" title={g.arquivo ? `Tabela: ${g.arquivo}` : undefined}>
                 Atualizado em {new Date(g.atualizado_em).toLocaleDateString("pt-BR", { timeZone: "America/Sao_Paulo" })}
@@ -230,38 +223,33 @@ function Conteudo({ grupo: g, familiaNome, indices, hoje, padroes, abaInicial, s
 
 const brl0 = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: 0, minimumFractionDigits: 0 });
 export const reais0 = (v: number) => brl0.format(Math.ceil(Number(v.toFixed(4))));
+// valores do cadastro (faixa de crédito): só corta os centavos, sem arredondar para cima
+const semCentavos = (v: number) => brl0.format(Math.floor(v));
+const nf2 = new Intl.NumberFormat("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
-/** Faixa fixa no topo, igual nas duas abas: o essencial do grupo e da simulação em curso. */
+/** Faixa fixa no topo, igual nas duas abas: o essencial do grupo. */
 function Resumo() {
-  const { grupo: g, info, realizadas, faltam, taxaAdm, cotas, meses } = useDados();
-  const { creditoSel, tipoSel, tipos, furo } = useSimulacao();
-  const tipo = tipos.find((t) => t.codigo === tipoSel);
-  const credito = creditoSel === null ? null : creditoSel * cotas;
-  const base =
-    credito !== null && taxaAdm !== null && tipo
-      ? calcularBase({
-          credito,
-          taxaAdmPct: taxaAdm,
-          pctParcela: tipo.pct,
-          prazoGrupo: g.prazo_grupo_meses,
-          mesesFaltam: faltam,
-          furo,
-          mesesContemplacao: Number(meses) || 0,
-        })
-      : null;
-  const item = "flex min-w-0 flex-col gap-0.5 px-4 py-2.5";
+  const { grupo: g, realizadas, faltam, creditos, disponiveis } = useDados();
+  const { furo } = useSimulacao();
+  const menor = creditos.length ? Math.min(...creditos) : null;
+  const maior = creditos.length ? Math.max(...creditos) : null;
+  // todos os percentuais do cadastro (do maior para o menor); em verde os oferecidos pelo grupo
+  const tipos = [...g.tiposParcela].sort((a, b) => b.pct - a.pct);
+  const item = "flex min-w-0 flex-col gap-1 px-4 py-2.5";
   const rotulo = "text-[10px] font-bold tracking-wider text-tinta uppercase";
   const valor = "text-lg leading-tight font-bold tabular-nums";
 
   return (
     <section
       aria-label="Resumo do grupo"
-      className="sticky top-0 z-10 grid grid-cols-2 divide-borda overflow-hidden rounded-2xl border border-borda bg-white shadow-[0_6px_18px_rgba(13,5,64,0.06)] sm:grid-cols-3 sm:divide-x lg:grid-cols-[1fr_1.6fr_1fr_1fr_1fr]"
+      className="sticky top-0 z-10 grid grid-cols-2 divide-borda overflow-hidden rounded-2xl border border-borda bg-white shadow-[0_6px_18px_rgba(13,5,64,0.06)] sm:grid-cols-3 sm:divide-x lg:grid-cols-[1fr_1.5fr_1.3fr_1.4fr_auto]"
     >
       <div className={item}>
-        <span className={rotulo}>Assembleia atual</span>
-        <span className={valor}>{g.assembleia}ª</span>
-        <span className="text-[11px] text-tinta">{g.data_assembleia ? dataBR(g.data_assembleia) : "—"}</span>
+        <span className={rotulo}>Próxima assembleia</span>
+        <span className="flex flex-wrap items-baseline gap-x-2">
+          <span className={valor}>{g.assembleia}ª</span>
+          <span className="text-[13px] font-semibold text-tinta tabular-nums">{g.data_assembleia ? dataBR(g.data_assembleia) : "sem data"}</span>
+        </span>
       </div>
       <div className={item} title={`${realizadas} de ${g.prazo_grupo_meses} assembleias realizadas · faltam ${faltam}`}>
         <span className={rotulo}>Andamento</span>
@@ -277,22 +265,34 @@ function Resumo() {
           <div className="absolute inset-y-0 left-0 min-w-1.5 rounded-full bg-laranja" style={{ width: `${Math.min(100, (realizadas / g.prazo_grupo_meses) * 100)}%` }} />
         </div>
       </div>
-      <div className={item}>
-        <span className={rotulo}>Crédito escolhido</span>
-        <span className={valor + " text-ouro-texto"}>{credito === null ? "—" : reais0(credito)}</span>
-        <span className="text-[11px] text-tinta">
-          {cotas} {cotas === 1 ? "cota" : "cotas"}
+      <div className={item} title={menor === null || maior === null ? undefined : `R$ ${nf2.format(menor)} a R$ ${nf2.format(maior)}`}>
+        <span className={rotulo}>Faixa de crédito</span>
+        <span className="text-[15px] leading-tight font-bold whitespace-nowrap text-ouro-texto tabular-nums">
+          {menor === null || maior === null ? "—" : menor === maior ? semCentavos(menor) : `${semCentavos(menor)} – ${semCentavos(maior)}`}
         </span>
       </div>
       <div className={item}>
-        <span className={rotulo}>Parcela {tipo ? `· ${tipo.descricao}` : ""}</span>
-        <span className={valor + " text-ouro-texto"}>{base ? reais0(base.parcelaAntes) : "—"}</span>
-        <span className="text-[11px] text-tinta">antes de contemplar{furo ? " · furo" : ""}</span>
+        <span className={rotulo}>Tipos de parcela</span>
+        <ul className="m-0 flex list-none flex-wrap gap-1 p-0">
+          {tipos.map((t) => {
+            const on = disponiveis.has(t.codigo);
+            return (
+              <li
+                key={t.codigo}
+                title={`${t.descricao}: ${on ? "oferecido" : "não oferecido"}`}
+                className={"rounded-md border px-1.5 py-0.5 text-[12px] font-bold tabular-nums " + (on ? "border-[#b8dcc0] bg-ok-fundo text-ok" : "border-borda bg-linha text-tinta/60")}
+              >
+                {t.pct}%<span className="sr-only">{on ? " oferecido" : " não oferecido"}</span>
+              </li>
+            );
+          })}
+        </ul>
       </div>
       <div className={item}>
-        <span className={rotulo}>Taxa · Índice</span>
-        <span className={valor}>{taxaAdm === null ? "—" : pct(taxaAdm)}</span>
-        <span className="text-[11px] text-tinta">{info.indice || "sem índice"}</span>
+        <span className={rotulo}>Furo</span>
+        <span className={"w-fit rounded-md border px-2 py-0.5 text-[12px] font-bold " + (furo ? "border-[#b8dcc0] bg-ok-fundo text-ok" : "border-borda bg-linha text-tinta")}>
+          {furo ? "Sim" : "Não"}
+        </span>
       </div>
     </section>
   );
