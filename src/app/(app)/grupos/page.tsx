@@ -1,159 +1,92 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { Suspense } from "react";
-import { FAMILIAS, carregarGrupo, contarPorFamilia, listarCoresContemplacao, listarGrupos, listarIndices, carregarPadroesSimulador } from "@/lib/grupos";
+import { FAMILIAS, carregarGrupo, carregarPadroesSimulador, contarPorFamilia, listarGrupos, listarIndices, nomeFamilia } from "@/lib/grupos";
 import { padroesDeLinha } from "@/lib/simulacao";
-import { GrupoDetalheView } from "./GrupoDetalhe";
-import { GrupoChips } from "./GrupoChips";
-import { ExportarResumo } from "./ExportarResumo";
-import { AreaFamilias, PainelGrupos, RetratilProvider } from "./SeletorRetratil";
+import { Cabecalho } from "./Cabecalho";
+import { GrupoDetalhe } from "./GrupoDetalhe";
+import { SeletorGrupo } from "./SeletorGrupo";
 
 export const metadata: Metadata = { title: "Grupos e Tabelas · Dinastia" };
 
 export default function GruposPage({ searchParams }: PageProps<"/grupos">) {
   return (
-    <>
-      <Suspense fallback={<Cabecalho />}>
-        <Conteudo searchParams={searchParams} />
-      </Suspense>
-
-    </>
-  );
-}
-
-function Cabecalho({ nav }: { nav?: React.ReactNode }) {
-  return (
-    <header className="flex flex-wrap items-center justify-between gap-x-6 gap-y-3 border-b border-borda bg-white px-8 py-3">
-      <div className="flex flex-wrap items-end gap-x-6 gap-y-2">
-        <div className="flex flex-col">
-          <div className="text-[11px] text-tinta">Cadastros</div>
-          <h1 className="text-xl font-bold leading-tight">Grupos e Tabelas</h1>
-        </div>
-        {nav ?? <div className="h-8 w-80" />}
-      </div>
-      <div className="flex flex-wrap items-center gap-2">
-        <ExportarResumo />
-        <button
-          type="button"
-          disabled
-          title="Em breve"
-          className="flex min-h-9 items-center gap-2 rounded-[10px] border border-navy bg-white px-3 text-[13px] font-semibold opacity-60"
-        >
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
-            <path d="M12 15V4M7 9l5-5 5 5M5 20h14" />
-          </svg>
-          Importar PDFs
-        </button>
-        <button
-          type="button"
-          disabled
-          title="Em breve"
-          className="flex min-h-9 items-center gap-2 rounded-[10px] bg-navy px-3 text-[13px] font-semibold text-white opacity-60"
-        >
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#ceaa5b" strokeWidth="1.8" aria-hidden="true">
-            <path d="M12 3l1.8 4.7L18.5 9.5l-4.7 1.8L12 16l-1.8-4.7L5.5 9.5l4.7-1.8z" />
-            <path d="M19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8z" />
-          </svg>
-          Simular com IA
-        </button>
-      </div>
-    </header>
-  );
-}
-
-function familiaPedida(sp: Record<string, string | string[] | undefined>) {
-  const pedida = typeof sp.familia === "string" ? sp.familia : undefined;
-  return FAMILIAS.find((f) => f.slug === pedida) ?? FAMILIAS[0];
-}
-
-function SeletorFamilia({ familia, contagem }: { familia: (typeof FAMILIAS)[number]; contagem: Record<string, number> }) {
-  return (
-    <nav aria-label="Família de produto" className="flex flex-wrap gap-1.5">
-      {FAMILIAS.map((f) => {
-        const ativo = f.slug === familia.slug;
-        return (
-          <Link
-            key={f.slug}
-            href={`/grupos?familia=${f.slug}`}
-            aria-current={ativo ? "true" : undefined}
-            className={
-              "flex h-8 items-center rounded-lg px-3 text-[13px] font-bold " +
-              (ativo
-                ? "bg-navy text-white shadow-[inset_0_-3px_0_var(--color-laranja)]"
-                : "border border-borda-campo bg-white text-navy hover:border-navy")
-            }
-          >
-            {f.nome} ({contagem[f.slug] ?? 0})
-          </Link>
-        );
-      })}
-    </nav>
+    <Suspense fallback={<Cabecalho />}>
+      <Conteudo searchParams={searchParams} />
+    </Suspense>
   );
 }
 
 async function Conteudo({ searchParams }: { searchParams: PageProps<"/grupos">["searchParams"] }) {
   const sp = await searchParams;
-  const familia = familiaPedida(sp);
   const numeroGrupo = typeof sp.grupo === "string" ? Number(sp.grupo) : undefined;
+  const pedida = FAMILIAS.find((f) => f.slug === sp.familia);
+  const aba = sp.aba === "simulador" ? "simulador" : "dados";
 
-  const [grupos, cores, detalhe, indices, contagem, padroes] = await Promise.all([
+  const detalhe = numeroGrupo ? await carregarGrupo(numeroGrupo) : null;
+  // sem família na URL, a lista mostra a família do grupo aberto
+  const familia = pedida ?? FAMILIAS.find((f) => f.slug === detalhe?.familia) ?? FAMILIAS[0];
+
+  const [grupos, contagem, indices, padroes] = await Promise.all([
     listarGrupos(familia.slug),
-    listarCoresContemplacao(),
-    numeroGrupo ? carregarGrupo(numeroGrupo) : Promise.resolve(null),
-    numeroGrupo ? listarIndices() : Promise.resolve([]),
     contarPorFamilia(),
-    numeroGrupo ? carregarPadroesSimulador() : Promise.resolve(padroesDeLinha(null)),
+    detalhe ? listarIndices() : Promise.resolve([]),
+    detalhe ? carregarPadroesSimulador() : Promise.resolve(padroesDeLinha(null)),
   ]);
   const hoje = new Date().toISOString().slice(0, 10);
 
+  const seletor = (
+    <SeletorGrupo
+      familias={FAMILIAS}
+      familia={familia.slug}
+      contagem={contagem}
+      hoje={hoje}
+      atual={
+        detalhe
+          ? {
+              numero: detalhe.numero,
+              familiaNome: nomeFamilia(detalhe.familia),
+              atualizadoEm: detalhe.atualizado_em ? new Date(detalhe.atualizado_em).toLocaleDateString("pt-BR", { timeZone: "America/Sao_Paulo" }) : null,
+              arquivo: detalhe.arquivo,
+            }
+          : null
+      }
+      grupos={grupos.map((g) => ({
+        numero: g.numero,
+        prazo: g.prazo_grupo_meses,
+        assembleia: g.assembleia,
+        data: g.data_assembleia,
+        min: g.min,
+        max: g.max,
+        participantes: g.participantes,
+        furo: g.furo,
+        reduzidas: g.reduzidas,
+      }))}
+    />
+  );
+
+  // com um grupo aberto, o seletor fica no cabeçalho principal; sem grupo, a lista aparece aberta no corpo da página
   return (
-    <RetratilProvider temSelecao={Boolean(detalhe)}>
-      <Cabecalho
-        nav={
-          <AreaFamilias>
-            <SeletorFamilia familia={familia} contagem={contagem} />
-          </AreaFamilias>
-        }
-      />
-
-      <div className="flex flex-col px-8 pt-0 pb-10">
-        <PainelGrupos>
-          {grupos.length === 0 ? (
-            <p className="rounded-xl border border-dashed border-borda-campo bg-white px-5 py-4 text-sm text-tinta">
-              Nenhum grupo cadastrado em {familia.nome}.
-            </p>
-          ) : (
-            <GrupoChips
-              familia={familia.slug}
-              ativo={detalhe?.numero}
-              hoje={hoje}
-              cores={cores}
-              grupos={grupos.map((g) => ({
-                numero: g.numero,
-                prazo: g.prazo_grupo_meses,
-                assembleia: g.assembleia,
-                data: g.data_assembleia,
-                min: g.min,
-                max: g.max,
-                seq: g.seq,
-                participantes: g.participantes,
-                furo: g.furo,
-                reduzidas: g.reduzidas,
-              }))}
-            />
-          )}
-        </PainelGrupos>
-
-        <div className="pt-3">
-          {detalhe ? (
-            <GrupoDetalheView grupo={detalhe} indices={indices} hoje={hoje} padroes={padroes} />
-          ) : numeroGrupo ? (
-            <p className="py-2 text-sm font-semibold text-[#9b1c1c]">Grupo {numeroGrupo} não encontrado.</p>
-          ) : grupos.length > 0 ? (
-            <p className="py-2 text-sm text-tinta">Selecione um grupo para ver os dados da tabela.</p>
-          ) : null}
-        </div>
+    <>
+      <Cabecalho seletor={detalhe ? seletor : undefined} />
+      <div className="flex flex-col gap-4 px-8 pt-4 pb-10 max-sm:px-4">
+        {detalhe ? (
+          <GrupoDetalhe
+            key={detalhe.grupo_assembleia_id}
+            grupo={detalhe}
+            familiaNome={nomeFamilia(detalhe.familia)}
+            indices={indices}
+            hoje={hoje}
+            padroes={padroes}
+            abaInicial={aba}
+          />
+        ) : (
+          <>
+            {numeroGrupo ? <p className="text-sm font-semibold text-[#9b1c1c]">Grupo {numeroGrupo} não encontrado.</p> : null}
+            {seletor}
+            {grupos.length > 0 && <p className="text-sm text-tinta">Escolha um grupo para ver os dados e simular.</p>}
+          </>
+        )}
       </div>
-    </RetratilProvider>
+    </>
   );
 }

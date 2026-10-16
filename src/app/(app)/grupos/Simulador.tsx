@@ -3,10 +3,10 @@
 import { useState } from "react";
 import type { Modalidade } from "@/lib/grupos";
 import { calcularBase, calcularColuna, type Coluna as Calc, type PadroesSimulador, type TipoColuna } from "@/lib/simulacao";
-import { useSimulacao } from "../grupos/SimulacaoContext";
-import { reais0, useDados } from "./GrupoV2";
+import { useSimulacao } from "./SimulacaoContext";
+import { reais0, useDados } from "./GrupoDetalhe";
 
-// Simulador da ver2: os mesmos cálculos da versão 1 (src/lib/simulacao.ts), com os parâmetros numa coluna à esquerda
+// Simulador do grupo: os cálculos vêm de src/lib/simulacao.ts, com os parâmetros numa coluna à esquerda
 // e a grade de resultados à direita. Só o "% Próprio" do cabeçalho de cada lance ainda é número de exemplo (bolinha amarela).
 
 const p2 = (v: number) => v.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + "%";
@@ -180,6 +180,16 @@ function somarDias(iso: string, dias: number) {
   return d.toISOString().slice(0, 10);
 }
 
+// validade da proposta: não pode ser anterior a hoje; acima de 15 dias avisa, mas deixa
+const LIMITE_VALIDADE_DIAS = 15;
+
+// data de hoje no fuso do navegador (AAAA-MM-DD)
+function hojeLocal() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+const diasEntre = (de: string, ate: string) => Math.round((Date.parse(ate + "T00:00:00Z") - Date.parse(de + "T00:00:00Z")) / 86400000);
+
 const PRE_DEFINIDOS = [1, 12, 24, 36, 48, 60, 120];
 // números de destaque da coluna de parâmetros (crédito, parcela, meses): mesma fonte e tamanho
 const GRANDE = "text-[28px] leading-none font-extrabold tracking-tight tabular-nums";
@@ -239,11 +249,13 @@ function Par({ r, v, className = "" }: { r: string; v: React.ReactNode; classNam
   );
 }
 
-export function SimuladorV2({ hoje, padroes }: { hoje: string; padroes: PadroesSimulador }) {
+export function Simulador({ hoje, padroes }: { hoje: string; padroes: PadroesSimulador }) {
   const { grupo: g, cotas, meses, setMeses, faltam, taxaAdm } = useDados();
   const { creditoSel, tipoSel, tipos, furo } = useSimulacao();
   const [vagas, setVagas] = useState("17");
   const [validade, setValidade] = useState(() => somarDias(hoje, 7));
+  const [validadeAjustada, setValidadeAjustada] = useState(false); // uma data passada foi trocada por hoje
+  const diasValidade = diasEntre(hojeLocal(), validade);
   const [inccLigado, setInccLigado] = useState(false); // padrão: desligado
   const [seguroLigado, setSeguroLigado] = useState(false); // padrão: desligado
   const [incc, setIncc] = useState(() => nf2.format(padroes.incc));
@@ -326,14 +338,14 @@ export function SimuladorV2({ hoje, padroes }: { hoje: string; padroes: PadroesS
         <Bloco
           compacto
           titulo={
-            <label htmlFor="meses-v2" className="flex items-baseline gap-2">
+            <label htmlFor="meses-grupo" className="flex items-baseline gap-2">
               Contemplação em
             </label>
           }
         >
           <div className="flex items-baseline gap-2">
             <input
-              id="meses-v2"
+              id="meses-grupo"
               inputMode="numeric"
               value={meses}
               onChange={(e) => setMeses(e.target.value.replace(/\D/g, "").slice(0, 3))}
@@ -386,25 +398,50 @@ export function SimuladorV2({ hoje, padroes }: { hoje: string; padroes: PadroesS
 
         {/* mesmo desenho de Informações complementares: rótulo à esquerda, valor à direita; campos só com o risco embaixo */}
         <Bloco titulo="Proposta">
-          <Linha r="Vagas" htmlFor="vagas-v2">
-            <input id="vagas-v2" className={RISCO + " w-16 text-[#c62828]"} inputMode="numeric" value={vagas} onChange={(e) => setVagas(e.target.value.replace(/\D/g, "").slice(0, 4))} />
+          <Linha r="Vagas" htmlFor="vagas-grupo">
+            <input id="vagas-grupo" className={RISCO + " w-16 text-[#c62828]"} inputMode="numeric" value={vagas} onChange={(e) => setVagas(e.target.value.replace(/\D/g, "").slice(0, 4))} />
           </Linha>
-          <Linha r="Validade" htmlFor="validade-v2">
+          <Linha r="Validade" htmlFor="validade-grupo">
             <input
-              id="validade-v2"
+              id="validade-grupo"
               type="date"
+              // o seletor de datas já não oferece dias anteriores a hoje (a data local só existe no navegador)
+              min={hojeLocal()}
+              suppressHydrationWarning
+              aria-describedby="aviso-validade"
               className={RISCO + " w-[8.5rem] text-[#c62828]"}
               value={validade}
-              onChange={(e) => e.target.value && setValidade(e.target.value)}
+              onChange={(e) => {
+                if (!e.target.value) return;
+                setValidade(e.target.value);
+                setValidadeAjustada(false);
+              }}
+              // ao sair do campo, uma data anterior a hoje volta para hoje
+              onBlur={() => {
+                const h = hojeLocal();
+                if (validade < h) {
+                  setValidade(h);
+                  setValidadeAjustada(true);
+                }
+              }}
             />
           </Linha>
+          <div id="aviso-validade" role="status" aria-live="polite" className="-mt-1 text-right text-[11px] leading-tight font-semibold">
+            {diasValidade < 0 ? (
+              <span className="text-[#9b1c1c]">Validade não pode ser anterior a hoje.</span>
+            ) : validadeAjustada ? (
+              <span className="text-alerta">Ajustada para hoje: a validade não pode ser anterior.</span>
+            ) : diasValidade > LIMITE_VALIDADE_DIAS ? (
+              <span className="text-alerta">Atenção: validade acima de {LIMITE_VALIDADE_DIAS} dias (daqui a {diasValidade}).</span>
+            ) : null}
+          </div>
           <Linha
             r="INCC"
             interruptor={<Interruptor ligado={inccLigado} rotulo="Considerar o INCC (desligado = 0%)" aoAlternar={() => setInccLigado((v) => !v)} />}
           >
             <span className="flex items-baseline gap-1">
               <input
-                id="incc-v2"
+                id="incc-grupo"
                 aria-label="INCC (% ao ano)"
                 className={RISCO + " w-16" + (inccLigado ? "" : " text-tinta/60")}
                 inputMode="decimal"

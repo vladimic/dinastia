@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 
-// Seletor de grupo da ver2: um botão com o grupo atual que abre a lista (larga) da família, com busca, filtros,
+// Seletor de grupo (fica no cabeçalho principal da tela): um botão com o grupo atual que abre a lista (larga) da família, com busca, filtros,
 // ordenação e o tamanho de cada grupo (participantes). Sem grupo escolhido, a lista aparece aberta na página.
 // O número do grupo no botão é um campo: digitar outro número e Enter abre esse grupo.
 
@@ -33,7 +33,7 @@ type Props = {
   familia: string;
   contagem: Record<string, number>;
   grupos: ItemGrupo[];
-  atual: { numero: number; familiaNome: string } | null;
+  atual: { numero: number; familiaNome: string; atualizadoEm?: string | null; arquivo?: string | null } | null;
   hoje: string;
 };
 
@@ -81,12 +81,13 @@ export function SeletorGrupo({ familias, familia, contagem, grupos, atual, hoje 
   // logo abaixo do botão; acompanha a rolagem da página enquanto estiver aberta
   useLayoutEffect(() => {
     if (!aberto) return;
-    // borda esquerda alinhada ao botão do grupo selecionado; a direita vai até a margem da tela
+    // a lista começa na margem esquerda do conteúdo da página (a do título do cabeçalho) e vai até a margem direita da tela
     const posicionar = () => {
       if (!botao.current || !painel.current) return;
       const r = botao.current.getBoundingClientRect();
       painel.current.style.top = `${Math.round(r.bottom + 8)}px`;
-      painel.current.style.left = `${Math.round(Math.max(16, r.left))}px`;
+      const cab = botao.current.closest("header");
+      painel.current.style.left = `${Math.round(Math.max(16, cab ? cab.getBoundingClientRect().left + 32 : r.left))}px`;
     };
     posicionar();
     window.addEventListener("scroll", posicionar, { passive: true });
@@ -100,7 +101,7 @@ export function SeletorGrupo({ familias, familia, contagem, grupos, atual, hoje 
   const href = (q: Record<string, string | number | undefined>) => {
     const p = new URLSearchParams();
     for (const [k, v] of Object.entries(q)) if (v !== undefined && v !== "") p.set(k, String(v));
-    return `/grupos-v2?${p.toString()}`;
+    return `/grupos?${p.toString()}`;
   };
   const linkGrupo = (n: number) => href({ familia, grupo: n, aba });
 
@@ -187,6 +188,11 @@ export function SeletorGrupo({ familias, familia, contagem, grupos, atual, hoje 
       ) : (
         <span className={seta + " opacity-35"} aria-hidden="true">
           ›
+        </span>
+      )}
+      {atual.atualizadoEm && (
+        <span className="max-w-[5.5rem] text-[11px] leading-tight text-tinta" title={atual.arquivo ? `Tabela: ${atual.arquivo}` : undefined}>
+          Atualizado em {atual.atualizadoEm}
         </span>
       )}
 
