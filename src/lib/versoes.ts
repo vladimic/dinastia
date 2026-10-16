@@ -2,6 +2,16 @@
 // Regra: a cada mudança entregue, acrescentar uma entrada NO TOPO.
 export const VERSOES: { numero: string; data: string; itens: string[] }[] = [
   {
+    numero: "0068",
+    data: "16/10/2026",
+    itens: [
+      "Grupo e Tabelas ver2 · cabeçalho: créditos sem centavos e com fonte maior; novo campo Qtd de cotas (− número +) ao lado dos créditos; o tipo de parcela escolhido fica em laranja, igual ao crédito.",
+      "O número do grupo no botão do seletor virou campo: digite outro número e tecle Enter para abrir esse grupo.",
+      "Simulador: saem a escolha de crédito, o contador de cotas e o tipo de parcela (tudo fica no cabeçalho); Crédito contratado e Parcela antes da contemplação ganham destaque no mesmo formato.",
+      "Números grandes (grupo, crédito contratado, parcela, meses de contemplação) passam para a fonte do sistema, com algarismos de mesma altura.",
+    ],
+  },
+  {
     numero: "0067",
     data: "16/10/2026",
     itens: [

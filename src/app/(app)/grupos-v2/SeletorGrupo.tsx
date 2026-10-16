@@ -1,11 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 
 // Seletor de grupo da ver2: um botão com o grupo atual que abre a lista (larga) da família, com busca, filtros,
 // ordenação e o tamanho de cada grupo (participantes). Sem grupo escolhido, a lista aparece aberta na página.
+// O número do grupo no botão é um campo: digitar outro número e Enter abre esse grupo.
 
 export type ItemGrupo = {
   numero: number;
@@ -48,7 +49,15 @@ export function SeletorGrupo({ familias, familia, contagem, grupos, atual, hoje 
     if (pediuLista) setAberto(true);
   }
   const caixa = useRef<HTMLDivElement>(null);
-  const botao = useRef<HTMLButtonElement>(null);
+  const botao = useRef<HTMLDivElement>(null);
+  const router = useRouter();
+  // número digitado no campo do grupo; volta ao grupo aberto quando a página troca de grupo
+  const [codigo, setCodigo] = useState(atual ? String(atual.numero) : "");
+  const [grupoDoCampo, setGrupoDoCampo] = useState(atual?.numero);
+  if (grupoDoCampo !== atual?.numero) {
+    setGrupoDoCampo(atual?.numero);
+    setCodigo(atual ? String(atual.numero) : "");
+  }
   const painel = useRef<HTMLDivElement>(null);
 
   // ao sair da página (ela fica preservada, escondida), a lista volta fechada
@@ -122,23 +131,46 @@ export function SeletorGrupo({ familias, familia, contagem, grupos, atual, hoje 
   const seta = "flex h-10 w-10 items-center justify-center rounded-xl border border-borda-campo bg-white text-navy hover:border-navy";
   return (
     <div ref={caixa} className="relative flex items-center gap-2">
-      <button
+      <div
         ref={botao}
-        type="button"
-        aria-haspopup="dialog"
-        aria-expanded={aberto}
-        onClick={() => setAberto((v) => !v)}
-        className="flex min-h-[3.25rem] items-center gap-3 rounded-2xl border border-navy bg-white py-1.5 pr-3 pl-4 text-left hover:shadow-[0_4px_14px_rgba(13,5,64,0.12)]"
+        className="flex min-h-[3.25rem] items-center rounded-2xl border border-navy bg-white focus-within:ring-2 focus-within:ring-laranja-claro hover:shadow-[0_4px_14px_rgba(13,5,64,0.12)]"
       >
-        <span className="font-display text-[32px] leading-none font-bold tabular-nums">{atual.numero}</span>
-        <span className="flex flex-col leading-tight">
-          <span className="text-[13px] font-bold">Grupo {atual.numero}</span>
-          <span className="text-[11px] text-tinta">{atual.familiaNome}</span>
-        </span>
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true" className={"transition-transform " + (aberto ? "rotate-180" : "")}>
-          <path d="M6 9l6 6 6-6" />
-        </svg>
-      </button>
+        <input
+          inputMode="numeric"
+          aria-label="Número do grupo (digite e tecle Enter)"
+          title="Digite o número de um grupo e tecle Enter"
+          value={codigo}
+          onChange={(e) => setCodigo(e.target.value.replace(/\D/g, "").slice(0, 6))}
+          onFocus={(e) => e.currentTarget.select()}
+          onKeyDown={(e) => {
+            if (e.key === "Escape") return setCodigo(String(atual.numero));
+            if (e.key !== "Enter") return;
+            const n = Number(codigo);
+            if (!n || n === atual.numero) return setCodigo(String(atual.numero));
+            setAberto(false);
+            // sem a família: a página usa a do grupo digitado
+            router.push(href({ grupo: n, aba }));
+          }}
+          onBlur={() => setCodigo(String(atual.numero))}
+          style={{ width: `${Math.max(3, codigo.length) + 0.6}ch` }}
+          className="ml-3 rounded-lg bg-transparent px-1 text-[26px] leading-none font-extrabold tracking-tight tabular-nums outline-none focus:bg-campo"
+        />
+        <button
+          type="button"
+          aria-haspopup="dialog"
+          aria-expanded={aberto}
+          onClick={() => setAberto((v) => !v)}
+          className="flex items-center gap-3 self-stretch rounded-r-2xl py-1.5 pr-3 pl-2 text-left"
+        >
+          <span className="flex flex-col leading-tight">
+            <span className="text-[13px] font-bold">Grupo {atual.numero}</span>
+            <span className="text-[11px] text-tinta">{atual.familiaNome}</span>
+          </span>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true" className={"transition-transform " + (aberto ? "rotate-180" : "")}>
+            <path d="M6 9l6 6 6-6" />
+          </svg>
+        </button>
+      </div>
       {anterior ? (
         <Link href={linkGrupo(anterior.numero)} className={seta} aria-label={`Grupo anterior (${anterior.numero})`} title={`Grupo anterior: ${anterior.numero}`}>
           ‹
