@@ -2,6 +2,14 @@
 // Regra: a cada mudança entregue, acrescentar uma entrada NO TOPO.
 export const VERSOES: { numero: string; data: string; itens: string[] }[] = [
   {
+    numero: "0069",
+    data: "16/10/2026",
+    itens: [
+      "Grupo e Tabelas ver2 · Dados do grupo: Informações, Faixa de crédito, Tipos de parcela e Modalidades de contemplação ficam numa linha só (Tipos de parcela logo depois da Faixa de crédito); a Sequência de contemplação ocupa a linha de baixo. Faixa de crédito mais estreita (valores sem o R$ repetido; o título indica R$) e o aviso \"não oferecido\" saiu da lista de tipos (a linha já aparece apagada).",
+      "Simulador: sai a linha entre Crédito contratado e Parcela antes da contemplação, e os dois valores ficam alinhados à direita; em Contemplação em saem o 1 e o valor do meio da régua e fica só o fim (\"fim: 156 meses\") acima da barra, à direita; saem Meses para terminar e Meses decorridos.",
+    ],
+  },
+  {
     numero: "0068",
     data: "16/10/2026",
     itens: [

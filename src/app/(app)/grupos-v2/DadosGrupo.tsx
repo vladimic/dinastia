@@ -37,19 +37,17 @@ export function DadosGrupo() {
           Edição ligada: cada alteração é gravada assim que você sai do campo. Desligue para voltar à leitura.
         </p>
       )}
-      {/* três colunas iguais: informações · faixa de crédito · modalidades */}
-      <div className="grid items-start gap-4 lg:grid-cols-2 xl:grid-cols-3">
+      {/* informações · faixa de crédito · tipos de parcela · modalidades (informações e faixa mais estreitas) */}
+      <div className="grid items-start gap-4 lg:grid-cols-2 xl:grid-cols-[minmax(0,1fr)_minmax(0,0.85fr)_minmax(0,0.8fr)_minmax(0,1.35fr)]">
         <Informacoes />
         <Creditos key={`cred-${editando}`} />
+        <Tipos />
         {/* só leitura (vem da tabela importada): o mesmo box da versão 1, esticado à largura da coluna */}
-        <div className="lg:col-span-2 xl:col-span-1 [&>section]:w-full [&>section]:p-4">
+        <div className="[&>section]:w-full [&>section]:p-4">
           <ModalidadesContemplacao modalidades={g.modalidades} tipos={g.tiposContemplacao} prazoGrupo={g.prazo_grupo_meses} />
         </div>
       </div>
-      <div className="grid items-start gap-4 xl:grid-cols-[minmax(0,1fr)_minmax(0,2fr)]">
-        <Tipos />
-        <Sequencia />
-      </div>
+      <Sequencia />
     </div>
   );
 }
@@ -256,16 +254,15 @@ function Creditos() {
     <section className={caixa(editando)}>
       <div className="flex items-center justify-between gap-3">
         <h3 className="text-sm font-bold">
-          Faixa de crédito <span className="font-semibold text-tinta">· {creditos.length} valores</span>
+          Faixa de crédito <span className="font-semibold text-tinta">(R$) · {creditos.length}</span>
         </h3>
         {editando && <Status estado={estado} />}
       </div>
       {!editando ? (
         <ul className="m-0 grid list-none gap-x-6 gap-y-1 p-0" style={grade}>
           {creditos.map((c) => (
-            <li key={c} className="flex items-baseline justify-between gap-2 border-b border-linha py-1">
-              <span className="text-[11px] font-semibold text-tinta">R$</span>
-              <span className="text-[14px] font-bold tabular-nums">{numero.format(c)}</span>
+            <li key={c} className="border-b border-linha py-1 text-right text-[14px] font-bold tabular-nums">
+              {numero.format(c)}
             </li>
           ))}
         </ul>
@@ -283,9 +280,6 @@ function Creditos() {
                   ×
                 </button>
                 <div className="relative flex-1">
-                  <span aria-hidden="true" className="pointer-events-none absolute top-1/2 left-2.5 -translate-y-1/2 text-xs font-semibold text-tinta">
-                    R$
-                  </span>
                   <input
                     inputMode="decimal"
                     autoFocus={l.valor === null}
@@ -304,7 +298,7 @@ function Creditos() {
                         e.currentTarget.blur();
                       }
                     }}
-                    className="h-8 w-full rounded-md border border-borda-campo bg-campo pr-2.5 pl-8 text-right text-[13px] font-bold tabular-nums text-navy outline-none focus:border-laranja focus:bg-white focus:ring-2 focus:ring-laranja-claro"
+                    className="h-8 w-full rounded-md border border-borda-campo bg-campo px-2 text-right text-[13px] font-bold tabular-nums text-navy outline-none focus:border-laranja focus:bg-white focus:ring-2 focus:ring-laranja-claro"
                   />
                 </div>
               </li>
@@ -389,8 +383,8 @@ function Tipos() {
                   {on ? "✓" : "–"}
                 </span>
               )}
-              <span className="flex-1">{t.descricao}</span>
-              {!on && <span className="text-[11px] font-semibold">não oferecido</span>}
+              <span className="flex-1 whitespace-nowrap">{t.descricao}</span>
+              {!on && <span className="sr-only">não oferecido</span>}
             </li>
           );
         })}

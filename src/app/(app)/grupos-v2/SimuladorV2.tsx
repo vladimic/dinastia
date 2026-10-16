@@ -186,9 +186,10 @@ const PRE_DEFINIDOS = [1, 12, 24, 36, 48, 60, 120];
 const GRANDE = "text-[28px] leading-none font-extrabold tracking-tight tabular-nums";
 
 /** Bloco da coluna de parâmetros */
-function Bloco({ titulo, children, id }: { titulo: React.ReactNode; children: React.ReactNode; id?: string }) {
+function Bloco({ titulo, children, id, junto }: { titulo: React.ReactNode; children: React.ReactNode; id?: string; junto?: boolean }) {
+  // junto = sem a linha e sem o espaço de baixo (o bloco seguinte "cola" neste)
   return (
-    <div className="flex flex-col gap-1.5 border-b border-linha pb-4 last:border-b-0 last:pb-0">
+    <div className={"flex flex-col gap-1.5 " + (junto ? "-mb-1" : "border-b border-linha pb-4 last:border-b-0 last:pb-0")}>
       <h3 id={id} className="text-[10px] font-bold tracking-[0.1em] text-ouro-texto uppercase">
         {titulo}
       </h3>
@@ -207,7 +208,7 @@ function Par({ r, v, className = "" }: { r: string; v: React.ReactNode; classNam
 }
 
 export function SimuladorV2({ hoje, padroes }: { hoje: string; padroes: PadroesSimulador }) {
-  const { grupo: g, cotas, meses, setMeses, faltam, realizadas, taxaAdm } = useDados();
+  const { grupo: g, cotas, meses, setMeses, faltam, taxaAdm } = useDados();
   const { creditoSel, tipoSel, tipos, furo } = useSimulacao();
   const [vagas, setVagas] = useState("17");
   const validadeRef = useRef<HTMLInputElement>(null);
@@ -275,16 +276,16 @@ export function SimuladorV2({ hoje, padroes }: { hoje: string; padroes: PadroesS
     <section aria-label={`Simulador do grupo ${g.numero}`} className="grid items-start gap-4 lg:grid-cols-[19rem_minmax(0,1fr)]">
       <aside aria-label="Parâmetros da simulação" className="flex flex-col gap-4 rounded-2xl border border-borda bg-white p-4 lg:sticky lg:top-[7.5rem]">
         {/* crédito, cotas e tipo de parcela são escolhidos no cabeçalho do grupo */}
-        <Bloco titulo="Crédito contratado">
-          <div className={GRANDE + " text-ouro-texto"}>{creditoContratado === null ? "—" : reais0(creditoContratado)}</div>
-          <span className="text-[11px] text-tinta">
+        <Bloco titulo="Crédito contratado" junto>
+          <div className={GRANDE + " text-right text-ouro-texto"}>{creditoContratado === null ? "—" : reais0(creditoContratado)}</div>
+          <span className="text-right text-[11px] text-tinta">
             {creditoSel === null ? "Escolha um crédito no cabeçalho" : `${cotas} ${cotas === 1 ? "cota" : "cotas"} × ${reais0(creditoSel)}`}
           </span>
         </Bloco>
 
         <Bloco titulo="Parcela antes da contemplação">
-          <div className={GRANDE + " text-ouro-texto"}>{base ? reais0(base.parcelaAntes) : "—"}</div>
-          <span className="text-[11px] text-tinta">
+          <div className={GRANDE + " text-right text-ouro-texto"}>{base ? reais0(base.parcelaAntes) : "—"}</div>
+          <span className="text-right text-[11px] text-tinta">
             {tipo ? `Parcela ${tipo.descricao}` : "Escolha o tipo de parcela no cabeçalho"}
             {furo ? " · com furo" : " · sem furo"}
           </span>
@@ -308,6 +309,9 @@ export function SimuladorV2({ hoje, padroes }: { hoje: string; padroes: PadroesS
             />
             <span className="text-[15px] font-bold text-laranja">meses</span>
           </div>
+          <div className="text-right text-[11px] font-semibold text-tinta tabular-nums">
+            fim: {maxMeses} {maxMeses === 1 ? "mês" : "meses"}
+          </div>
           <input
             type="range"
             min={1}
@@ -318,11 +322,6 @@ export function SimuladorV2({ hoje, padroes }: { hoje: string; padroes: PadroesS
             aria-valuetext={`${mesesContemplacao} meses`}
             className="h-7 w-full cursor-pointer accent-[#ff751f]"
           />
-          <div className="flex justify-between text-[10px] text-tinta tabular-nums">
-            <span>1</span>
-            <span>{Math.round(maxMeses / 2)}</span>
-            <span>{maxMeses} (fim)</span>
-          </div>
           <div className="flex gap-1" role="group" aria-label="Atalhos de meses">
             {PRE_DEFINIDOS.filter((m) => m <= maxMeses).map((m) => (
               <button
@@ -345,8 +344,6 @@ export function SimuladorV2({ hoje, padroes }: { hoje: string; padroes: PadroesS
         </Bloco>
 
         <Bloco titulo="Grupo">
-          <Par r="Meses para terminar" v={faltam} />
-          <Par r="Meses decorridos" v={String(realizadas).padStart(2, "0")} />
           <Par r="Fidelidade em" v={fidelidadeMeses ? `${fidelidadeMeses} meses` : "—"} />
           <Par r="Taxa de adm. mensal" v={taxaMensal === null ? "—" : p2(taxaMensal)} />
           <Par r="Parcela para lance" v={base ? reais0(base.parcelaLance) : "—"} />
