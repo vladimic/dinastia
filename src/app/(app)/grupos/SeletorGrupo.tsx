@@ -274,6 +274,13 @@ function Lista({
       ordem === "tamanho" ? (b.participantes ?? 0) - (a.participantes ?? 0) || a.numero - b.numero : ordem === "faltam" ? faltam(a) - faltam(b) || a.numero - b.numero : a.numero - b.numero,
     );
 
+  const temFiltro = filtraCredito || marcados.length > 0 || filtros.furo || filtros.r70 || filtros.r55;
+  const limparTudo = () => {
+    setFiltros({ furo: false, r70: false, r55: false });
+    setFaixa(null);
+    setMarcados([]);
+  };
+
   const chip = (on: boolean) =>
     "flex min-h-8 items-center gap-1.5 rounded-full border px-3 text-[12px] font-bold " + (on ? "border-tinta bg-lavanda text-navy" : "border-borda-campo bg-white text-tinta hover:border-navy");
 
@@ -311,11 +318,23 @@ function Lista({
           <FiltroCredito minimo={limites.minimo} maximo={limites.maximo} de={de} ate={ate} aoMudar={(a, b) => setFaixa({ de: a, ate: b })} />
         )}
         {valoresParticipantes.length > 0 && (
-          <div role="group" aria-labelledby="rotulo-participantes" className="flex h-[42px] shrink-0 flex-col justify-center gap-1">
-            <span id="rotulo-participantes" className="text-[10px] leading-none font-extrabold tracking-wider text-tinta uppercase">
-              Participantes
-            </span>
-            <div className="flex gap-1">
+          <div role="group" aria-labelledby="rotulo-participantes" className="flex h-[42px] shrink-0 flex-col justify-center gap-[3px] rounded-xl border border-borda-campo bg-campo px-2.5">
+            <div className="flex h-3 items-center justify-between">
+              <span id="rotulo-participantes" className="text-[10px] leading-none font-extrabold tracking-wider text-tinta uppercase">
+                Participantes
+              </span>
+              <button
+                type="button"
+                aria-label="Limpar filtro de participantes"
+                aria-hidden={!marcados.length}
+                tabIndex={marcados.length ? 0 : -1}
+                onClick={() => setMarcados([])}
+                className={"w-4 text-[14px] leading-[12px] text-tinta hover:text-navy " + (marcados.length ? "" : "invisible")}
+              >
+                ×
+              </button>
+            </div>
+            <div className="flex items-center gap-1">
               {valoresParticipantes.map((v) => {
                 const on = marcados.includes(v);
                 return (
@@ -325,14 +344,23 @@ function Lista({
                     aria-pressed={on}
                     onClick={() => setMarcados((m) => (m.includes(v) ? m.filter((x) => x !== v) : [...m, v]))}
                     className={
-                      "flex h-[26px] min-w-[3.25rem] items-center justify-center rounded-lg border px-2 text-[12px] font-bold tabular-nums " +
-                      (on ? "border-navy bg-navy text-white" : "border-borda-campo bg-white text-navy hover:border-navy")
+                      "flex h-[22px] min-w-[3.25rem] items-center justify-center rounded-md border px-2 text-[12px] font-bold tabular-nums " +
+                      (on ? "border-laranja bg-laranja-claro text-navy" : "border-borda-campo bg-white text-navy hover:border-navy")
                     }
                   >
                     {v.toLocaleString("pt-BR", { useGrouping: false })}
                   </button>
                 );
               })}
+              <button
+                type="button"
+                disabled={!temFiltro}
+                onClick={limparTudo}
+                title="Limpa Parcela, Crédito e Participantes"
+                className="ml-1 h-[22px] rounded-md px-1.5 text-[11px] font-bold whitespace-nowrap text-tinta underline underline-offset-2 hover:text-navy disabled:no-underline disabled:opacity-40 disabled:hover:text-tinta"
+              >
+                Limpa tudo
+              </button>
             </div>
           </div>
         )}

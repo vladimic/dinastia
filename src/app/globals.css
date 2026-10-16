@@ -145,7 +145,7 @@ body {
 .faixa {
   --pa: 0;
   --pb: 1;
-  --bolinha: 16px;
+  --bolinha: 14px;
   position: relative;
   height: var(--bolinha);
   width: 100%;
@@ -165,7 +165,7 @@ body {
 .faixa-preenchido {
   left: calc(var(--pa) * (100% - var(--bolinha)) + var(--bolinha) / 2);
   width: calc((var(--pb) - var(--pa)) * (100% - var(--bolinha)));
-  background: var(--color-navy);
+  background: var(--color-laranja);
 }
 .faixa input[type="range"] {
   position: absolute;
@@ -193,7 +193,7 @@ body {
   border-radius: 50%;
   cursor: grab;
   background: #fff;
-  border: 2px solid var(--color-navy);
+  border: 2px solid var(--color-laranja);
   box-shadow: 0 1px 3px rgba(13, 5, 64, 0.25);
 }
 .faixa input[type="range"]::-moz-range-thumb {
@@ -203,7 +203,7 @@ body {
   border-radius: 50%;
   cursor: grab;
   background: #fff;
-  border: 2px solid var(--color-navy);
+  border: 2px solid var(--color-laranja);
   box-shadow: 0 1px 3px rgba(13, 5, 64, 0.25);
 }
 .faixa input[type="range"]:focus-visible::-webkit-slider-thumb {
