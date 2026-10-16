@@ -1,0 +1,315 @@
+"use client";
+
+import Link from "next/link";
+import { useSearchParams } from "next/navigation";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
+
+// Seletor de grupo da ver2: um botão com o grupo atual que abre a lista (larga) da família, com busca, filtros,
+// ordenação e o tamanho de cada grupo (participantes). Sem grupo escolhido, a lista aparece aberta na página.
+
+export type ItemGrupo = {
+  numero: number;
+  prazo: number;
+  assembleia: number;
+  data: string | null;
+  min: number | null;
+  max: number | null;
+  participantes: number | null;
+  furo: boolean;
+  reduzidas: number[];
+};
+
+type Familia = { slug: string; nome: string };
+type Ordem = "numero" | "tamanho" | "faltam";
+
+const PARTICIPANTES_MAX = 9999; // barra cheia
+const temAte55 = (g: ItemGrupo) => g.reduzidas.some((p) => p <= 55);
+const tem70 = (g: ItemGrupo) => g.reduzidas.includes(70);
+const mil = (v: number) => `R$ ${Math.round(v / 1000).toLocaleString("pt-BR")} mil`;
+
+type Props = {
+  familias: readonly Familia[];
+  familia: string;
+  contagem: Record<string, number>;
+  grupos: ItemGrupo[];
+  atual: { numero: number; familiaNome: string } | null;
+  hoje: string;
+};
+
+export function SeletorGrupo({ familias, familia, contagem, grupos, atual, hoje }: Props) {
+  const sp = useSearchParams();
+  const aba = sp.get("aba") ?? undefined;
+  const pediuLista = sp.get("lista") === "1";
+  const [aberto, setAberto] = useState(pediuLista);
+  // a URL pediu a lista (trocou de família com a lista aberta): reabre, mesmo que a página tenha sido preservada
+  const [ultimaUrl, setUltimaUrl] = useState(sp.toString());
+  if (ultimaUrl !== sp.toString()) {
+    setUltimaUrl(sp.toString());
+    if (pediuLista) setAberto(true);
+  }
+  const caixa = useRef<HTMLDivElement>(null);
+
+  // ao sair da página (ela fica preservada, escondida), a lista volta fechada
+  useLayoutEffect(() => () => setAberto(false), []);
+
+  useEffect(() => {
+    if (!aberto || !atual) return;
+    const fora = (e: MouseEvent) => {
+      if (caixa.current && !caixa.current.contains(e.target as Node)) setAberto(false);
+    };
+    const esc = (e: KeyboardEvent) => e.key === "Escape" && setAberto(false);
+    document.addEventListener("mousedown", fora);
+    document.addEventListener("keydown", esc);
+    return () => {
+      document.removeEventListener("mousedown", fora);
+      document.removeEventListener("keydown", esc);
+    };
+  }, [aberto, atual]);
+
+  const href = (q: Record<string, string | number | undefined>) => {
+    const p = new URLSearchParams();
+    for (const [k, v] of Object.entries(q)) if (v !== undefined && v !== "") p.set(k, String(v));
+    return `/grupos-v2?${p.toString()}`;
+  };
+  const linkGrupo = (n: number) => href({ familia, grupo: n, aba });
+
+  const i = atual ? grupos.findIndex((g) => g.numero === atual.numero) : -1;
+  const anterior = i > 0 ? grupos[i - 1] : null;
+  const proximo = i >= 0 && i < grupos.length - 1 ? grupos[i + 1] : null;
+  const nomeFamilia = familias.find((f) => f.slug === familia)?.nome ?? familia;
+
+  const lista = (
+    <Lista
+      familias={familias}
+      familia={familia}
+      contagem={contagem}
+      grupos={grupos}
+      ativo={atual?.numero}
+      hoje={hoje}
+      linkGrupo={linkGrupo}
+      linkFamilia={(slug) => href({ familia: slug, grupo: atual?.numero, aba, lista: atual ? 1 : undefined })}
+      aoEscolher={() => setAberto(false)}
+      focar={Boolean(atual)}
+    />
+  );
+
+  if (!atual) {
+    return <section className="rounded-2xl border border-borda bg-white p-4">{lista}</section>;
+  }
+
+  const seta = "flex h-10 w-10 items-center justify-center rounded-xl border border-borda-campo bg-white text-navy hover:border-navy";
+  return (
+    <div ref={caixa} className="relative flex items-center gap-2">
+      <button
+        type="button"
+        aria-haspopup="dialog"
+        aria-expanded={aberto}
+        onClick={() => setAberto((v) => !v)}
+        className="flex min-h-[3.25rem] items-center gap-3 rounded-2xl border border-navy bg-white py-1.5 pr-3 pl-4 text-left hover:shadow-[0_4px_14px_rgba(13,5,64,0.12)]"
+      >
+        <span className="font-display text-[32px] leading-none font-bold tabular-nums">{atual.numero}</span>
+        <span className="flex flex-col leading-tight">
+          <span className="text-[13px] font-bold">Grupo {atual.numero}</span>
+          <span className="text-[11px] text-tinta">{atual.familiaNome} · trocar de grupo</span>
+        </span>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true" className={"transition-transform " + (aberto ? "rotate-180" : "")}>
+          <path d="M6 9l6 6 6-6" />
+        </svg>
+      </button>
+      {anterior ? (
+        <Link href={linkGrupo(anterior.numero)} className={seta} aria-label={`Grupo anterior (${anterior.numero})`} title={`Grupo anterior: ${anterior.numero}`}>
+          ‹
+        </Link>
+      ) : (
+        <span className={seta + " opacity-35"} aria-hidden="true">
+          ‹
+        </span>
+      )}
+      {proximo ? (
+        <Link href={linkGrupo(proximo.numero)} className={seta} aria-label={`Próximo grupo (${proximo.numero})`} title={`Próximo grupo: ${proximo.numero}`}>
+          ›
+        </Link>
+      ) : (
+        <span className={seta + " opacity-35"} aria-hidden="true">
+          ›
+        </span>
+      )}
+
+      {aberto && (
+        <div
+          role="dialog"
+          aria-label={`Escolher grupo · ${nomeFamilia}`}
+          className="absolute top-[calc(100%+8px)] left-0 z-40 w-[min(70rem,calc(100vw-2rem))] rounded-2xl border border-borda-campo bg-white p-4 shadow-[0_24px_60px_rgba(13,5,64,0.28)] lg:w-[min(70rem,calc(100vw-260px-4rem))]"
+        >
+          {lista}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function Lista({
+  familias,
+  familia,
+  contagem,
+  grupos,
+  ativo,
+  hoje,
+  linkGrupo,
+  linkFamilia,
+  aoEscolher,
+  focar,
+}: {
+  familias: readonly Familia[];
+  familia: string;
+  contagem: Record<string, number>;
+  grupos: ItemGrupo[];
+  ativo?: number;
+  hoje: string;
+  linkGrupo: (n: number) => string;
+  linkFamilia: (slug: string) => string;
+  aoEscolher: () => void;
+  focar: boolean;
+}) {
+  const [busca, setBusca] = useState("");
+  const [filtros, setFiltros] = useState({ furo: false, r70: false, r55: false });
+  const [ordem, setOrdem] = useState<Ordem>("numero");
+
+  const realizadas = (g: ItemGrupo) => (g.data && g.data >= hoje ? g.assembleia - 1 : g.assembleia);
+  const faltam = (g: ItemGrupo) => Math.max(0, g.prazo - realizadas(g));
+
+  const q = busca.replace(/\D/g, "");
+  const visiveis = grupos
+    .filter((g) => (!q || String(g.numero).includes(q)) && (!filtros.furo || g.furo) && (!filtros.r70 || tem70(g)) && (!filtros.r55 || temAte55(g)))
+    .sort((a, b) =>
+      ordem === "tamanho" ? (b.participantes ?? 0) - (a.participantes ?? 0) || a.numero - b.numero : ordem === "faltam" ? faltam(a) - faltam(b) || a.numero - b.numero : a.numero - b.numero,
+    );
+
+  const chip = (on: boolean) =>
+    "flex min-h-8 items-center gap-1.5 rounded-full border px-3 text-[12px] font-bold " + (on ? "border-tinta bg-lavanda text-navy" : "border-borda-campo bg-white text-tinta hover:border-navy");
+
+  return (
+    <div className="flex flex-col gap-3">
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+        <nav aria-label="Família de produto" className="flex flex-wrap gap-1 rounded-xl border border-borda bg-linha p-1">
+          {familias.map((f) => {
+            const on = f.slug === familia;
+            return (
+              <Link
+                key={f.slug}
+                href={linkFamilia(f.slug)}
+                aria-current={on ? "true" : undefined}
+                className={"flex min-h-8 items-center rounded-lg px-3 text-[13px] font-bold " + (on ? "bg-white text-navy shadow ring-1 ring-laranja" : "text-tinta hover:text-navy")}
+              >
+                {f.nome} <span className="ml-1 font-semibold opacity-70">{contagem[f.slug] ?? 0}</span>
+              </Link>
+            );
+          })}
+        </nav>
+        <input
+          type="search"
+          autoFocus={focar}
+          inputMode="numeric"
+          placeholder="Número do grupo"
+          aria-label="Buscar grupo pelo número"
+          value={busca}
+          onChange={(e) => setBusca(e.target.value)}
+          className="h-9 w-44 rounded-lg border border-borda-campo bg-campo px-3 text-[13px] font-semibold text-navy outline-none focus:border-laranja focus:bg-white"
+        />
+        <div className="flex flex-wrap gap-1.5" role="group" aria-label="Filtros">
+          <button type="button" aria-pressed={filtros.furo} onClick={() => setFiltros((f) => ({ ...f, furo: !f.furo }))} className={chip(filtros.furo)}>
+            <i aria-hidden="true" className="h-2 w-2 rounded-full bg-furo" /> Furo
+          </button>
+          <button type="button" aria-pressed={filtros.r70} onClick={() => setFiltros((f) => ({ ...f, r70: !f.r70 }))} className={chip(filtros.r70)}>
+            <i aria-hidden="true" className="h-2 w-2 rounded-full bg-setenta" /> Parcela 70
+          </button>
+          <button type="button" aria-pressed={filtros.r55} onClick={() => setFiltros((f) => ({ ...f, r55: !f.r55 }))} className={chip(filtros.r55)}>
+            <i aria-hidden="true" className="h-2 w-2 rounded-full bg-reduzida" /> Parcela 50 / 55
+          </button>
+        </div>
+        <label className="ml-auto flex items-center gap-2 text-[12px] font-semibold text-tinta">
+          Ordenar por
+          <select
+            value={ordem}
+            onChange={(e) => setOrdem(e.target.value as Ordem)}
+            className="h-9 rounded-lg border border-borda-campo bg-campo px-2 text-[13px] font-bold text-navy outline-none focus:border-laranja"
+          >
+            <option value="numero">Número</option>
+            <option value="tamanho">Tamanho (maior primeiro)</option>
+            <option value="faltam">Faltam menos assembleias</option>
+          </select>
+        </label>
+      </div>
+
+      {grupos.length === 0 ? (
+        <p className="rounded-xl border border-dashed border-borda-campo px-4 py-3 text-sm text-tinta">Nenhum grupo cadastrado nesta família.</p>
+      ) : visiveis.length === 0 ? (
+        <p className="px-1 py-3 text-sm text-tinta">Nenhum grupo com esses filtros.</p>
+      ) : (
+        <ul className="m-0 grid max-h-[min(60vh,34rem)] list-none grid-cols-[repeat(auto-fill,minmax(6.25rem,1fr))] gap-1.5 overflow-auto p-0.5">
+          {visiveis.map((g) => {
+            const sel = g.numero === ativo;
+            const r = realizadas(g);
+            const tam = g.participantes;
+            const credito = g.min !== null && g.max !== null ? `${mil(g.min)} a ${mil(g.max)}` : "sem créditos";
+            const marcas = [g.furo && "furo", tem70(g) && "parcela 70", temAte55(g) && "parcela 50 ou 55"].filter(Boolean).join(", ");
+            return (
+              <li key={g.numero}>
+                <Link
+                  href={linkGrupo(g.numero)}
+                  onClick={aoEscolher}
+                  aria-current={sel ? "true" : undefined}
+                  title={`Grupo ${g.numero} · ${r}/${g.prazo} assembleias (faltam ${faltam(g)}) · ${credito}${tam ? ` · ${tam.toLocaleString("pt-BR")} participantes` : ""}`}
+                  className={
+                    "relative flex flex-col gap-1 rounded-xl border px-2.5 pt-1.5 pb-2 " +
+                    (sel ? "border-navy bg-lavanda ring-2 ring-laranja" : "border-borda-campo bg-white hover:border-navy")
+                  }
+                >
+                  <span className="flex items-start justify-between gap-1">
+                    <span className="text-[15px] leading-tight font-extrabold tabular-nums">{g.numero}</span>
+                    <span aria-hidden="true" className="flex gap-[3px] pt-1">
+                      {g.furo && <i className="h-2 w-2 rounded-full bg-furo" />}
+                      {tem70(g) && <i className="h-2 w-2 rounded-full bg-setenta" />}
+                      {temAte55(g) && <i className="h-2 w-2 rounded-full bg-reduzida" />}
+                    </span>
+                  </span>
+                  <span className="text-[10px] leading-none text-tinta tabular-nums">
+                    {r}/{g.prazo} assembleias
+                  </span>
+                  <span className="flex items-center gap-1.5">
+                    <span className="relative h-1.5 flex-1 overflow-hidden rounded-full bg-lavanda" aria-hidden="true">
+                      {tam ? <span className="absolute inset-y-0 left-0 rounded-full bg-[#8b83c9]" style={{ width: `${Math.min(100, (tam / PARTICIPANTES_MAX) * 100)}%` }} /> : null}
+                    </span>
+                    <span className="text-[11px] leading-none font-bold tabular-nums">{tam ? tam.toLocaleString("pt-BR") : "—"}</span>
+                  </span>
+                  <span className="sr-only">
+                    {tam ? ` · ${tam.toLocaleString("pt-BR")} participantes` : ""}
+                    {marcas ? ` · ${marcas}` : ""}
+                  </span>
+                </Link>
+              </li>
+            );
+          })}
+        </ul>
+      )}
+
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-[11px] text-tinta">
+        <span className="flex items-center gap-1.5">
+          <i aria-hidden="true" className="h-2 w-2 rounded-full bg-furo" /> Furo
+        </span>
+        <span className="flex items-center gap-1.5">
+          <i aria-hidden="true" className="h-2 w-2 rounded-full bg-setenta" /> Parcela 70
+        </span>
+        <span className="flex items-center gap-1.5">
+          <i aria-hidden="true" className="h-2 w-2 rounded-full bg-reduzida" /> Parcela 50 / 55
+        </span>
+        <span className="flex items-center gap-1.5">
+          <i aria-hidden="true" className="h-1.5 w-6 rounded-full bg-[#8b83c9]" /> Tamanho do grupo (participantes; barra cheia = 9.999)
+        </span>
+        <span>
+          {visiveis.length} de {grupos.length} grupos
+        </span>
+      </div>
+    </div>
+  );
+}
