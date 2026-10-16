@@ -48,6 +48,8 @@ export function SeletorGrupo({ familias, familia, contagem, grupos, atual, hoje 
     if (pediuLista) setAberto(true);
   }
   const caixa = useRef<HTMLDivElement>(null);
+  const botao = useRef<HTMLButtonElement>(null);
+  const painel = useRef<HTMLDivElement>(null);
 
   // ao sair da página (ela fica preservada, escondida), a lista volta fechada
   useLayoutEffect(() => () => setAberto(false), []);
@@ -65,6 +67,22 @@ export function SeletorGrupo({ familias, familia, contagem, grupos, atual, hoje 
       document.removeEventListener("keydown", esc);
     };
   }, [aberto, atual]);
+
+  // a lista ocupa a largura da tela (por cima do menu, para caber mais grupos por linha),
+  // logo abaixo do botão; acompanha a rolagem da página enquanto estiver aberta
+  useLayoutEffect(() => {
+    if (!aberto) return;
+    const posicionar = () => {
+      if (botao.current && painel.current) painel.current.style.top = `${Math.round(botao.current.getBoundingClientRect().bottom + 8)}px`;
+    };
+    posicionar();
+    window.addEventListener("scroll", posicionar, { passive: true });
+    window.addEventListener("resize", posicionar);
+    return () => {
+      window.removeEventListener("scroll", posicionar);
+      window.removeEventListener("resize", posicionar);
+    };
+  }, [aberto]);
 
   const href = (q: Record<string, string | number | undefined>) => {
     const p = new URLSearchParams();
@@ -101,6 +119,7 @@ export function SeletorGrupo({ familias, familia, contagem, grupos, atual, hoje 
   return (
     <div ref={caixa} className="relative flex items-center gap-2">
       <button
+        ref={botao}
         type="button"
         aria-haspopup="dialog"
         aria-expanded={aberto}
@@ -110,7 +129,7 @@ export function SeletorGrupo({ familias, familia, contagem, grupos, atual, hoje 
         <span className="font-display text-[32px] leading-none font-bold tabular-nums">{atual.numero}</span>
         <span className="flex flex-col leading-tight">
           <span className="text-[13px] font-bold">Grupo {atual.numero}</span>
-          <span className="text-[11px] text-tinta">{atual.familiaNome} · trocar de grupo</span>
+          <span className="text-[11px] text-tinta">{atual.familiaNome}</span>
         </span>
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true" className={"transition-transform " + (aberto ? "rotate-180" : "")}>
           <path d="M6 9l6 6 6-6" />
@@ -137,9 +156,10 @@ export function SeletorGrupo({ familias, familia, contagem, grupos, atual, hoje 
 
       {aberto && (
         <div
+          ref={painel}
           role="dialog"
           aria-label={`Escolher grupo · ${nomeFamilia}`}
-          className="absolute top-[calc(100%+8px)] left-0 z-40 w-[min(70rem,calc(100vw-2rem))] rounded-2xl border border-borda-campo bg-white p-4 shadow-[0_24px_60px_rgba(13,5,64,0.28)] lg:w-[min(70rem,calc(100vw-260px-4rem))]"
+          className="fixed inset-x-4 z-40 mx-auto max-w-[96rem] rounded-2xl border border-borda-campo bg-white p-4 shadow-[0_24px_60px_rgba(13,5,64,0.28)]"
         >
           {lista}
         </div>
@@ -190,8 +210,9 @@ function Lista({
 
   return (
     <div className="flex flex-col gap-3">
-      <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
-        <nav aria-label="Família de produto" className="flex flex-wrap gap-1 rounded-xl border border-borda bg-linha p-1">
+      {/* cabeçalho da lista numa linha só: família, busca, filtros e ordenação */}
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-2 xl:flex-nowrap">
+        <nav aria-label="Família de produto" className="flex shrink-0 flex-wrap gap-1 rounded-xl border border-borda bg-linha p-1">
           {familias.map((f) => {
             const on = f.slug === familia;
             return (
@@ -214,9 +235,9 @@ function Lista({
           aria-label="Buscar grupo pelo número"
           value={busca}
           onChange={(e) => setBusca(e.target.value)}
-          className="h-9 w-44 rounded-lg border border-borda-campo bg-campo px-3 text-[13px] font-semibold text-navy outline-none focus:border-laranja focus:bg-white"
+          className="h-9 w-40 shrink-0 rounded-lg border border-borda-campo bg-campo px-3 text-[13px] font-semibold text-navy outline-none focus:border-laranja focus:bg-white"
         />
-        <div className="flex flex-wrap gap-1.5" role="group" aria-label="Filtros">
+        <div className="flex shrink-0 flex-wrap gap-1.5" role="group" aria-label="Filtros">
           <button type="button" aria-pressed={filtros.furo} onClick={() => setFiltros((f) => ({ ...f, furo: !f.furo }))} className={chip(filtros.furo)}>
             <i aria-hidden="true" className="h-2 w-2 rounded-full bg-furo" /> Furo
           </button>
@@ -227,7 +248,7 @@ function Lista({
             <i aria-hidden="true" className="h-2 w-2 rounded-full bg-reduzida" /> Parcela 50 / 55
           </button>
         </div>
-        <label className="ml-auto flex items-center gap-2 text-[12px] font-semibold text-tinta">
+        <label className="ml-auto flex shrink-0 items-center gap-2 text-[12px] font-semibold whitespace-nowrap text-tinta">
           Ordenar por
           <select
             value={ordem}
@@ -235,8 +256,8 @@ function Lista({
             className="h-9 rounded-lg border border-borda-campo bg-campo px-2 text-[13px] font-bold text-navy outline-none focus:border-laranja"
           >
             <option value="numero">Número</option>
-            <option value="tamanho">Tamanho (maior primeiro)</option>
-            <option value="faltam">Faltam menos assembleias</option>
+            <option value="tamanho">Tamanho do grupo</option>
+            <option value="faltam">Menos assembleias</option>
           </select>
         </label>
       </div>
@@ -246,7 +267,7 @@ function Lista({
       ) : visiveis.length === 0 ? (
         <p className="px-1 py-3 text-sm text-tinta">Nenhum grupo com esses filtros.</p>
       ) : (
-        <ul className="m-0 grid max-h-[min(60vh,34rem)] list-none grid-cols-[repeat(auto-fill,minmax(7rem,1fr))] gap-1.5 overflow-auto p-0.5">
+        <ul className="m-0 grid max-h-[min(60vh,34rem)] list-none grid-cols-[repeat(auto-fill,minmax(6.5rem,1fr))] gap-1.5 overflow-auto p-0.5">
           {visiveis.map((g) => {
             const sel = g.numero === ativo;
             const r = realizadas(g);
@@ -261,23 +282,23 @@ function Lista({
                   aria-current={sel ? "true" : undefined}
                   title={`Grupo ${g.numero} · ${r} realizadas, faltam ${faltam(g)}, de ${g.prazo} assembleias · ${credito}${tam ? ` · ${tam.toLocaleString("pt-BR")} participantes` : ""}`}
                   className={
-                    "relative flex flex-col gap-1.5 rounded-xl border px-2.5 pt-1.5 pb-2 " +
+                    "relative flex min-w-0 flex-col gap-1 rounded-xl border px-2.5 pt-1.5 pb-2 " +
                     (sel ? "border-navy bg-lavanda ring-2 ring-laranja" : "border-borda-campo bg-white hover:border-navy")
                   }
                 >
-                  {/* realizadas/faltam::prazo, ex.: 80/160::240 */}
-                  <span className="flex items-baseline justify-between gap-1">
+                  {/* 1ª linha: número e sinalizadores · 2ª: realizadas/faltam::prazo (ex.: 80/160::240) · 3ª: participantes */}
+                  <span className="flex items-center justify-between gap-1">
                     <span className="text-[15px] leading-tight font-extrabold tabular-nums">{g.numero}</span>
-                    <span className="text-[10px] leading-none font-semibold whitespace-nowrap text-tinta tabular-nums">
-                      {r}/{faltam(g)}::{g.prazo}
-                    </span>
-                  </span>
-                  <span className="flex items-center gap-1.5">
-                    <span aria-hidden="true" className="flex gap-[3px]">
+                    <span aria-hidden="true" className="flex shrink-0 gap-[3px]">
                       {g.furo && <i className="h-2 w-2 rounded-full bg-furo" />}
                       {tem70(g) && <i className="h-2 w-2 rounded-full bg-setenta" />}
                       {temAte55(g) && <i className="h-2 w-2 rounded-full bg-reduzida" />}
                     </span>
+                  </span>
+                  <span className="truncate text-[10px] leading-none font-semibold text-tinta tabular-nums">
+                    {r}/{faltam(g)}::{g.prazo}
+                  </span>
+                  <span className="flex items-center gap-1.5">
                     <span className="relative h-1.5 flex-1 overflow-hidden rounded-full bg-lavanda" aria-hidden="true">
                       {tam ? <span className="absolute inset-y-0 left-0 rounded-full bg-[#8b83c9]" style={{ width: `${Math.min(100, (tam / PARTICIPANTES_MAX) * 100)}%` }} /> : null}
                     </span>
