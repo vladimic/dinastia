@@ -54,13 +54,13 @@ export function FiltroCredito({ minimo, maximo, de, ate, aoMudar }: Props) {
             e.currentTarget.blur();
           }
         }}
-        className="h-6 w-full rounded-md border border-borda-campo bg-campo pr-1.5 pl-6 text-[12px] font-semibold tabular-nums text-navy outline-none focus:border-laranja focus:bg-white"
+        className="h-[22px] w-full rounded-md border border-borda-campo bg-white pr-1.5 pl-6 text-[12px] font-semibold tabular-nums text-navy outline-none focus:border-laranja"
       />
     </span>
   );
 
   return (
-    <div role="group" aria-label="Valor do crédito" className="flex h-[42px] w-[19rem] shrink-0 flex-col justify-center gap-0.5">
+    <div role="group" aria-label="Valor do crédito" className="flex h-[42px] w-[19.5rem] shrink-0 flex-col justify-center gap-0.5 rounded-xl border border-borda-campo bg-campo px-2.5">
       <div className="flex items-center gap-1.5">
         <span className="mr-auto text-[10px] leading-none font-extrabold tracking-wider text-tinta uppercase">Crédito</span>
         {campo("de", de, "Crédito mínimo")}
