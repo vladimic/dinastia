@@ -25,6 +25,8 @@ type Familia = { slug: string; nome: string };
 type Ordem = "numero" | "tamanho" | "faltam";
 
 const PARTICIPANTES_MAX = 9999; // barra cheia
+// com pouca largura os filtros novos (crédito, participantes, limpar) descem juntos para a 2ª linha e o Ordenar fica na 1ª; com largura suficiente tudo cabe numa linha só
+const ORDEM_NOVOS = "order-3 @min-[1510px]:order-none";
 const temAte55 = (g: ItemGrupo) => g.reduzidas.some((p) => p <= 55);
 const tem70 = (g: ItemGrupo) => g.reduzidas.includes(70);
 const mil = (v: number) => `R$ ${Math.round(v / 1000).toLocaleString("pt-BR")} mil`;
@@ -285,9 +287,9 @@ function Lista({
     "flex min-h-8 items-center gap-1.5 rounded-full border px-3 text-[12px] font-bold " + (on ? "border-tinta bg-lavanda text-navy" : "border-borda-campo bg-white text-tinta hover:border-navy");
 
   return (
-    <div className="flex flex-col gap-3">
+    <div className="@container flex flex-col gap-3">
       {/* cabeçalho da lista numa linha só: família, busca, filtros e ordenação */}
-      <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+      <div className="flex flex-wrap items-center gap-x-2 gap-y-2">
         <nav aria-label="Família de produto" className="flex shrink-0 flex-wrap gap-1 rounded-xl border border-borda bg-linha p-1">
           {familias.map((f) => {
             const on = f.slug === familia;
@@ -315,10 +317,10 @@ function Lista({
           </button>
         </div>
         {limites && (
-          <FiltroCredito minimo={limites.minimo} maximo={limites.maximo} de={de} ate={ate} aoMudar={(a, b) => setFaixa({ de: a, ate: b })} />
+          <FiltroCredito minimo={limites.minimo} maximo={limites.maximo} de={de} ate={ate} aoMudar={(a, b) => setFaixa({ de: a, ate: b })} className={ORDEM_NOVOS} />
         )}
         {valoresParticipantes.length > 0 && (
-          <div role="group" aria-labelledby="rotulo-participantes" className="flex h-[42px] shrink-0 flex-col justify-center gap-[3px] rounded-xl border border-borda-campo bg-campo px-2.5">
+          <div role="group" aria-labelledby="rotulo-participantes" className={"flex h-[42px] shrink-0 flex-col justify-center gap-[3px] rounded-xl border border-borda-campo bg-campo px-2.5 " + ORDEM_NOVOS}>
             <div className="flex h-3 items-center justify-between">
               <span id="rotulo-participantes" className="text-[10px] leading-none font-extrabold tracking-wider text-tinta uppercase">
                 Participantes
@@ -334,7 +336,7 @@ function Lista({
                 ×
               </button>
             </div>
-            <div className="flex items-center gap-1">
+            <div className="flex items-center gap-[3px]">
               {valoresParticipantes.map((v) => {
                 const on = marcados.includes(v);
                 return (
@@ -344,7 +346,7 @@ function Lista({
                     aria-pressed={on}
                     onClick={() => setMarcados((m) => (m.includes(v) ? m.filter((x) => x !== v) : [...m, v]))}
                     className={
-                      "flex h-[22px] min-w-[3.25rem] items-center justify-center rounded-md border px-2 text-[12px] font-bold tabular-nums " +
+                      "flex h-[22px] min-w-[2.5rem] items-center justify-center rounded-md border px-1 text-[12px] font-bold tabular-nums " +
                       (on ? "border-laranja bg-laranja-claro text-navy" : "border-borda-campo bg-white text-navy hover:border-navy")
                     }
                   >
@@ -352,23 +354,29 @@ function Lista({
                   </button>
                 );
               })}
-              <button
-                type="button"
-                disabled={!temFiltro}
-                onClick={limparTudo}
-                title="Limpa Parcela, Crédito e Participantes"
-                className="ml-1 h-[22px] rounded-md px-1.5 text-[11px] font-bold whitespace-nowrap text-tinta underline underline-offset-2 hover:text-navy disabled:no-underline disabled:opacity-40 disabled:hover:text-tinta"
-              >
-                Limpa tudo
-              </button>
             </div>
           </div>
         )}
+        <button
+          type="button"
+          disabled={!temFiltro}
+          onClick={limparTudo}
+          aria-label="Limpa tudo"
+          title="Limpa tudo (Parcela, Crédito e Participantes)"
+          className={"flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-borda-campo bg-white text-tinta hover:border-navy hover:text-navy disabled:cursor-default disabled:opacity-40 disabled:hover:border-borda-campo disabled:hover:text-tinta " + ORDEM_NOVOS}
+        >
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <path d="M3 4h18l-7 8.5V19l-4 2v-8.5z" />
+            <path d="M16.5 15.5l5 5M21.5 15.5l-5 5" />
+          </svg>
+        </button>
+        {/* quebra de linha só no layout estreito: separa o Ordenar (1ª linha) dos filtros novos (2ª linha) */}
+        <span aria-hidden="true" className="order-2 h-0 basis-full @min-[1510px]:hidden" />
         <select
           value={ordem}
           aria-label="Ordenar grupos"
           onChange={(e) => setOrdem(e.target.value as Ordem)}
-          className="ml-auto h-9 shrink-0 rounded-lg border border-borda-campo bg-campo px-2 text-[13px] font-bold text-navy outline-none focus:border-laranja"
+          className="order-1 ml-auto h-9 shrink-0 rounded-lg border border-borda-campo bg-campo px-2 text-[13px] font-bold text-navy outline-none focus:border-laranja @min-[1510px]:order-none"
         >
           <option value="numero">Ordenar: número</option>
           <option value="tamanho">Ordenar: tamanho</option>

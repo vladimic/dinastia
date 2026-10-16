@@ -145,7 +145,7 @@ body {
 .faixa {
   --pa: 0;
   --pb: 1;
-  --bolinha: 14px;
+  --bolinha: 16px;
   position: relative;
   height: var(--bolinha);
   width: 100%;

@@ -2,6 +2,15 @@
 // Regra: a cada mudança entregue, acrescentar uma entrada NO TOPO.
 export const VERSOES: { numero: string; data: string; itens: string[] }[] = [
   {
+    numero: "0074",
+    data: "16/10/2026",
+    itens: [
+      "Lista de grupos: o \"Limpa tudo\" sai do box de Participantes e vira um botão só com ícone (funil com ×), ao lado do box; dentro de Participantes fica apenas o × que limpa os participantes.",
+      "Lista de grupos: os filtros ficam mais estreitos (o R$ do crédito passa para o rótulo; campos e botões menores). Com a lista a partir de ~1510px de largura tudo cabe numa linha; abaixo disso o Ordenar continua na linha de cima e Crédito, Participantes e Limpar descem juntos para a linha de baixo.",
+      "Lista de grupos: o slider de crédito usa melhor a altura do box (bolinhas maiores) e o × do crédito fica junto do rótulo.",
+    ],
+  },
+  {
     numero: "0073",
     data: "16/10/2026",
     itens: [
