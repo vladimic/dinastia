@@ -55,10 +55,31 @@ async function Formulario({ searchParams }: { searchParams: PageProps<"/parametr
       <h2 className="border-t border-linha pt-3 text-sm font-bold">Simulador</h2>
       <Campo rotulo="INCC projetado (% ao ano)" nome="incc_pct_ano" valor={pct(pad.incc)} />
       <Campo rotulo="Contemplação em (meses)" nome="contemplacao_meses" valor={String(pad.contemplacaoMeses)} />
+      <div className="flex flex-col gap-1.5">
+        <span id="rotulo-prazos" className="text-xs font-semibold text-tinta">
+          Prazos de contemplação (meses)
+        </span>
+        <div role="group" aria-labelledby="rotulo-prazos" className="flex flex-wrap gap-1.5">
+          {pad.contemplacaoPrazos.map((m, i) => (
+            <input
+              key={i}
+              className="campo-sm !w-[3.3rem]"
+              name={`contemplacao_prazo_${i + 1}`}
+              inputMode="numeric"
+              defaultValue={String(m)}
+              required
+              aria-label={`Prazo ${i + 1} de 7`}
+            />
+          ))}
+        </div>
+        <p className="text-[11px] leading-snug text-tinta">
+          Os 7 atalhos do campo Contemplação em do simulador. Informe 7 prazos diferentes, de 1 a 999; eles são gravados em ordem crescente.
+        </p>
+      </div>
       <Campo rotulo="Parcelas do lance livre" nome="lance_livre_parcelas" valor={String(pad.lanceLivreParcelas)} />
       <Campo rotulo="Parcelas do lance fidelidade" nome="lance_fidelidade_parcelas" valor={String(pad.lanceFidelidadeParcelas)} />
       <p className="text-[11px] leading-snug text-tinta">
-        Valores com que o simulador de cada grupo abre. Na tela do simulador, INCC, contemplação e parcelas dos lances livre e fidelidade podem ser alterados para aquela simulação, sem mudar estes parâmetros.
+        Valores com que o simulador de cada grupo abre. Na tela do simulador, INCC, seguro, contemplação e parcelas dos lances livre e fidelidade podem ser alterados para aquela simulação, sem mudar estes parâmetros. O percentual do seguro é o da seção Seguro prestamista, acima.
       </p>
 
       <h2 className="border-t border-linha pt-3 text-sm font-bold">Concorrência dos lances (%)</h2>
@@ -73,13 +94,15 @@ async function Formulario({ searchParams }: { searchParams: PageProps<"/parametr
           Parâmetros salvos.
         </p>
       )}
-      {["4", "5", "6"].includes(String(sp.erro)) && (
+      {["4", "5", "6", "7"].includes(String(sp.erro)) && (
         <p role="alert" className="rounded-lg bg-[#fbe4e4] px-3 py-2 text-sm font-semibold text-[#9b1c1c]">
           {sp.erro === "4"
             ? "Parcelas do lance inválidas. Informe números inteiros de 1 a 999."
             : sp.erro === "5"
               ? "Concorrência inválida. Informe um percentual entre 0 e 100."
-              : "Os textos do simulador não podem ficar vazios (título até 60 e texto até 80 caracteres)."}
+              : sp.erro === "7"
+                ? "Prazos de contemplação inválidos. Informe 7 prazos diferentes, números inteiros de 1 a 999."
+                : "Os textos do simulador não podem ficar vazios (título até 60 e texto até 80 caracteres)."}
         </p>
       )}
       {sp.erro === "3" && (
