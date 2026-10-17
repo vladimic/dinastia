@@ -19,6 +19,8 @@ export type ItemGrupo = {
   participantes: number | null;
   furo: boolean;
   reduzidas: number[];
+  /** códigos das 20 primeiras contemplações (desenhadas no pop-up) */
+  seq: string[];
 };
 
 type Familia = { slug: string; nome: string };
@@ -30,6 +32,7 @@ const ORDEM_NOVOS = "order-3 @min-[1510px]:order-none";
 const temAte55 = (g: ItemGrupo) => g.reduzidas.some((p) => p <= 55);
 const tem70 = (g: ItemGrupo) => g.reduzidas.includes(70);
 const mil = (v: number) => `R$ ${Math.round(v / 1000).toLocaleString("pt-BR")} mil`;
+const dataBR = (iso: string) => iso.slice(0, 10).split("-").reverse().join("/");
 
 type Props = {
   familias: readonly Familia[];
@@ -38,9 +41,11 @@ type Props = {
   grupos: ItemGrupo[];
   atual: { numero: number; familiaNome: string; atualizadoEm?: string | null; arquivo?: string | null } | null;
   hoje: string;
+  /** cor de cada modalidade, para a sequência do pop-up */
+  cores: Record<string, string>;
 };
 
-export function SeletorGrupo({ familias, familia, contagem, grupos, atual, hoje }: Props) {
+export function SeletorGrupo({ familias, familia, contagem, grupos, atual, hoje, cores }: Props) {
   const sp = useSearchParams();
   const aba = sp.get("aba") ?? undefined;
   const pediuLista = sp.get("lista") === "1";
@@ -130,6 +135,7 @@ export function SeletorGrupo({ familias, familia, contagem, grupos, atual, hoje 
       grupos={grupos}
       ativo={atual?.numero}
       hoje={hoje}
+      cores={cores}
       linkGrupo={linkGrupo}
       linkFamilia={(slug) => href({ familia: slug, grupo: atual?.numero, aba, lista: atual ? 1 : undefined })}
       aoEscolher={() => setAberto(false)}
@@ -228,6 +234,7 @@ function Lista({
   grupos,
   ativo,
   hoje,
+  cores,
   linkGrupo,
   linkFamilia,
   aoEscolher,
@@ -238,10 +245,20 @@ function Lista({
   grupos: ItemGrupo[];
   ativo?: number;
   hoje: string;
+  cores: Record<string, string>;
   linkGrupo: (n: number) => string;
   linkFamilia: (slug: string) => string;
   aoEscolher: () => void;
 }) {
+  // pop-up de detalhes do grupo sob o mouse (ou com o foco do teclado)
+  const [pop, setPop] = useState<{ g: ItemGrupo; x: number; y: number; acima: boolean } | null>(null);
+  function mostrar(g: ItemGrupo, el: HTMLElement) {
+    const r = el.getBoundingClientRect();
+    const largura = 260;
+    const x = Math.min(Math.max(8, r.left + r.width / 2 - largura / 2), window.innerWidth - largura - 8);
+    const acima = r.bottom + 210 > window.innerHeight; // o pop-up tem ~195 px de altura: sem espaço embaixo, abre acima
+    setPop({ g, x, y: acima ? r.top - 6 : r.bottom + 6, acima });
+  }
   const [filtros, setFiltros] = useState({ furo: false, r70: false, r55: false });
   const [ordem, setOrdem] = useState<Ordem>("numero");
   // faixa de crédito escolhida (null = toda a faixa da família) e participantes marcados (vazio = todos)
@@ -403,15 +420,20 @@ function Lista({
             const sel = g.numero === ativo;
             const r = realizadas(g);
             const tam = g.participantes;
-            const credito = g.min !== null && g.max !== null ? `${mil(g.min)} a ${mil(g.max)}` : "sem créditos";
             const marcas = [g.furo && "furo", tem70(g) && "parcela 70", temAte55(g) && "parcela 50 ou 55"].filter(Boolean).join(", ");
             return (
               <li key={g.numero}>
                 <Link
                   href={linkGrupo(g.numero)}
-                  onClick={aoEscolher}
+                  onClick={() => {
+                    setPop(null);
+                    aoEscolher();
+                  }}
                   aria-current={sel ? "true" : undefined}
-                  title={`Grupo ${g.numero} · ${r} realizadas, faltam ${faltam(g)}, de ${g.prazo} assembleias · ${credito}${tam ? ` · ${tam.toLocaleString("pt-BR")} participantes` : ""}`}
+                  onMouseEnter={(e) => mostrar(g, e.currentTarget)}
+                  onMouseLeave={() => setPop(null)}
+                  onFocus={(e) => mostrar(g, e.currentTarget)}
+                  onBlur={() => setPop(null)}
                   className={
                     "relative flex min-w-0 flex-col gap-1 rounded-xl border px-2 pt-1.5 pb-2 " +
                     (sel ? "border-navy bg-lavanda ring-2 ring-laranja" : "border-borda-campo bg-white hover:border-navy")
@@ -446,6 +468,61 @@ function Lista({
         </ul>
       )}
 
+      {pop && <Popup {...pop} hoje={hoje} cores={cores} />}
+    </div>
+  );
+}
+
+// Pop-up com os detalhes do grupo (o mesmo da versão antiga da tela): crédito, participantes, reduzidas,
+// assembleias, realizadas/faltam e a sequência de contemplação em quadradinhos coloridos.
+function Popup({ g, x, y, acima, hoje, cores }: { g: ItemGrupo; x: number; y: number; acima: boolean; hoje: string; cores: Record<string, string> }) {
+  // a tabela vigente é da próxima assembleia enquanto a data dela não passou
+  const realizadas = g.data && g.data >= hoje ? g.assembleia - 1 : g.assembleia;
+  const faltam = Math.max(0, g.prazo - realizadas);
+  const linha = "flex justify-between gap-3";
+
+  return (
+    <div
+      role="tooltip"
+      style={{ left: x, top: y, width: 260, transform: acima ? "translateY(-100%)" : undefined }}
+      className="pointer-events-none fixed z-50 flex flex-col gap-1.5 rounded-xl bg-navy p-3.5 text-[13px] text-[#e9e6f5] shadow-[0_10px_30px_rgba(13,5,64,0.35)]"
+    >
+      <div className="text-sm font-bold text-ouro">
+        Grupo {g.numero} · {g.assembleia}ª{g.data ? ` · ${dataBR(g.data)}` : ""}
+      </div>
+      <div className={linha}>
+        <span>Crédito</span>
+        <span className="font-semibold text-white">{g.min !== null && g.max !== null ? `${mil(g.min)} a ${mil(g.max)}` : "—"}</span>
+      </div>
+      <div className={linha}>
+        <span>Participantes</span>
+        <span className="font-semibold text-white tabular-nums">{g.participantes ? g.participantes.toLocaleString("pt-BR") : "—"}</span>
+      </div>
+      {g.reduzidas.length > 0 && (
+        <div className={linha}>
+          <span>Reduzidas</span>
+          <span className="font-semibold text-white tabular-nums">{g.reduzidas.join(" · ")}</span>
+        </div>
+      )}
+      <div className={linha}>
+        <span>Assembleias</span>
+        <span className="font-semibold text-white tabular-nums">{g.prazo}</span>
+      </div>
+      <div className="flex justify-between gap-3">
+        <span>
+          Realizadas <span className="font-semibold text-white tabular-nums">{realizadas}</span>
+        </span>
+        <span>
+          Faltam <span className="font-semibold text-laranja tabular-nums">{faltam}</span>
+        </span>
+      </div>
+      {g.seq.length > 0 && (
+        <div className="grid grid-cols-[repeat(20,minmax(0,1fr))] gap-[2px] pt-0.5" aria-label={`Sequência: ${g.seq.join(", ")}`}>
+          {g.seq.map((c, k) => (
+            <span key={k} style={{ background: cores[c] ?? "#b9b3d6" }} className="aspect-square rounded-[2px]" />
+          ))}
+        </div>
+      )}
     </div>
   );
 }

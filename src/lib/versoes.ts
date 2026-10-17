@@ -2,6 +2,14 @@
 // Regra: a cada mudança entregue, acrescentar uma entrada NO TOPO.
 export const VERSOES: { numero: string; data: string; itens: string[] }[] = [
   {
+    numero: "0077",
+    data: "17/10/2026",
+    itens: [
+      "Lista de grupos: o pop-up de detalhes volta ao passar o mouse (ou focar com o teclado) sobre um grupo, igual ao da tela antiga: crédito, participantes, reduzidas, assembleias, realizadas/faltam e a sequência de contemplação em quadradinhos coloridos. Ele tinha saído por engano na troca de telas (0071). Os boxes deixam de mostrar o balão simples do navegador, para não aparecerem dois ao mesmo tempo.",
+      "O pop-up passa a abrir acima do grupo quando não cabe embaixo (a folga antiga de 160 px era menor que a altura do pop-up, de cerca de 195 px, e ele podia sair da tela).",
+    ],
+  },
+  {
     numero: "0076",
     data: "16/10/2026",
     itens: [
