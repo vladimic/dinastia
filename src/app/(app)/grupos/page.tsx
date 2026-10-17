@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
-import { FAMILIAS, carregarGrupo, carregarPadroesSimulador, contarPorFamilia, listarGrupos, listarIndices, nomeFamilia } from "@/lib/grupos";
+import { FAMILIAS, carregarGrupo, carregarPadroesSimulador, contarPorFamilia, listarCoresContemplacao, listarGrupos, listarIndices, nomeFamilia } from "@/lib/grupos";
 import { padroesDeLinha } from "@/lib/simulacao";
 import { Cabecalho } from "./Cabecalho";
 import { GrupoDetalhe } from "./GrupoDetalhe";
@@ -26,8 +26,9 @@ async function Conteudo({ searchParams }: { searchParams: PageProps<"/grupos">["
   // sem família na URL, a lista mostra a família do grupo aberto
   const familia = pedida ?? FAMILIAS.find((f) => f.slug === detalhe?.familia) ?? FAMILIAS[0];
 
-  const [grupos, contagem, indices, padroes] = await Promise.all([
+  const [grupos, cores, contagem, indices, padroes] = await Promise.all([
     listarGrupos(familia.slug),
+    listarCoresContemplacao(),
     contarPorFamilia(),
     detalhe ? listarIndices() : Promise.resolve([]),
     detalhe ? carregarPadroesSimulador() : Promise.resolve(padroesDeLinha(null)),
@@ -36,6 +37,7 @@ async function Conteudo({ searchParams }: { searchParams: PageProps<"/grupos">["
 
   const seletor = (
     <SeletorGrupo
+      cores={cores}
       familias={FAMILIAS}
       familia={familia.slug}
       contagem={contagem}
@@ -60,6 +62,7 @@ async function Conteudo({ searchParams }: { searchParams: PageProps<"/grupos">["
         participantes: g.participantes,
         furo: g.furo,
         reduzidas: g.reduzidas,
+        seq: g.seq,
       }))}
     />
   );
