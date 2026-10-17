@@ -12,6 +12,7 @@ import { reais0, useDados } from "./GrupoDetalhe";
 const p2 = (v: number) => v.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + "%";
 const dinheiro = (v: number | null | undefined) => (v === null || v === undefined ? "—" : reais0(v));
 const nf2 = new Intl.NumberFormat("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const nf4 = new Intl.NumberFormat("pt-BR", { minimumFractionDigits: 4, maximumFractionDigits: 4 });
 
 type Cor = "navy" | "ouro" | "laranja" | "livre";
 type Meta = { chave: string; tipo: TipoColuna; titulo: string; numero?: number; proprioPct?: number; icone?: "cadeado" | "martelo"; cor: Cor };
@@ -190,7 +191,6 @@ function hojeLocal() {
 }
 const diasEntre = (de: string, ate: string) => Math.round((Date.parse(ate + "T00:00:00Z") - Date.parse(de + "T00:00:00Z")) / 86400000);
 
-const PRE_DEFINIDOS = [1, 12, 24, 36, 48, 60, 120];
 // números de destaque da coluna de parâmetros (crédito, parcela, meses): mesma fonte e tamanho
 const GRANDE = "text-[28px] leading-none font-extrabold tracking-tight tabular-nums";
 
@@ -258,6 +258,7 @@ export function Simulador({ hoje, padroes }: { hoje: string; padroes: PadroesSim
   const diasValidade = diasEntre(hojeLocal(), validade);
   const [inccLigado, setInccLigado] = useState(false); // padrão: desligado
   const [seguroLigado, setSeguroLigado] = useState(false); // padrão: desligado
+  const [seguro, setSeguro] = useState(() => nf4.format(padroes.seguroPct)); // % do crédito ao mês, do parâmetro global
   const [incc, setIncc] = useState(() => nf2.format(padroes.incc));
 
   // parcela em que a fidelidade libera (36), e não o mês em que entra na sequência (37)
@@ -369,7 +370,8 @@ export function Simulador({ hoje, padroes }: { hoje: string; padroes: PadroesSim
               className="h-5 w-full cursor-pointer accent-[#ff751f]"
             />
             <div className="flex gap-1" role="group" aria-label="Atalhos de meses">
-              {PRE_DEFINIDOS.filter((m) => m <= maxMeses).map((m) => (
+              {/* os 7 prazos vêm do parâmetro global (Parâmetros globais › Simulador) */}
+              {padroes.contemplacaoPrazos.filter((m) => m <= maxMeses).map((m) => (
                 <button
                   key={m}
                   type="button"
@@ -457,7 +459,25 @@ export function Simulador({ hoje, padroes }: { hoje: string; padroes: PadroesSim
               <span className="font-bold">%</span>
             </span>
           </Linha>
-          <Linha r="Seguro" interruptor={<Interruptor ligado={seguroLigado} rotulo="Seguro" aoAlternar={() => setSeguroLigado((v) => !v)} />} />
+          <Linha r="Seguro" interruptor={<Interruptor ligado={seguroLigado} rotulo="Considerar o seguro (desligado = 0%)" aoAlternar={() => setSeguroLigado((v) => !v)} />}>
+            <span className="flex items-baseline gap-1">
+              <input
+                id="seguro-grupo"
+                aria-label="Seguro (% do crédito ao mês)"
+                className={RISCO + " w-[4.5rem]" + (seguroLigado ? "" : " text-tinta/60")}
+                inputMode="decimal"
+                readOnly={!seguroLigado}
+                value={seguroLigado ? seguro : "0,0000"}
+                title="Vem de Parâmetros globais (% do crédito ao mês); aqui pode ser alterado só para esta simulação"
+                onChange={(e) => setSeguro(e.target.value.replace(/[^\d,]/g, "").slice(0, 7))}
+                onBlur={() => {
+                  const n = Number(seguro.replace(",", "."));
+                  setSeguro(nf4.format(Number.isFinite(n) && seguro !== "" ? n : padroes.seguroPct));
+                }}
+              />
+              <span className="font-bold">%</span>
+            </span>
+          </Linha>
         </Bloco>
       </aside>
 

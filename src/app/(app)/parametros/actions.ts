@@ -17,6 +17,10 @@ export async function salvarParametros(formData: FormData) {
   if (incc === null || incc < 0 || incc > 100) redirect("/parametros?erro=2");
   const contemplacao = inteiro(formData.get("contemplacao_meses"));
   if (!(contemplacao >= 1 && contemplacao <= 999)) redirect("/parametros?erro=3");
+  // 7 prazos de atalho de "Contemplação em": inteiros de 1 a 999, sem repetir; gravados em ordem crescente
+  const prazos = [1, 2, 3, 4, 5, 6, 7].map((i) => inteiro(formData.get(`contemplacao_prazo_${i}`)));
+  if (prazos.some((v) => !(v >= 1 && v <= 999)) || new Set(prazos).size !== 7) redirect("/parametros?erro=7");
+  prazos.sort((a, b) => a - b);
   const livre = inteiro(formData.get("lance_livre_parcelas"));
   const fidelidade = inteiro(formData.get("lance_fidelidade_parcelas"));
   if (!(livre >= 1 && livre <= 999) || !(fidelidade >= 1 && fidelidade <= 999)) redirect("/parametros?erro=4");
@@ -43,6 +47,7 @@ export async function salvarParametros(formData: FormData) {
       seguro_padrao_pct: seguro,
       incc_pct_ano: incc,
       contemplacao_meses: contemplacao,
+      contemplacao_prazos: prazos,
       lance_livre_parcelas: livre,
       lance_fidelidade_parcelas: fidelidade,
       ...conc,

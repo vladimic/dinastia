@@ -146,6 +146,10 @@ export type PadroesSimulador = {
   /** INCC projetado, % ao ano */
   incc: number;
   contemplacaoMeses: number;
+  /** os 7 prazos (meses) que aparecem como atalhos em "Contemplação em" */
+  contemplacaoPrazos: number[];
+  /** seguro, % do crédito ao mês (o mesmo parâmetro de todos os grupos) */
+  seguroPct: number;
   lanceLivreParcelas: number;
   lanceFidelidadeParcelas: number;
   /** concorrência de cada lance, % (só se altera em Parâmetros globais) */
@@ -153,6 +157,9 @@ export type PadroesSimulador = {
   /** textos do rodapé de cada coluna */
   rodape: Record<TipoColuna, Rodape>;
 };
+
+/** prazos de atalho de "Contemplação em" (valores de fábrica, os mesmos com que o parâmetro foi carregado) */
+export const PRAZOS_CONTEMPLACAO_PADRAO = [1, 12, 24, 36, 48, 60, 120];
 
 export const RODAPE_PADRAO: Record<TipoColuna, Rodape> = {
   SOR: { titulo: "Sem lance", texto: "Depende só da sorte" },
@@ -168,9 +175,14 @@ export function padroesDeLinha(l: Record<string, unknown> | null | undefined): P
   const r = (l?.rodape_textos ?? {}) as Partial<Record<TipoColuna, Partial<Rodape>>>;
   const rodape = { ...RODAPE_PADRAO };
   for (const k of Object.keys(RODAPE_PADRAO) as TipoColuna[]) rodape[k] = { ...RODAPE_PADRAO[k], ...(r[k] ?? {}) };
+  // 7 prazos válidos (inteiros de 1 a 999); qualquer outra coisa volta aos valores de fábrica
+  const bruto = Array.isArray(l?.contemplacao_prazos) ? (l.contemplacao_prazos as unknown[]).map(Number) : [];
+  const prazos = bruto.length === 7 && bruto.every((v) => Number.isInteger(v) && v >= 1 && v <= 999) ? bruto : PRAZOS_CONTEMPLACAO_PADRAO;
   return {
     incc: n(l?.incc_pct_ano, 6),
     contemplacaoMeses: n(l?.contemplacao_meses, 1),
+    contemplacaoPrazos: prazos,
+    seguroPct: n(l?.seguro_padrao_pct, 0),
     lanceLivreParcelas: n(l?.lance_livre_parcelas, 150),
     lanceFidelidadeParcelas: n(l?.lance_fidelidade_parcelas, 130),
     concorrencia: {

@@ -2,6 +2,15 @@
 // Regra: a cada mudança entregue, acrescentar uma entrada NO TOPO.
 export const VERSOES: { numero: string; data: string; itens: string[] }[] = [
   {
+    numero: "0078",
+    data: "17/10/2026",
+    itens: [
+      "Parâmetros globais › Simulador: novo parâmetro Prazos de contemplação, com 7 campos (meses), carregado com os 7 valores que o simulador já usava: 1, 12, 24, 36, 48, 60 e 120. Os prazos são gravados em ordem crescente e não podem se repetir (de 1 a 999). Migração 0022, já aplicada no banco.",
+      "Simulador · Contemplação em: os 7 atalhos de prazo agora vêm sempre desse parâmetro (a lista fixa no código saiu). Atalhos maiores que os meses que faltam ao grupo continuam escondidos.",
+      "Simulador · Seguro: ao ligar, o percentual aparece ao lado, vindo do parâmetro global Seguro prestamista (% do crédito ao mês), como o INCC; pode ser alterado só naquela simulação. Desligado, mostra 0,0000%.",
+    ],
+  },
+  {
     numero: "0077",
     data: "17/10/2026",
     itens: [
