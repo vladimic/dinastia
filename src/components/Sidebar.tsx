@@ -33,7 +33,7 @@ const GRUPOS: { titulo?: string; itens: Item[] }[] = [
       { href: "/usuarios", label: "Usuários", pronto: true, admin: true },
       { href: "/lances", label: "Histórico de lances" },
       { href: "/indices", label: "Índices de correção" },
-      { href: "/importar", label: "Importar tabelas (PDF)" },
+      { href: "/importar", label: "Importar tabelas (PDF)", pronto: true, admin: true },
     ],
   },
 ];

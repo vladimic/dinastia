@@ -2,6 +2,16 @@
 // Regra: a cada mudança entregue, acrescentar uma entrada NO TOPO.
 export const VERSOES: { numero: string; data: string; itens: string[] }[] = [
   {
+    numero: "0080",
+    data: "20/10/2026",
+    itens: [
+      "Parâmetros globais › Pastas dos PDFs: cada caminho ganhou o ícone de pasta, que abre o Finder para escolher a pasta. O navegador só informa o nome da pasta (não o caminho completo); o sistema troca o último trecho do caminho e pede para conferir o início.",
+      "Nova tela Cadastros › Importar tabelas (PDF), só para administradores: as 4 famílias (Imóveis, Veículos, Serviços e Outros Bens) com chave liga/desliga (padrão ligada), o caminho da pasta vindo dos Parâmetros globais, editável e com o ícone do Finder. Ainda não lê os PDFs: a leitura e a comparação com a base são a próxima etapa.",
+      "Grupos e Tabelas: o botão Importar PDFs saiu do cabeçalho (a importação fica só no menu principal).",
+      "Índices de correção passam a seguir a mesma regra de acesso (todos leem, só administrador grava). Migração 0024.",
+    ],
+  },
+  {
     numero: "0079",
     data: "20/10/2026",
     itens: [

@@ -17,17 +17,6 @@ export function Cabecalho({ seletor }: { seletor?: React.ReactNode }) {
           type="button"
           disabled
           title="Em breve"
-          className="flex min-h-9 items-center gap-2 rounded-[10px] border border-navy bg-white px-3 text-[13px] font-semibold opacity-60"
-        >
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
-            <path d="M12 15V4M7 9l5-5 5 5M5 20h14" />
-          </svg>
-          Importar PDFs
-        </button>
-        <button
-          type="button"
-          disabled
-          title="Em breve"
           className="flex min-h-9 items-center gap-2 rounded-[10px] bg-navy px-3 text-[13px] font-semibold text-white opacity-60"
         >
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#ceaa5b" strokeWidth="1.8" aria-hidden="true">
