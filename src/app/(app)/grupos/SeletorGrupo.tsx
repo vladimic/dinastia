@@ -6,7 +6,7 @@ import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { FiltroCredito } from "./FiltroCredito";
 
 // Seletor de grupo (fica no cabeçalho principal da tela): um botão com o grupo atual que abre a lista (larga) da família, com busca, filtros,
-// ordenação e o tamanho de cada grupo (participantes). Os filtros são: parcela, valor do crédito (slider duplo) e participantes. Sem grupo escolhido, a lista aparece aberta na página.
+// o tamanho de cada grupo (participantes). Os filtros são: parcela, valor do crédito (slider duplo) e participantes. Sem grupo escolhido, a lista aparece aberta na página.
 // O número do grupo no botão é um campo: digitar outro número e Enter abre esse grupo.
 
 export type ItemGrupo = {
@@ -24,11 +24,8 @@ export type ItemGrupo = {
 };
 
 type Familia = { slug: string; nome: string };
-type Ordem = "numero" | "tamanho" | "faltam";
 
 const PARTICIPANTES_MAX = 9999; // barra cheia
-// com pouca largura os filtros novos (crédito, participantes, limpar) descem juntos para a 2ª linha e o Ordenar fica na 1ª; com largura suficiente tudo cabe numa linha só
-const ORDEM_NOVOS = "order-3 @min-[1510px]:order-none";
 const temAte55 = (g: ItemGrupo) => g.reduzidas.some((p) => p <= 55);
 const tem70 = (g: ItemGrupo) => g.reduzidas.includes(70);
 const mil = (v: number) => `R$ ${Math.round(v / 1000).toLocaleString("pt-BR")} mil`;
@@ -260,7 +257,6 @@ function Lista({
     setPop({ g, x, y: acima ? r.top - 6 : r.bottom + 6, acima });
   }
   const [filtros, setFiltros] = useState({ furo: false, r70: false, r55: false });
-  const [ordem, setOrdem] = useState<Ordem>("numero");
   // faixa de crédito escolhida (null = toda a faixa da família) e participantes marcados (vazio = todos)
   const [faixa, setFaixa] = useState<{ de: number; ate: number } | null>(null);
   const [marcados, setMarcados] = useState<number[]>([]);
@@ -298,9 +294,7 @@ function Lista({
         (!filtros.r70 || tem70(g)) &&
         (!filtros.r55 || temAte55(g)),
     )
-    .sort((a, b) =>
-      ordem === "tamanho" ? (b.participantes ?? 0) - (a.participantes ?? 0) || a.numero - b.numero : ordem === "faltam" ? faltam(a) - faltam(b) || a.numero - b.numero : a.numero - b.numero,
-    );
+    .sort((a, b) => a.numero - b.numero);
 
   const temFiltro = filtraCredito || marcados.length > 0 || filtros.furo || filtros.r70 || filtros.r55;
   const limparTudo = () => {
@@ -314,7 +308,7 @@ function Lista({
 
   return (
     <div className="@container flex flex-col gap-3">
-      {/* cabeçalho da lista numa linha só: família, busca, filtros e ordenação */}
+      {/* cabeçalho da lista numa linha só: família, busca e filtros */}
       <div className="flex flex-wrap items-center gap-x-2 gap-y-2">
         <nav aria-label="Família de produto" className="flex shrink-0 flex-wrap gap-1 rounded-xl border border-borda bg-linha p-1">
           {familias.map((f) => {
@@ -343,10 +337,10 @@ function Lista({
           </button>
         </div>
         {limites && (
-          <FiltroCredito minimo={limites.minimo} maximo={limites.maximo} de={de} ate={ate} aoMudar={(a, b) => setFaixa({ de: a, ate: b })} className={ORDEM_NOVOS} />
+          <FiltroCredito minimo={limites.minimo} maximo={limites.maximo} de={de} ate={ate} aoMudar={(a, b) => setFaixa({ de: a, ate: b })} />
         )}
         {valoresParticipantes.length > 0 && (
-          <div role="group" aria-labelledby="rotulo-participantes" className={"flex h-[42px] shrink-0 flex-col justify-center gap-[3px] " + ORDEM_NOVOS}>
+          <div role="group" aria-labelledby="rotulo-participantes" className="flex h-[42px] shrink-0 flex-col justify-center gap-[3px]">
             <div className="flex h-3 items-center justify-between">
               <span id="rotulo-participantes" className="text-[10px] leading-none font-extrabold tracking-wider text-tinta uppercase">
                 Participantes
@@ -389,25 +383,13 @@ function Lista({
           onClick={limparTudo}
           aria-label="Limpa tudo"
           title="Limpa tudo (Parcela, Crédito e Participantes)"
-          className={"flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-borda-campo bg-white text-tinta hover:border-navy hover:text-navy disabled:cursor-default disabled:opacity-40 disabled:hover:border-borda-campo disabled:hover:text-tinta " + ORDEM_NOVOS}
+          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-borda-campo bg-white text-tinta hover:border-navy hover:text-navy disabled:cursor-default disabled:opacity-40 disabled:hover:border-borda-campo disabled:hover:text-tinta"
         >
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
             <path d="M3 4h18l-7 8.5V19l-4 2v-8.5z" />
             <path d="M16.5 15.5l5 5M21.5 15.5l-5 5" />
           </svg>
         </button>
-        {/* quebra de linha só no layout estreito: separa o Ordenar (1ª linha) dos filtros novos (2ª linha) */}
-        <span aria-hidden="true" className="order-2 h-0 basis-full @min-[1510px]:hidden" />
-        <select
-          value={ordem}
-          aria-label="Ordenar grupos"
-          onChange={(e) => setOrdem(e.target.value as Ordem)}
-          className="order-1 ml-auto h-9 shrink-0 rounded-lg border border-borda-campo bg-campo px-2 text-[13px] font-bold text-navy outline-none focus:border-laranja @min-[1510px]:order-none"
-        >
-          <option value="numero">Ordenar: número</option>
-          <option value="tamanho">Ordenar: tamanho</option>
-          <option value="faltam">Ordenar: faltam menos</option>
-        </select>
       </div>
 
       {grupos.length === 0 ? (
