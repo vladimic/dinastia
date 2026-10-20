@@ -16,7 +16,6 @@ export const nomeFamilia = (slug: string) => FAMILIAS.find((f) => f.slug === slu
 // ordem de exibição das modalidades
 const ORDEM_TIPO = [
   "SOR",
-  "CAN",
   "LIV",
   "LIM",
   "FIX",
@@ -151,15 +150,11 @@ type TipoRef = { codigo: string; nome: string };
 export type Modalidade = {
   tipo: string;
   max_parcelas_lance: number | null;
-  pct_categoria: number | null;
   embutido_max_parcelas: number | null;
-  embutido_base: "ofertado" | "categoria" | null;
   embutido_pct: number | null;
-  recurso_proprio_obrig: boolean | null;
   a_partir_assembleia_cota: number;
   requisitos: string | null;
   transferivel: boolean;
-  embutido_texto: string | null;
   tipo_contemplacao: TipoRef;
 };
 
@@ -179,9 +174,8 @@ export async function carregarGrupo(numero: number) {
         `id, aprovado_por, aprovado_em, observacoes, pagamento_com_furo, fidelidade_meses,
          arquivo_importado(nome),
          grupo_assembleia_tipo_parcela(tipo_parcela(codigo, descricao, pct)),
-         grupo_modalidade(tipo, max_parcelas_lance, pct_categoria, embutido_max_parcelas, embutido_base,
-           embutido_pct, recurso_proprio_obrig, a_partir_assembleia_cota, requisitos, transferivel,
-           embutido_texto, tipo_contemplacao(codigo, nome)),
+         grupo_modalidade(tipo, max_parcelas_lance, embutido_max_parcelas, embutido_pct,
+           a_partir_assembleia_cota, requisitos, transferivel, tipo_contemplacao(codigo, nome)),
          grupo_sequencia_faixa(assembleia_de, assembleia_ate, demais_tipo, tipo_contemplacao(nome),
            grupo_sequencia(ordem, quantidade, tipo, tipo_contemplacao(codigo, nome)))`,
       )

@@ -2,8 +2,8 @@
 
 export type TipoValor = "numero" | "texto" | "booleano" | "data" | "lista_numeros" | "lista_codigos" | "nenhum";
 
-const CAMPOS_NUMERO = new Set(["prazo_grupo_meses", "participantes", "taxa_adm_total", "fundo_reserva", "mes_reajuste", "dia_vencimento", "prazo_cota", "max", "pct_cat", "emb_parc", "emb_pct", "a_partir"]);
-const CAMPOS_BOOL = new Set(["rec_proprio", "transf"]);
+const CAMPOS_NUMERO = new Set(["prazo_grupo_meses", "participantes", "taxa_adm_total", "fundo_reserva", "mes_reajuste", "dia_vencimento", "prazo_cota", "max", "emb_parc", "emb_pct", "a_partir"]);
+const CAMPOS_BOOL = new Set(["transf"]);
 const CAMPOS_DATA = new Set(["data_assembleia", "primeira_correcao"]);
 
 export function tipoDoCampo(escopo: string, campo: string): TipoValor {
@@ -67,7 +67,6 @@ export function converterEdicao(escopo: string, campo: string, texto: string): {
       return { ok: true, valor: [...new Set(itens)].sort() };
     }
     case "texto":
-      if (campo === "emb_base" && t !== "" && !["ofertado", "categoria"].includes(t)) return { ok: false, erro: "Informe ofertado ou categoria." };
       return { ok: true, valor: t === "" ? null : t };
     default:
       return { ok: false, erro: "Esta diferença só pode ser aceita ou rejeitada." };

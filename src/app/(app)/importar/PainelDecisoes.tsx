@@ -111,7 +111,7 @@ export function PainelDecisoes({
   };
 
   // contagens ajustadas pelo que já foi marcado nesta tela
-  const pendenteLocal = (d: Dif) => ctx.decisaoDe(d) === "pendente";
+  const pendenteLocal = (d: Dif) => (local[d.id]?.decisao ?? d.decisao) === "pendente";
   let faltaDecidir = contagens.diferencasPendentes;
   let prontos = new Set(idsProntos);
   for (const it of itens) {

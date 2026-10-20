@@ -24,9 +24,10 @@ const num = (s: string) => Number(s.replace(/\./g, "").replace(",", "."));
 const dois = (n: number) => String(n).padStart(2, "0");
 const MONEY = /^\d{1,3}(?:\.\d{3})*,\d{2}$/;
 
-function tipoPorNome(nome: string): string {
+// O Sorteio Cota Cancelada não é guardado (acompanha o Sorteio ativo): devolve null e quem chama ignora.
+function tipoPorNome(nome: string): string | null {
   const n = nome.toLowerCase();
-  if (n.includes("sorteio") && n.includes("cancel")) return "CAN";
+  if (n.includes("sorteio") && n.includes("cancel")) return null;
   if (n.includes("sorteio")) return "SOR";
   if (n.includes("livre")) return "LIV";
   if (n.includes("limitado")) return "LIM";
@@ -129,25 +130,22 @@ export function interpretar(linhas: Linha[], arquivo: string, hash: string): Lei
 
   const ml = plano.match(/Modalidades de Contemplações: (.*?)\*Categoria/);
   if (!ml) throw new ErroLeitura("linha 'Modalidades de Contemplações' não encontrada");
-  const presentes = new Set(ml[1].trim().split(" - ").filter((p) => p.trim()).map(tipoPorNome));
-  const vazio = (): Modalidade => ({
-    max: null, pct_cat: null, emb_parc: null, emb_base: null, emb_pct: null, rec_proprio: null, a_partir: 1, req: null, transf: true, emb_texto: null,
-  });
+  const presentes = new Set(ml[1].trim().split(" - ").filter((p) => p.trim()).map(tipoPorNome).filter((t): t is string => t !== null));
+  const vazio = (): Modalidade => ({ max: null, emb_parc: null, emb_pct: null, a_partir: 1, req: null, transf: true });
   const modal: Record<string, Modalidade> = {};
-  for (const t of ["SOR", "CAN", "LIV", "LIM", "FIX", "FID"]) if (presentes.has(t)) modal[t] = vazio();
+  for (const t of ["SOR", "LIV", "LIM", "FIX", "FID"]) if (presentes.has(t)) modal[t] = vazio();
   if (modal.LIM) {
-    if (lim) Object.assign(modal.LIM, { max: Number(lim[1]), pct_cat: Number(lim[2]) });
+    if (lim) Object.assign(modal.LIM, { max: Number(lim[1]) });
     else erros.push("regra do lance limitado não encontrada");
   }
   if (modal.FIX) {
-    if (fix) Object.assign(modal.FIX, { max: Number(fix[1]), pct_cat: Number(fix[2]) });
+    if (fix) Object.assign(modal.FIX, { max: Number(fix[1]) });
     else erros.push("regra do lance fixo não encontrada");
   }
   if (modal.FID) {
     if (fid)
       Object.assign(modal.FID, {
         max: Number(fid[1]),
-        pct_cat: Number(fid[2]),
         a_partir: fidAss ?? 1,
         transf: !naoTransfere,
         req: fidParc ? `${fidParc} parcelas pagas (consecutivas ou não) e participação em ${fidParc} assembleias; antecipações não contam` : null,
@@ -157,8 +155,9 @@ export function interpretar(linhas: Linha[], arquivo: string, hash: string): Lei
 
   const lances = Object.keys(modal).filter((t) => LANCES.has(t));
   const todasProprio = /Em todas as modalidades 100% do lance deve ser pago com recursos próprios/.test(plano);
+  const comRegra = new Set<string>();
   if (todasProprio) {
-    for (const t of lances) Object.assign(modal[t], { rec_proprio: true, emb_texto: "100% do lance com recursos próprios (sem embutido)" });
+    for (const t of lances) comRegra.add(t); // sem embutido: os dois campos ficam vazios
   } else {
     // As regras de embutido vêm numa frase só, em partes separadas por "|". Cada parte começa com "Lance(s) <modalidades>"
     // seguido de ":" ou de "deve ser pago". O começo da frase é a primeira parte assim: não pode ser achado por um texto solto
@@ -179,14 +178,11 @@ export function interpretar(linhas: Linha[], arquivo: string, hash: string): Lei
           continue;
         }
         const sujeito = m[1];
-        let regra = m[2].trim().replace(/\.$/, "");
-        if (!comDoisPontos) {
-          // "Lance Livre deve ser pago 100% do lance com recursos próprios" -> mesma frase que a base já guarda
-          if (/^deve ser pago\s*100% do lance com recursos próprios$/.test(regra)) regra = "100% do lance deve ser pago com recursos próprios";
-          else {
-            erros.push(`regra de embutido não reconhecida: ${parte.slice(0, 80)}`);
-            continue;
-          }
+        const regra = m[2].trim().replace(/\.$/, "");
+        // "Lance Livre deve ser pago 100% do lance com recursos próprios" = sem embutido
+        if (!comDoisPontos && !/^deve ser pago\s*100% do lance com recursos próprios$/.test(regra)) {
+          erros.push(`regra de embutido não reconhecida: ${parte.slice(0, 80)}`);
+          continue;
         }
         const tipos = ([["Livre", "LIV"], ["Limitado", "LIM"], ["Fixo", "FIX"], ["Fidelidade", "FID"]] as const).filter(([k]) => sujeito.includes(k)).map(([, t]) => t);
         const r1 = regra.match(/embutir\)\s*(aprox\.\s*)?(\d+) parcelas \((\d+)% (do valor ofertado|da categoria)\)/);
@@ -201,12 +197,15 @@ export function interpretar(linhas: Linha[], arquivo: string, hash: string): Lei
             avisos.push(`embutido citado para ${t}, que o grupo não oferece`);
             continue;
           }
-          d.emb_texto = regra;
-          // sem "embutir" na regra não há embutido
-          Object.assign(d, { emb_parc: null, emb_pct: null, emb_base: null });
-          if (r1) Object.assign(d, { emb_parc: Number(r1[2]), emb_pct: Number(r1[3]), emb_base: r1[4].includes("ofertado") ? "ofertado" : "categoria" });
-          else if (r2) Object.assign(d, { emb_pct: Number(r2[1]), emb_base: "ofertado" });
-          d.rec_proprio = !(d.emb_base === "ofertado" && d.emb_pct === 100);
+          comRegra.add(t);
+          // sem "embutir" na regra não há embutido (zera o que uma regra anterior tenha preenchido)
+          d.emb_parc = null;
+          d.emb_pct = null;
+          // "60 parcelas (25% da categoria)": limite em parcelas; "44 parcelas (100% do valor ofertado)": parcelas e % do lance; "50% do valor ofertado": só %
+          if (r1) {
+            d.emb_parc = Number(r1[2]);
+            if (r1[4].includes("ofertado")) d.emb_pct = Number(r1[3]);
+          } else if (r2) d.emb_pct = Number(r2[1]);
         }
       }
     }
@@ -217,7 +216,7 @@ export function interpretar(linhas: Linha[], arquivo: string, hash: string): Lei
       if (noPdf !== lidas(re)) erros.push(`regra de embutido fora do lugar esperado ("${rotulo}": ${noPdf} no PDF, ${lidas(re)} lidas)`);
     }
     // toda modalidade de lance precisa ter ficado com a sua regra
-    for (const t of lances) if (modal[t].emb_texto === null) erros.push(`regra de embutido de ${t} não encontrada`);
+    for (const t of lances) if (!comRegra.has(t)) erros.push(`regra de embutido de ${t} não encontrada`);
   }
 
   // ---------------- sequência ----------------
@@ -225,14 +224,15 @@ export function interpretar(linhas: Linha[], arquivo: string, hash: string): Lei
   const demaisMultiplo: string[] = [];
   const rxSeq = new RegExp(`Da (\\d+)ª a (\\d+)ª Assembleia: (.*?) - Demais contemplações seguem com (a mesma sequencia|Lance ${L}+(?: e Lance ${L}+)?)`, "gu");
   for (const f of plano.matchAll(rxSeq)) {
-    const itens = f[3].split(" - ").map((parte) => {
+    const itens = f[3].split(" - ").flatMap((parte) => {
       const r = parte.trim().match(/^(\d+) (.+)$/);
       if (!r) throw new ErroLeitura(`item de sequência não reconhecido: ${parte}`);
-      return { qtd: Number(r[1]), tipo: tipoPorNome(r[2]) };
+      const tipo = tipoPorNome(r[2]);
+      return tipo ? [{ qtd: Number(r[1]), tipo }] : []; // Sorteio Cota Cancelada não é guardado
     });
     let demais: string | null = null;
     if (!f[4].startsWith("a mesma")) {
-      const tipos = f[4].split(" e ").map(tipoPorNome);
+      const tipos = f[4].split(" e ").map(tipoPorNome).filter((t): t is string => t !== null);
       demais = tipos[0];
       if (tipos.length > 1) demaisMultiplo.push(`Da ${f[1]}ª a ${f[2]}ª assembleia, demais contemplações seguem com ${f[4]}.`);
     }

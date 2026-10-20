@@ -51,23 +51,23 @@ export function calcularBase(e: Entrada): Base {
 }
 
 export type RegraEmbutido = {
-  embutido_base: "ofertado" | "categoria" | null;
-  embutido_pct: number | null;
+  /** máximo de parcelas do lance que podem ser embutidas; nulo = sem limite em parcelas */
   embutido_max_parcelas: number | null;
+  /** % do lance ofertado que pode ser embutido; nulo = sem limite em %. Os dois nulos = sem embutido */
+  embutido_pct: number | null;
 };
 
 /**
- * Fração do lance (0 a 1) que pode ser paga com a carta (embutido).
- * - base "ofertado": o percentual da regra (ex.: 50% do valor ofertado);
- * - base "categoria" com limite em parcelas: o limite dividido pelas parcelas do lance (ex.: embutir até 60 parcelas);
- * - sem regra de embutido: 0 (todo o lance com recursos próprios).
+ * Fração do lance (0 a 1) que pode ser paga com a carta (embutido): o menor entre
+ * - o % do lance da regra (ex.: 50% do valor ofertado) e
+ * - o limite em parcelas dividido pelas parcelas do lance (ex.: embutir até 60 parcelas).
+ * Sem nenhum dos dois: 0 (todo o lance com recursos próprios).
  */
 export function fracaoEmbutido(r: RegraEmbutido, qtdParcelas: number): number {
-  if (r.embutido_pct === null) return 0;
-  if (r.embutido_base === "categoria" && r.embutido_max_parcelas !== null) {
-    return qtdParcelas > 0 ? Math.min(1, r.embutido_max_parcelas / qtdParcelas) : 0;
-  }
-  return Math.min(1, Number(r.embutido_pct) / 100);
+  if (r.embutido_pct === null && r.embutido_max_parcelas === null) return 0;
+  const porPct = r.embutido_pct === null ? 1 : Number(r.embutido_pct) / 100;
+  const porParcelas = r.embutido_max_parcelas === null ? 1 : qtdParcelas > 0 ? r.embutido_max_parcelas / qtdParcelas : 0;
+  return Math.max(0, Math.min(1, porPct, porParcelas));
 }
 
 export type TipoColuna = "SOR" | "FIX" | "LIM" | "LIV" | "FID";

@@ -1,23 +1,22 @@
 // Sequência de contemplação de um grupo, numa linha só.
 //
 // O banco guarda faixas de assembleias (grupo_sequencia_faixa) com itens (grupo_sequencia).
-// Nos grupos lidos até hoje, as faixas só diferem em três coisas: quantos sorteios (SOR) há,
-// o Sorteio Cancelada (CAN, sempre com a mesma quantidade do SOR) e a entrada do fidelidade (FID).
+// Nos grupos lidos até hoje, as faixas só diferem em duas coisas: quantos sorteios (SOR) há
+// e a entrada do fidelidade (FID). (O Sorteio Cancelada não é mais guardado.)
 // Este módulo transforma as faixas num modelo simples (sorteios por mês + ordem + "demais") e de volta.
 export const LIMITE_ORDEM = 25;
 export const SORTEIO = "SOR";
-export const CANCELADA = "CAN"; // não aparece na linha
 export const FIDELIDADE = "FID";
 
 export type Item = { codigo: string; qtd: number };
 export type Faixa = { de: number; ate: number; itens: Item[]; demais: string | null };
 
 export type ModeloSequencia = {
-  /** false = as faixas diferem por outro motivo além de SOR/CAN/FID (regra específica) */
+  /** false = as faixas diferem por outro motivo além de SOR/FID (regra específica) */
   simples: boolean;
   /** quantos sorteios a partir de cada mês (o primeiro sempre começa no mês 1) */
   sorteios: { de: number; qtd: number }[];
-  /** posições depois dos sorteios, uma por contemplação, sem SOR/CAN */
+  /** posições depois dos sorteios, uma por contemplação, sem SOR */
   ordem: string[];
   /** tipo das demais contemplações; nulo = repete a ordem, sem o sorteio */
   demais: string | null;
@@ -28,7 +27,7 @@ export type ModeloSequencia = {
 const soma = (itens: Item[], codigo: string) => itens.filter((i) => i.codigo === codigo).reduce((s, i) => s + i.qtd, 0);
 const expandir = (itens: Item[]) => itens.flatMap((i) => Array<string>(Math.max(1, i.qtd)).fill(i.codigo));
 const assinatura = (f: Faixa) =>
-  JSON.stringify([f.itens.filter((i) => ![SORTEIO, CANCELADA, FIDELIDADE].includes(i.codigo)).map((i) => [i.codigo, i.qtd]), f.demais]);
+  JSON.stringify([f.itens.filter((i) => ![SORTEIO, FIDELIDADE].includes(i.codigo)).map((i) => [i.codigo, i.qtd]), f.demais]);
 
 export function modelar(faixas: Faixa[]): ModeloSequencia | null {
   if (!faixas.length) return null;
@@ -47,20 +46,20 @@ export function modelar(faixas: Faixa[]): ModeloSequencia | null {
   return {
     simples: fs.every((f) => assinatura(f) === assinatura(ultima)),
     sorteios,
-    ordem: expandir(base.itens).filter((c) => c !== SORTEIO && c !== CANCELADA),
+    ordem: expandir(base.itens).filter((c) => c !== SORTEIO),
     demais: ultima.demais,
     prazo: ultima.ate,
   };
 }
 
 // Completa a ordem até o limite: se há tipo para as demais contemplações, repete esse tipo;
-// se a regra é "mesma ordem", repete a ordem sem o sorteio. Sorteio Cancelada nunca aparece.
+// se a regra é "mesma ordem", repete a ordem sem o sorteio.
 export function montarOrdem(itens: Item[], demais: string | null, limite = LIMITE_ORDEM): string[] {
-  const base = expandir(itens).filter((c) => c !== CANCELADA);
+  const base = expandir(itens);
   const ordem = base.slice(0, limite);
   if (ordem.length >= limite) return ordem;
 
-  if (demais && demais !== CANCELADA) {
+  if (demais) {
     while (ordem.length < limite) ordem.push(demais);
     return ordem;
   }
@@ -133,8 +132,8 @@ export function validarEdicao(e: Edicao, codigosValidos: Set<string>): string | 
     if (i > 0 && s.de <= e.sorteios[i - 1].de) return "Os meses dos sorteios precisam estar em ordem crescente.";
   }
   if (!e.ordem.length || e.ordem.length > LIMITE_ORDEM - 1) return `A ordem tem de 1 a ${LIMITE_ORDEM - 1} posições.`;
-  const livres = (c: string) => codigosValidos.has(c) && c !== SORTEIO && c !== CANCELADA;
-  if (!e.ordem.every(livres)) return "Modalidade inválida na ordem (SOR e CAN não entram aqui).";
+  const livres = (c: string) => codigosValidos.has(c) && c !== SORTEIO;
+  if (!e.ordem.every(livres)) return "Modalidade inválida na ordem (o sorteio não entra aqui).";
   if (e.demais !== null && !livres(e.demais)) return "Modalidade inválida nas demais contemplações.";
   if (e.fidelidadeMeses !== null && (!Number.isInteger(e.fidelidadeMeses) || e.fidelidadeMeses < 2))
     return "Mês de liberação do fidelidade: número maior que 1.";
@@ -161,7 +160,6 @@ export function gerarFaixas(e: Edicao, prazo: number): Faixa[] {
       };
       if (qtd > 0) {
         poe(SORTEIO, qtd);
-        poe(CANCELADA, qtd);
       }
       for (const c of ordem) poe(c, 1);
       return { de, ate: i + 1 < arr.length ? arr[i + 1] - 1 : prazo, itens, demais: e.demais };

@@ -9,6 +9,23 @@ export const FORMATO_BACKUP = 1;
 
 type Linha = Record<string, unknown>;
 
+// Regra de uma modalidade a partir de uma linha de backup, nova ou do formato antigo
+// (que tinha base ofertado/categoria, % da categoria, texto e recurso próprio, hoje calculados ou fora do modelo).
+function modalidadeDoBackup(m: Linha) {
+  const antigo = "embutido_base" in m;
+  const parc = antigo ? (m.embutido_base === "categoria" || m.tipo === "FIX" ? m.embutido_max_parcelas : null) : m.embutido_max_parcelas;
+  const pct = antigo ? (m.embutido_base === "ofertado" ? num(m.embutido_pct) : null) : num(m.embutido_pct);
+  return {
+    tipo: m.tipo,
+    max: m.max_parcelas_lance,
+    emb_parc: parc ?? null,
+    emb_pct: pct,
+    a_partir: m.a_partir_assembleia_cota,
+    req: m.requisitos,
+    transf: m.transferivel,
+  };
+}
+
 async function todas(supabase: SupabaseClient, tabela: string, select = "*", ordem?: string) {
   const out: Linha[] = [];
   for (let de = 0; ; de += 1000) {
@@ -35,9 +52,8 @@ export async function exportarBackup(supabase: SupabaseClient, email: string) {
        aprovado_por, aprovado_em, pagamento_com_furo, fidelidade_meses,
        arquivo:arquivo_importado(nome, hash_sha256, status, recebido_em, dados_extraidos),
        tipos_parcela:grupo_assembleia_tipo_parcela(tipo_parcela),
-       modalidades:grupo_modalidade(tipo, max_parcelas_lance, pct_categoria, embutido_max_parcelas,
-         embutido_base, embutido_pct, recurso_proprio_obrig, a_partir_assembleia_cota, requisitos,
-         transferivel, embutido_texto),
+       modalidades:grupo_modalidade(tipo, max_parcelas_lance, embutido_max_parcelas, embutido_pct,
+         a_partir_assembleia_cota, requisitos, transferivel),
        faixas:grupo_sequencia_faixa(assembleia_de, assembleia_ate, demais_tipo,
          itens:grupo_sequencia(ordem, tipo, quantidade))`,
       "id",
@@ -112,10 +128,11 @@ export async function restaurarBackup(supabase: SupabaseClient, b: Backup, email
     ["tipo_contemplacao", d.tiposContemplacao, "codigo"],
     ["tipo_parcela", d.tiposParcela, "codigo"],
   ] as const) {
-    if (!linhas?.length) continue;
-    const { error } = await supabase.from(tabela).upsert(linhas, { onConflict: chave });
+    const lista = tabela === "tipo_contemplacao" ? (linhas ?? []).filter((l) => l.codigo !== "CAN") : linhas; // o Sorteio Cancelada não existe mais
+    if (!lista?.length) continue;
+    const { error } = await supabase.from(tabela).upsert(lista, { onConflict: chave });
     if (error) r.erros.push(`${tabela}: ${error.message}`);
-    else r.cadastrosAtualizados += linhas.length;
+    else r.cadastrosAtualizados += lista.length;
   }
 
   // 2) versões que faltam, pela mesma função da importação de PDF
@@ -139,47 +156,42 @@ export async function restaurarBackup(supabase: SupabaseClient, b: Backup, email
     const arq = (v.arquivo ?? {}) as Linha;
     const payload = {
       numero: Number(v.grupo_numero),
-      familia: g.familia,
       assembleia: Number(v.assembleia_numero),
-      data_assembleia: v.data_assembleia,
-      prazo_grupo: g.prazo_grupo_meses,
-      prazo_cota: v.prazo_cota_meses,
-      participantes: g.participantes,
-      taxa_adm: g.taxa_adm_total,
-      indice: g.indice,
-      mes_reajuste: g.mes_reajuste,
-      primeira_correcao: g.primeira_correcao,
-      vencimento: g.dia_vencimento,
-      observacoes: v.observacoes,
       arquivo: arq.nome ?? "backup",
       hash: arq.hash_sha256 ?? null,
       auditoria: arq.dados_extraidos ?? null,
       aprovado_por: v.aprovado_por ?? `restaurado por ${email}`,
-      creditos: ((v.creditos as unknown[]) ?? []).map(num),
-      tipos_parcela: ((v.tipos_parcela as Linha[]) ?? []).map((t) => t.tipo_parcela),
-      modalidades: ((v.modalidades as Linha[]) ?? []).map((m) => ({
-        tipo: m.tipo,
-        max: m.max_parcelas_lance,
-        pct_cat: num(m.pct_categoria),
-        emb_parc: m.embutido_max_parcelas,
-        emb_base: m.embutido_base,
-        emb_pct: num(m.embutido_pct),
-        rec_proprio: m.recurso_proprio_obrig,
-        a_partir: m.a_partir_assembleia_cota,
-        req: m.requisitos,
-        transf: m.transferivel,
-        emb_texto: m.embutido_texto,
-      })),
-      faixas: ((v.faixas as Linha[]) ?? []).map((f) => ({
-        de: f.assembleia_de,
-        ate: f.assembleia_ate,
-        demais: f.demais_tipo,
-        itens: [...((f.itens as Linha[]) ?? [])]
-          .sort((a, b) => Number(a.ordem) - Number(b.ordem))
-          .map((i) => ({ tipo: i.tipo, qtd: i.quantidade })),
-      })),
+      grupo: {
+        familia: g.familia,
+        prazo_grupo_meses: g.prazo_grupo_meses,
+        participantes: g.participantes,
+        taxa_adm_total: g.taxa_adm_total,
+        fundo_reserva: g.fundo_reserva,
+        indice: g.indice,
+        mes_reajuste: g.mes_reajuste,
+        primeira_correcao: g.primeira_correcao,
+        dia_vencimento: g.dia_vencimento,
+      },
+      versao: {
+        data_assembleia: v.data_assembleia,
+        prazo_cota: v.prazo_cota_meses,
+        observacoes: v.observacoes,
+        pagamento_com_furo: v.pagamento_com_furo === true,
+        creditos: ((v.creditos as unknown[]) ?? []).map(num),
+        tipos_parcela: ((v.tipos_parcela as Linha[]) ?? []).map((t) => t.tipo_parcela),
+        modalidades: ((v.modalidades as Linha[]) ?? []).filter((m) => m.tipo !== "CAN").map(modalidadeDoBackup),
+        faixas: ((v.faixas as Linha[]) ?? []).map((f) => ({
+          de: f.assembleia_de,
+          ate: f.assembleia_ate,
+          demais: f.demais_tipo === "CAN" ? null : f.demais_tipo,
+          itens: [...((f.itens as Linha[]) ?? [])]
+            .filter((i) => i.tipo !== "CAN")
+            .sort((a, b) => Number(a.ordem) - Number(b.ordem))
+            .map((i) => ({ tipo: i.tipo, qtd: i.quantidade })),
+        })),
+      },
     };
-    const { error } = await supabase.rpc("importar_grupo", { p: payload });
+    const { error } = await supabase.rpc("aplicar_importacao", { p: payload });
     if (error) r.erros.push(`versão ${chave}: ${error.message}`);
     else {
       r.versoesRepostas++;
