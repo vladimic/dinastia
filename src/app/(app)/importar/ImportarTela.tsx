@@ -98,10 +98,11 @@ function Familia({
           </button>
         )}
       </div>
-      <input
-        className="campo-sm !text-left font-mono"
+      <textarea
+        className="campo-sm !h-auto !min-h-[3.4rem] resize-none !py-1.5 !text-left [text-align-last:left]! font-mono leading-snug break-all"
+        rows={2}
         value={caminho}
-        onChange={(e) => mudar({ caminho: e.target.value })}
+        onChange={(e) => mudar({ caminho: e.target.value.replace(/[\r\n]+/g, "") })}
         maxLength={500}
         spellCheck={false}
         autoComplete="off"

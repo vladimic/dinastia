@@ -45,7 +45,7 @@ export async function salvarParametros(formData: FormData) {
 
   const pastas: Record<string, string | null> = {};
   for (const { campo } of PASTAS_PDF) {
-    const v = String(formData.get(campo) ?? "").trim();
+    const v = String(formData.get(campo) ?? "").replace(/[\r\n]+/g, "").trim();
     if (v.length > 500) redirect("/parametros?erro=8");
     pastas[campo] = v || null;
   }
