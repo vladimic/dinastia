@@ -40,6 +40,7 @@ export function ImportarTela({ pastas }: { pastas: Pasta[] }) {
       <p className="text-sm text-tinta">
         Ligue as famílias que serão lidas e confira a pasta de PDFs de cada uma. O caminho padrão vem dos Parâmetros globais; o que você mudar aqui vale só para as próximas importações neste computador e não altera os Parâmetros.
       </p>
+      <AjudanteLocal />
       <ul className="flex flex-col gap-3">
         {pastas.map((p) => (
           <Familia
@@ -126,5 +127,64 @@ function Familia({
         )}
       </div>
     </li>
+  );
+}
+
+const COMANDO = "python3 ~/Downloads/dinastia_local.py";
+
+// Passo a passo para baixar e abrir o Dinastia Local no Mac (o arquivo já sai com o endereço deste site autorizado).
+function AjudanteLocal() {
+  const [erro, setErro] = useState("");
+  const [copiado, setCopiado] = useState(false);
+
+  async function baixar() {
+    setErro("");
+    try {
+      const r = await fetch("/dinastia_local.py", { cache: "no-store" });
+      if (!r.ok) throw new Error();
+      const texto = (await r.text()).replace('"https://dinastia.vercel.app"', JSON.stringify(window.location.origin));
+      const url = URL.createObjectURL(new Blob([texto], { type: "text/x-python" }));
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "dinastia_local.py";
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch {
+      setErro("Não foi possível baixar o arquivo. Tente de novo.");
+    }
+  }
+
+  return (
+    <div className="flex flex-col gap-2 rounded-2xl border border-borda bg-white p-4">
+      <h2 className="text-sm font-bold">Dinastia Local (uma vez por sessão de trabalho)</h2>
+      <ol className="flex list-decimal flex-col gap-1.5 pl-5 text-[13px]">
+        <li>
+          <button type="button" onClick={baixar} className="font-bold text-navy underline">
+            Baixar o Dinastia Local
+          </button>{" "}
+          (o arquivo vai para a pasta Downloads).
+        </li>
+        <li>Abra o <strong>Terminal</strong> do Mac (aperte Cmd + Espaço, digite Terminal e Enter).</li>
+        <li>
+          Cole este comando e aperte Enter:{" "}
+          <code className="rounded bg-linha px-1.5 py-0.5 font-mono text-xs">{COMANDO}</code>{" "}
+          <button
+            type="button"
+            className="text-xs font-semibold text-navy underline"
+            onClick={() => {
+              navigator.clipboard?.writeText(COMANDO).then(() => setCopiado(true), () => {});
+            }}
+          >
+            {copiado ? "Copiado ✓" : "Copiar"}
+          </button>
+        </li>
+        <li>Deixe a janela do Terminal aberta. Se o Mac pedir para instalar as “ferramentas de linha de comando”, aceite e repita o comando depois.</li>
+      </ol>
+      {erro && (
+        <p role="alert" className="text-xs font-semibold text-[#9b1c1c]">
+          {erro}
+        </p>
+      )}
+    </div>
   );
 }
