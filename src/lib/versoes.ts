@@ -2,6 +2,16 @@
 // Regra: a cada mudança entregue, acrescentar uma entrada NO TOPO.
 export const VERSOES: { numero: string; data: string; itens: string[] }[] = [
   {
+    numero: "0088",
+    data: "20/10/2026",
+    itens: [
+      "Leitor de PDFs: encontrada a causa raiz do embutido errado no Lance livre (grupo 940, e provavelmente 540 e outros): a frase das regras de embutido era procurada a partir de qualquer “Lance …” solto antes dela (como o “…seguem com Lance Livre” do fim da sequência), e a primeira regra ia para a modalidade errada. Agora a frase começa na primeira parte que realmente é uma regra (“Lance(s) … :” ou “Lance … deve ser pago …”).",
+      "Reconhece também a forma sem dois-pontos: “Lance Livre deve ser pago 100% do lance com recursos próprios” = sem embutido, recurso próprio obrigatório (a mesma frase que a base já guarda).",
+      "Conferências novas: toda frase “embutir)” e “deve ser pago” do PDF precisa ter sido lida; toda modalidade de lance precisa ter ficado com sua regra; a sequência precisa cobrir da 1ª assembleia ao prazo do grupo sem buracos e só citar modalidades do grupo. Se algo falhar, o PDF vai para “Com erro de leitura” com o motivo, em vez de gerar uma diferença enganosa.",
+      "Todos os PDFs lidos antes são lidos de novo na próxima leitura da pasta (decisões ainda válidas são mantidas).",
+    ],
+  },
+  {
     numero: "0087",
     data: "20/10/2026",
     itens: [
