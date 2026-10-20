@@ -15,13 +15,12 @@ export type Modalidade = {
   emb_pct: number | null;
   a_partir: number;
   req: string | null;
-  transf: boolean;
 };
 
 export type Faixa = { de: number; ate: number; itens: { qtd: number; tipo: string }[]; demais: string | null };
 
 /** Versão do leitor de PDFs: sobe quando uma correção muda o que é lido (PDFs lidos antes com versão menor são lidos de novo). */
-export const LEITOR = 4;
+export const LEITOR = 5;
 
 export type Leitura = {
   leitor: number;

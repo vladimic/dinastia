@@ -74,7 +74,6 @@ comment on column public.grupo_modalidade.embutido_max_parcelas is 'Máximo de p
 comment on column public.grupo_modalidade.embutido_pct is '% do lance ofertado que pode ser embutido. Vazio = sem limite em %. Os dois campos de embutido vazios = a modalidade não permite embutido (100% recurso próprio).';
 comment on column public.grupo_modalidade.a_partir_assembleia_cota is 'A partir de qual assembleia da cota a modalidade vale (1 = desde o início; fidelidade costuma ser 37).';
 comment on column public.grupo_modalidade.requisitos is 'Requisitos para usar a modalidade (ex.: 36 parcelas pagas e participação em 36 assembleias, na fidelidade).';
-comment on column public.grupo_modalidade.transferivel is 'A transferência da cota transfere o benefício? Não, no lance fidelidade (o PDF avisa “a transferência da cota não transfere o benefício”).';
 comment on table public.grupo_sequencia_faixa is 'Faixas de assembleias da sequência de contemplação (ex.: da 1ª à 36ª; da 37ª à 240ª) de uma versão do grupo.';
 comment on column public.grupo_sequencia_faixa.id is 'Identificador da faixa.';
 comment on column public.grupo_sequencia_faixa.grupo_assembleia_id is 'Versão do grupo.';
@@ -122,6 +121,6 @@ comment on column public.usuario.telefone is 'Telefone com DDD, só dígitos.';
 comment on column public.usuario.administrador is 'Administrador pode alterar cadastros, grupos, importar PDFs e gerenciar usuários. O sistema nunca fica sem administrador.';
 comment on column public.usuario.criado_em is 'Quando a linha foi criada (automático).';
 comment on column public.usuario.atualizado_em is 'Última alteração da linha (automático).';
-comment on table public.usuario_autorizado is 'OBSOLETA: lista antiga de e-mails autorizados, substituída por usuario na migração 0023. Sem uso; pode ser removida.';
+comment on table public.usuario_autorizado is 'OBSOLETA: lista antiga de e-mails autorizados, substituída por usuario na migração 0023. Sem uso.';
 comment on column public.usuario_autorizado.email is 'E-mail autorizado (lista antiga).';
 comment on column public.usuario_autorizado.criado_em is 'Quando a linha foi criada (automático).';

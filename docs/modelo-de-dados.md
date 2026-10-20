@@ -107,7 +107,6 @@ erDiagram
     decimal embutido_pct
     int a_partir_assembleia_cota
     string requisitos
-    boolean transferivel
   }
   grupo_sequencia_faixa {
     int id PK
@@ -301,7 +300,6 @@ Regras de cada modalidade de lance em cada versão do grupo. O % do lance em rel
 | `embutido_pct` | número decimal | não |  | % do lance ofertado que pode ser embutido. Vazio = sem limite em %. Os dois campos de embutido vazios = a modalidade não permite embutido (100% recurso próprio). |
 | `a_partir_assembleia_cota` | inteiro | sim |  | A partir de qual assembleia da cota a modalidade vale (1 = desde o início; fidelidade costuma ser 37). |
 | `requisitos` | texto | não |  | Requisitos para usar a modalidade (ex.: 36 parcelas pagas e participação em 36 assembleias, na fidelidade). |
-| `transferivel` | sim/não | sim |  | A transferência da cota transfere o benefício? Não, no lance fidelidade (o PDF avisa “a transferência da cota não transfere o benefício”). |
 
 #### `grupo_sequencia_faixa`
 
@@ -399,7 +397,7 @@ Quem pode entrar no Dinastia e se é administrador. Contém dados pessoais (CPF,
 
 #### `usuario_autorizado`
 
-OBSOLETA: lista antiga de e-mails autorizados, substituída por usuario na migração 0023. Sem uso; pode ser removida.
+OBSOLETA: lista antiga de e-mails autorizados, substituída por usuario na migração 0023. Sem uso.
 
 | Campo | Tipo | Obrig. | Chave | Descrição |
 |---|---|---|---|---|

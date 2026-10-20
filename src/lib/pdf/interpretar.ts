@@ -126,12 +126,11 @@ export function interpretar(linhas: Linha[], arquivo: string, hash: string): Lei
     plano.match(/máximo de (\d+) PARCELAS \((\d+)%\)/) ?? plano.match(/Lance Fidelidade até (\d+) parcelas de lance \((\d+)% da categoria\)/);
   const fidAss = pega(/CONCORREM NA (\d+)ª ASSEMBLEIA DA COTA/, Number, false);
   const fidParc = pega(/efetuarem o pagamento de (\d+) parcelas/, Number, false);
-  const naoTransfere = plano.includes("NÃO TRANSFERE O BENEFÍCIO");
 
   const ml = plano.match(/Modalidades de Contemplações: (.*?)\*Categoria/);
   if (!ml) throw new ErroLeitura("linha 'Modalidades de Contemplações' não encontrada");
   const presentes = new Set(ml[1].trim().split(" - ").filter((p) => p.trim()).map(tipoPorNome).filter((t): t is string => t !== null));
-  const vazio = (): Modalidade => ({ max: null, emb_parc: null, emb_pct: null, a_partir: 1, req: null, transf: true });
+  const vazio = (): Modalidade => ({ max: null, emb_parc: null, emb_pct: null, a_partir: 1, req: null });
   const modal: Record<string, Modalidade> = {};
   for (const t of ["SOR", "LIV", "LIM", "FIX", "FID"]) if (presentes.has(t)) modal[t] = vazio();
   if (modal.LIM) {
@@ -147,7 +146,6 @@ export function interpretar(linhas: Linha[], arquivo: string, hash: string): Lei
       Object.assign(modal.FID, {
         max: Number(fid[1]),
         a_partir: fidAss ?? 1,
-        transf: !naoTransfere,
         req: fidParc ? `${fidParc} parcelas pagas (consecutivas ou não) e participação em ${fidParc} assembleias; antecipações não contam` : null,
       });
     else erros.push("regra do lance fidelidade não encontrada");
