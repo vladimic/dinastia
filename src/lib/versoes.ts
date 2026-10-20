@@ -2,6 +2,14 @@
 // Regra: a cada mudança entregue, acrescentar uma entrada NO TOPO.
 export const VERSOES: { numero: string; data: string; itens: string[] }[] = [
   {
+    numero: "0081",
+    data: "20/10/2026",
+    itens: [
+      "Ícone de pasta (Parâmetros globais e Importar tabelas): agora abre o Finder já posicionado na pasta cadastrada (se ela não existir, na pasta existente mais próxima ou na pasta do usuário) e grava o caminho COMPLETO escolhido. Isso é feito pelo novo programa local scripts/dinastia_local.py (“Dinastia Local”), que roda no Mac; o navegador sozinho não consegue informar o caminho completo.",
+      "Importar tabelas (PDF): mudar o caminho ou o liga/desliga de uma família não altera mais os Parâmetros globais; fica guardado só neste navegador, com o link “Voltar ao padrão dos Parâmetros”.",
+    ],
+  },
+  {
     numero: "0080",
     data: "20/10/2026",
     itens: [

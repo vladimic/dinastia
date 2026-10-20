@@ -1,6 +1,7 @@
 "use client";
 
-import { escolherPasta, suportaEscolherPasta } from "@/lib/pastaLocal";
+import { useState } from "react";
+import { escolherPastaNoFinder } from "@/lib/ajudanteLocal";
 
 export function IconePasta() {
   return (
@@ -10,20 +11,33 @@ export function IconePasta() {
   );
 }
 
-// Botão que abre o Finder (seletor de pastas do navegador) e devolve a pasta escolhida.
-export function BotaoPasta({ rotulo, onEscolher }: { rotulo: string; onEscolher: (pasta: FileSystemDirectoryHandle) => void }) {
-  const ok = suportaEscolherPasta();
+// Abre o Finder (pelo Dinastia Local) posicionado na pasta atual e devolve o caminho completo escolhido.
+export function BotaoPasta({
+  rotulo,
+  inicio,
+  onEscolher,
+  onErro,
+}: {
+  rotulo: string;
+  inicio: string;
+  onEscolher: (caminho: string) => void;
+  onErro: (mensagem: string) => void;
+}) {
+  const [abrindo, setAbrindo] = useState(false);
   return (
     <button
       type="button"
       onClick={async () => {
-        const pasta = await escolherPasta();
-        if (pasta) onEscolher(pasta);
+        setAbrindo(true);
+        const r = await escolherPastaNoFinder(inicio, `Escolha a pasta dos PDFs de ${rotulo}`);
+        setAbrindo(false);
+        if ("caminho" in r) onEscolher(r.caminho);
+        else if ("erro" in r) onErro(r.erro);
       }}
-      disabled={!ok}
-      title={ok ? `Escolher a pasta de ${rotulo} no Finder` : "Este navegador não permite escolher pastas. Use o Chrome."}
+      disabled={abrindo}
+      title={`Escolher a pasta de ${rotulo} no Finder`}
       aria-label={`Escolher a pasta de ${rotulo}`}
-      className="flex min-h-[30px] w-9 shrink-0 items-center justify-center rounded-lg border border-borda-campo bg-white text-navy hover:bg-linha disabled:cursor-not-allowed disabled:opacity-50"
+      className="flex min-h-[30px] w-9 shrink-0 items-center justify-center rounded-lg border border-borda-campo bg-white text-navy hover:bg-linha disabled:opacity-50"
     >
       <IconePasta />
     </button>

@@ -42,6 +42,13 @@ cp .env.example .env.local   # preencha com os dados do Supabase
 npm run dev
 ```
 
+## Dinastia Local (importação de PDFs)
+Programa que roda no Mac e permite ao site abrir o Finder com o caminho completo e, na próxima etapa, ler os PDFs das pastas.
+```bash
+python3 scripts/dinastia_local.py                                   # deixe a janela aberta
+python3 scripts/dinastia_local.py --origem https://SEU-SITE.vercel.app   # se o endereço do site for outro
+```
+
 ## Versionamento
 A cada mudança entregue: incrementar `APP_VERSION` em `src/lib/version.ts` (0001 → 0002…) e registrar no `CHANGELOG.md`.
 Mudanças de banco entram como novo arquivo em `supabase/migrations/` (0003_…sql), nunca editando os anteriores.
