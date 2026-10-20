@@ -10,8 +10,9 @@ import { hashesJaLidos, registrarLeituras, type ResumoLote } from "./actions";
 
 const LOTE = 15;
 
-// "GRUPO 540 - 1%.pdf", "GRUPO 540 - 2%.pdf": variações do plano de antecipado do PDF principal (que é o "GRUPO 540.pdf"). Não são lidas.
-const VARIACAO = /[-–]\s*\d+\s*%\s*\.pdf$/i;
+// "GRUPO 540 - 1%.pdf", "GRUPO 12210 - 2% - vigente a partir de 17.10.2026.pdf": variações do plano de antecipado do PDF principal
+// ("GRUPO 540.pdf"). O sufixo " - 1%" / " - 2%" pode vir em qualquer parte do nome. Não são lidas.
+const VARIACAO = /[-–]\s*\d+\s*%/;
 
 async function sha256(dados: ArrayBuffer) {
   const h = await crypto.subtle.digest("SHA-256", dados);
