@@ -157,35 +157,67 @@ export function interpretar(linhas: Linha[], arquivo: string, hash: string): Lei
 
   const lances = Object.keys(modal).filter((t) => LANCES.has(t));
   const todasProprio = /Em todas as modalidades 100% do lance deve ser pago com recursos próprios/.test(plano);
-  const emb = plano.match(new RegExp(`((?:Lances?|Lance) [${L}\\d_ ,]{0,40}: permitido descontar.*?)(?:Entregas condicionadas|$)`, "u"));
   if (todasProprio) {
     for (const t of lances) Object.assign(modal[t], { rec_proprio: true, emb_texto: "100% do lance com recursos próprios (sem embutido)" });
-  } else if (!emb) {
-    erros.push("regras de embutido não encontradas");
   } else {
-    for (const segTxt of emb[1].split("|").map((x) => x.trim())) {
-      const i = segTxt.indexOf(":");
-      if (i < 0) continue;
-      const sujeito = segTxt.slice(0, i);
-      const regra = segTxt.slice(i + 1);
-      const tipos = ([["Livre", "LIV"], ["Limitado", "LIM"], ["Fixo", "FIX"], ["Fidelidade", "FID"]] as const).filter(([k]) => sujeito.includes(k)).map(([, t]) => t);
-      const r1 = regra.match(/embutir\)\s*(aprox\.\s*)?(\d+) parcelas \((\d+)% (do valor ofertado|da categoria)\)/);
-      const r2 = regra.match(/embutir\)\s*(\d+)% do valor ofertado/);
-      for (const t of tipos) {
-        const d = modal[t];
-        if (!d) {
-          avisos.push(`embutido citado para ${t}, que o grupo não oferece`);
+    // As regras de embutido vêm numa frase só, em partes separadas por "|". Cada parte começa com "Lance(s) <modalidades>"
+    // seguido de ":" ou de "deve ser pago". O começo da frase é a primeira parte assim: não pode ser achado por um texto solto
+    // antes dela (ex.: "…seguem com Lance Livre" no fim da sequência), senão a regra vai para a modalidade errada.
+    const MODS = "(?:Livre|Limitado|Fixo|Fidelidade)";
+    const SUJ = `Lances?\\s+${MODS}(?:\\s*(?:,|e)\\s*${MODS})*`;
+    const inicio = plano.search(new RegExp(`${SUJ}(?=\\s*:|\\s+deve ser pago)`));
+    if (inicio < 0) {
+      erros.push("regras de embutido não encontradas");
+    } else {
+      const trecho = plano.slice(inicio).split(/Entregas condicionadas|Valores e condições/)[0];
+      for (const parte of trecho.split("|").map((x) => x.trim()).filter(Boolean)) {
+        const comDoisPontos = parte.match(new RegExp(`^(${SUJ})\\s*:\\s*(.+)$`));
+        const semDoisPontos = parte.match(new RegExp(`^(${SUJ})\\s+(deve ser pago.+)$`));
+        const m = comDoisPontos ?? semDoisPontos;
+        if (!m) {
+          erros.push(`regra de embutido não reconhecida: ${parte.slice(0, 80)}`);
           continue;
         }
-        d.emb_texto = regra.trim().replace(/\.$/, "");
-        // vale a última regra citada para a modalidade: sem "embutir" nela, não há embutido (zera o que uma regra anterior tenha preenchido)
-        Object.assign(d, { emb_parc: null, emb_pct: null, emb_base: null });
-        if (r1) Object.assign(d, { emb_parc: Number(r1[2]), emb_pct: Number(r1[3]), emb_base: r1[4].includes("ofertado") ? "ofertado" : "categoria" });
-        else if (r2) Object.assign(d, { emb_pct: Number(r2[1]), emb_base: "ofertado" });
-        d.rec_proprio = !(d.emb_base === "ofertado" && d.emb_pct === 100);
+        const sujeito = m[1];
+        let regra = m[2].trim().replace(/\.$/, "");
+        if (!comDoisPontos) {
+          // "Lance Livre deve ser pago 100% do lance com recursos próprios" -> mesma frase que a base já guarda
+          if (/^deve ser pago\s*100% do lance com recursos próprios$/.test(regra)) regra = "100% do lance deve ser pago com recursos próprios";
+          else {
+            erros.push(`regra de embutido não reconhecida: ${parte.slice(0, 80)}`);
+            continue;
+          }
+        }
+        const tipos = ([["Livre", "LIV"], ["Limitado", "LIM"], ["Fixo", "FIX"], ["Fidelidade", "FID"]] as const).filter(([k]) => sujeito.includes(k)).map(([, t]) => t);
+        const r1 = regra.match(/embutir\)\s*(aprox\.\s*)?(\d+) parcelas \((\d+)% (do valor ofertado|da categoria)\)/);
+        const r2 = regra.match(/embutir\)\s*(\d+)% do valor ofertado/);
+        if (/embutir/.test(regra) && !r1 && !r2) {
+          erros.push(`regra de embutido não reconhecida: ${regra.slice(0, 80)}`);
+          continue;
+        }
+        for (const t of tipos) {
+          const d = modal[t];
+          if (!d) {
+            avisos.push(`embutido citado para ${t}, que o grupo não oferece`);
+            continue;
+          }
+          d.emb_texto = regra;
+          // sem "embutir" na regra não há embutido
+          Object.assign(d, { emb_parc: null, emb_pct: null, emb_base: null });
+          if (r1) Object.assign(d, { emb_parc: Number(r1[2]), emb_pct: Number(r1[3]), emb_base: r1[4].includes("ofertado") ? "ofertado" : "categoria" });
+          else if (r2) Object.assign(d, { emb_pct: Number(r2[1]), emb_base: "ofertado" });
+          d.rec_proprio = !(d.emb_base === "ofertado" && d.emb_pct === 100);
+        }
       }
     }
-    for (const t of lances) if (modal[t].emb_texto === null) avisos.push(`regra de embutido de ${t} não encontrada`);
+    // conferência cruzada: toda frase "embutir)" e toda "deve ser pago" do PDF tem de ter sido lida por uma das partes acima
+    const lidas = (re: RegExp) => ((inicio >= 0 ? plano.slice(inicio).split(/Entregas condicionadas|Valores e condições/)[0] : "").match(re) ?? []).length;
+    for (const [rotulo, re] of [["embutir", /embutir\)/g], ["deve ser pago", /deve ser pago/g]] as const) {
+      const noPdf = (plano.match(re) ?? []).length;
+      if (noPdf !== lidas(re)) erros.push(`regra de embutido fora do lugar esperado ("${rotulo}": ${noPdf} no PDF, ${lidas(re)} lidas)`);
+    }
+    // toda modalidade de lance precisa ter ficado com a sua regra
+    for (const t of lances) if (modal[t].emb_texto === null) erros.push(`regra de embutido de ${t} não encontrada`);
   }
 
   // ---------------- sequência ----------------
@@ -208,6 +240,13 @@ export function interpretar(linhas: Linha[], arquivo: string, hash: string): Lei
   }
   if (demaisMultiplo.length) avisos.push("demais contemplações com mais de uma modalidade (gravado o 1º tipo; texto completo em observações)");
   if (!faixas.length) erros.push("sequência de contemplação não encontrada");
+  else {
+    // as faixas têm de cobrir da 1ª assembleia ao prazo do grupo, sem buracos, e só usar modalidades que o grupo oferece
+    const ordenadas = [...faixas].sort((a, b) => a.de - b.de);
+    const ok = ordenadas[0].de === 1 && ordenadas[ordenadas.length - 1].ate === prazoGrupo && ordenadas.every((f, i) => i === 0 || f.de === ordenadas[i - 1].ate + 1);
+    if (!ok) erros.push(`sequência de contemplação não cobre da 1ª à ${prazoGrupo}ª assembleia sem buracos`);
+    for (const f of faixas) for (const i of f.itens) if (!modal[i.tipo]) erros.push(`sequência cita ${i.tipo}, que não está nas modalidades do grupo`);
+  }
 
   const obs = [...demaisMultiplo];
   if (plano.includes("Entregas condicionadas a efetiva arrecadação")) obs.push("Entregas condicionadas à efetiva arrecadação do grupo.");
