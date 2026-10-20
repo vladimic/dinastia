@@ -3,8 +3,8 @@ import ExcelJS from "exceljs";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 // Exportação para Excel: uma aba por tabela do banco, com todas as linhas e colunas, como estão gravadas.
-// Segue a ordem de dependência (cadastros, grupo, versões, filhos). A tabela usuario_autorizado não entra:
-// ela não tem policy de leitura (invisível pela API, de propósito), então o app não consegue lê-la.
+// Segue a ordem de dependência (cadastros, grupo, versões, filhos). As tabelas usuario e usuario_autorizado não entram:
+// guardam dados pessoais e a lista de acesso, e não fazem parte do backup.
 
 type Linha = Record<string, unknown>;
 

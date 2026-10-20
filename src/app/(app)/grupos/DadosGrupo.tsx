@@ -34,7 +34,7 @@ export function DadosGrupo() {
     <div className="flex flex-col gap-4">
       {editando && (
         <p className="rounded-xl border border-alerta-borda bg-alerta-fundo px-4 py-2 text-[13px] font-semibold text-alerta">
-          Edição ligada: cada alteração é gravada assim que você sai do campo. Desligue para voltar à leitura.
+          Modo Edição ligado: cada alteração é gravada assim que você sai do campo. Desligue para voltar à leitura.
         </p>
       )}
       {/* informações · faixa de crédito · tipos de parcela · modalidades (informações e faixa mais estreitas) */}

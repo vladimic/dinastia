@@ -54,6 +54,8 @@ type Props = {
   hoje: string;
   padroes: PadroesSimulador;
   abaInicial: Aba;
+  /** só administradores ligam o Modo Edição */
+  podeEditar: boolean;
 };
 
 export function GrupoDetalhe(p: Props) {
@@ -72,7 +74,7 @@ export function GrupoDetalhe(p: Props) {
   );
 }
 
-function Conteudo({ grupo: g, familiaNome, indices, hoje, padroes, abaInicial }: Props) {
+function Conteudo({ grupo: g, familiaNome, indices, hoje, padroes, abaInicial, podeEditar }: Props) {
   const router = useRouter();
   const inicial: Info = {
     participantes: milhar(g.participantes),
@@ -182,15 +184,17 @@ function Conteudo({ grupo: g, familiaNome, indices, hoje, padroes, abaInicial }:
           {aba === "dados" && (
             <div className="flex items-center gap-2.5 pb-2">
               <span id="rotulo-edicao" className={"text-[13px] font-bold " + (editando ? "text-alerta" : "text-tinta")}>
-                {editando ? "Edição ligada" : "Edição desligada"}
+                Modo Edição
               </span>
               <button
                 type="button"
                 role="switch"
                 aria-checked={editando}
                 aria-labelledby="rotulo-edicao"
+                disabled={!podeEditar}
+                title={podeEditar ? undefined : "Apenas administradores podem alterar o Modo Edição"}
                 onClick={alternarEdicao}
-                className={"relative h-6 w-11 shrink-0 rounded-full transition-colors " + (editando ? "bg-laranja" : "bg-[#cfcbe0]")}
+                className={"relative h-6 w-11 shrink-0 rounded-full transition-colors disabled:cursor-not-allowed disabled:opacity-50 " + (editando ? "bg-laranja" : "bg-[#cfcbe0]")}
               >
                 <span className={"absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-all " + (editando ? "left-[22px]" : "left-0.5")} />
               </button>

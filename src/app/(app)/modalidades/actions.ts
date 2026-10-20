@@ -2,6 +2,7 @@
 
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { ehAdministrador } from "@/lib/usuario";
 
 const CODIGO = /^[A-Z0-9_-]{1,10}$/;
 const COR = /^#[0-9a-fA-F]{6}$/;
@@ -16,6 +17,7 @@ function ler(formData: FormData) {
 
 // Inclui uma modalidade nova. O código não muda depois de criado (ele liga a modalidade aos grupos).
 export async function incluirModalidade(formData: FormData) {
+  if (!(await ehAdministrador())) redirect("/modalidades");
   const { codigo, nome, cor } = ler(formData);
   if (!CODIGO.test(codigo) || !nome || !COR.test(cor)) redirect("/modalidades?erro=dados");
 
@@ -25,6 +27,7 @@ export async function incluirModalidade(formData: FormData) {
 }
 
 export async function salvarModalidade(formData: FormData) {
+  if (!(await ehAdministrador())) redirect("/modalidades");
   const { codigo, nome, cor } = ler(formData);
   if (!codigo || !nome || !COR.test(cor)) redirect("/modalidades?erro=dados");
 
@@ -35,6 +38,7 @@ export async function salvarModalidade(formData: FormData) {
 
 // Só exclui se nenhum grupo usa a modalidade (as chaves estrangeiras recusam).
 export async function excluirModalidade(formData: FormData) {
+  if (!(await ehAdministrador())) redirect("/modalidades");
   const codigo = String(formData.get("codigo") ?? "");
   const supabase = await createClient();
   const { error } = await supabase.from("tipo_contemplacao").delete().eq("codigo", codigo);

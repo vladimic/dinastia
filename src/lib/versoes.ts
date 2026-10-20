@@ -2,6 +2,16 @@
 // Regra: a cada mudança entregue, acrescentar uma entrada NO TOPO.
 export const VERSOES: { numero: string; data: string; itens: string[] }[] = [
   {
+    numero: "0079",
+    data: "20/10/2026",
+    itens: [
+      "Nova tela Cadastros › Usuários: inclusão, edição e exclusão de usuários, com CPF (chave única, validado), nome completo, e-mail, telefone com DDD e a marca de Administrador. A tela mostra quem já tem login e quem está com “Login pendente”. O sistema nunca fica sem administrador (o banco recusa remover ou rebaixar o último), e ninguém exclui, rebaixa ou troca o e-mail de si mesmo. Migração 0023 (a lista antiga usuario_autorizado foi substituída pela tabela de usuários).",
+      "Apenas administradores gravam: Parâmetros globais, Modalidades de Contemplação, Tipos de Parcela, Usuários, dados dos grupos, importação e restauração de backup. Os demais usuários continuam vendo tudo e simulando. Esses itens somem do menu para quem não é administrador.",
+      "Grupos e Tabelas: “Edição ligada/desligada” passa a se chamar Modo Edição, e só administradores conseguem ligá-lo.",
+      "Parâmetros globais › Textos sob o prazo restante (simulador): ganhou o botão Salvar. Novo bloco Pastas dos PDFs das tabelas, com 4 parâmetros (Imóveis, Veículos, Serviços e Outros Bens) para o futuro programa de importação, já preenchidos.",
+    ],
+  },
+  {
     numero: "0078",
     data: "17/10/2026",
     itens: [

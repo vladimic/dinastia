@@ -2,6 +2,8 @@
 
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { PASTAS_PDF } from "@/lib/pastasPdf";
+import { ehAdministrador } from "@/lib/usuario";
 import { lerPct } from "@/lib/formato";
 import { RODAPE_PADRAO, type TipoColuna } from "@/lib/simulacao";
 
@@ -11,6 +13,7 @@ const inteiro = (v: FormDataEntryValue | null) => {
 };
 
 export async function salvarParametros(formData: FormData) {
+  if (!(await ehAdministrador())) redirect("/parametros");
   const seguro = lerPct(formData.get("seguro_padrao_pct"));
   if (seguro === null || seguro < 0 || seguro > 1) redirect("/parametros?erro=1");
   const incc = lerPct(formData.get("incc_pct_ano"));
@@ -40,6 +43,13 @@ export async function salvarParametros(formData: FormData) {
     rodape[k] = { titulo, texto };
   }
 
+  const pastas: Record<string, string | null> = {};
+  for (const { campo } of PASTAS_PDF) {
+    const v = String(formData.get(campo) ?? "").trim();
+    if (v.length > 500) redirect("/parametros?erro=8");
+    pastas[campo] = v || null;
+  }
+
   const supabase = await createClient();
   const { error } = await supabase
     .from("parametros_gerais")
@@ -52,6 +62,7 @@ export async function salvarParametros(formData: FormData) {
       lance_fidelidade_parcelas: fidelidade,
       ...conc,
       rodape_textos: rodape,
+      ...pastas,
     })
     .eq("id", 1);
   redirect(`/parametros?${error ? "erro" : "salvo"}=1`);

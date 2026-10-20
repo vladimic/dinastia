@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type { ReactNode } from "react";
 
-type Item = { href: string; label: string; pronto?: boolean };
+type Item = { href: string; label: string; pronto?: boolean; admin?: boolean };
 
 const GRUPOS: { titulo?: string; itens: Item[] }[] = [
   {
@@ -27,9 +27,10 @@ const GRUPOS: { titulo?: string; itens: Item[] }[] = [
     titulo: "Cadastros",
     itens: [
       { href: "/grupos", label: "Grupos e Tabelas", pronto: true },
-      { href: "/parametros", label: "Parâmetros globais", pronto: true },
-      { href: "/modalidades", label: "Modalidades de Contemplação", pronto: true },
-      { href: "/tipos-parcela", label: "Tipos de Parcela", pronto: true },
+      { href: "/parametros", label: "Parâmetros globais", pronto: true, admin: true },
+      { href: "/modalidades", label: "Modalidades de Contemplação", pronto: true, admin: true },
+      { href: "/tipos-parcela", label: "Tipos de Parcela", pronto: true, admin: true },
+      { href: "/usuarios", label: "Usuários", pronto: true, admin: true },
       { href: "/lances", label: "Histórico de lances" },
       { href: "/indices", label: "Índices de correção" },
       { href: "/importar", label: "Importar tabelas (PDF)" },
@@ -37,7 +38,7 @@ const GRUPOS: { titulo?: string; itens: Item[] }[] = [
   },
 ];
 
-export function Sidebar({ rodape }: { rodape: ReactNode }) {
+export function Sidebar({ rodape, admin = false }: { rodape: ReactNode; admin?: boolean }) {
   const path = usePathname();
 
   return (
@@ -56,7 +57,7 @@ export function Sidebar({ rodape }: { rodape: ReactNode }) {
           {g.titulo && (
             <div className="px-3 pb-2 text-[11px] uppercase tracking-[0.16em] text-ouro">{g.titulo}</div>
           )}
-          {g.itens.map((item) => {
+          {g.itens.filter((item) => admin || !item.admin).map((item) => {
             const ativo = path === item.href || path.startsWith(item.href + "/");
             if (!item.pronto) {
               return (
