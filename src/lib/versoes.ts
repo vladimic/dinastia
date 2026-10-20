@@ -2,6 +2,14 @@
 // Regra: a cada mudança entregue, acrescentar uma entrada NO TOPO.
 export const VERSOES: { numero: string; data: string; itens: string[] }[] = [
   {
+    numero: "0091",
+    data: "21/10/2026",
+    itens: [
+      "Dicionário de dados e modelo entidade-relacionamento: novo documento docs/modelo-de-dados.md (diagrama e dicionário de todas as tabelas e campos), desenho docs/modelo-er.svg e comentários de cada tabela e campo gravados no próprio banco (migração 0027). Fonte única: src/lib/dicionarioDados.ts.",
+      "Exportar Excel (menu ☰): agora inclui as abas Dicionário e Relacionamentos, as tabelas da importação (importacao_item e importacao_diferenca) e a tabela usuario (administrador); o cabeçalho de cada aba segue o dicionário, mesmo com a tabela vazia.",
+    ],
+  },
+  {
     numero: "0090",
     data: "21/10/2026",
     itens: [
