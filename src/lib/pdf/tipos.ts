@@ -21,7 +21,11 @@ export type Modalidade = {
 
 export type Faixa = { de: number; ate: number; itens: { qtd: number; tipo: string }[]; demais: string | null };
 
+/** Versão do leitor de PDFs: sobe quando uma correção muda o que é lido (PDFs lidos antes com versão menor são lidos de novo). */
+export const LEITOR = 2;
+
 export type Leitura = {
+  leitor: number;
   arquivo: string;
   hash: string;
   numero: string;

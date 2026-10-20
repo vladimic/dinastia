@@ -6,7 +6,7 @@ import { ehAdministrador, usuarioAtual } from "@/lib/usuario";
 import { carregarEstados } from "@/lib/pdf/estado";
 import { classificar, comparar, montarFinal, tiposParcelaDe, type Decidida, type Diferenca } from "@/lib/pdf/comparar";
 import { converterEdicao } from "@/lib/pdf/edicao";
-import type { Leitura } from "@/lib/pdf/tipos";
+import { LEITOR, type Leitura } from "@/lib/pdf/tipos";
 
 type Falha = { ok: false; erro: string };
 const NEGADO: Falha = { ok: false, erro: "Apenas administradores podem importar tabelas." };
@@ -25,17 +25,29 @@ export async function hashesJaLidos(hashes: string[]): Promise<string[]> {
   for (let i = 0; i < hashes.length; i += 100) {
     const parte = hashes.slice(i, i + 100);
     const [a, b] = await Promise.all([
-      supabase.from("importacao_item").select("hash_sha256").in("hash_sha256", parte).neq("situacao", "erro"),
+      supabase.from("importacao_item").select("hash_sha256, situacao, leitor:leitura->>leitor").in("hash_sha256", parte),
       supabase.from("arquivo_importado").select("hash_sha256").in("hash_sha256", parte),
     ]);
-    for (const r of [...(a.data ?? []), ...(b.data ?? [])]) conhecidos.add(r.hash_sha256 as string);
+    // já decidido (aplicado/descartado) nunca é lido de novo; o resto só se foi lido por um leitor mais antigo ou com erro
+    for (const r of (a.data ?? []) as { hash_sha256: string; situacao: string; leitor: string | null }[]) {
+      if (r.situacao === "aplicado" || r.situacao === "rejeitado" || (r.situacao !== "erro" && Number(r.leitor ?? 0) >= LEITOR)) conhecidos.add(r.hash_sha256);
+    }
+    for (const r of b.data ?? []) conhecidos.add(r.hash_sha256 as string);
   }
   return [...conhecidos];
 }
 
 export type ResumoLote = { lidos: number; novos: number; novasAssembleias: number; semMudanca: number; comDiferencas: number; ignorados: number; erros: number };
 
-const assinatura = (l: Leitura) => JSON.stringify({ ...l, arquivo: "", hash: "", avisos: [], erros: [] });
+// Dois PDFs do mesmo grupo e assembleia são "o mesmo" quando trazem os mesmos dados que o Dinastia guarda;
+// o que a base não guarda (plano de antecipado, valores das parcelas) não conta (ex.: "GRUPO 540 - 1%" e "- 2%").
+const assinatura = (l: Leitura) =>
+  JSON.stringify({
+    numero: l.numero, familia: l.familia, assembleia: l.assembleia, data: l.data_assembleia, prazo_cota: l.prazo_cota, prazo_grupo: l.prazo_grupo,
+    participantes: l.participantes, taxa_adm: l.taxa_adm, indice: l.indice, mes_reajuste: l.mes_reajuste, primeira_correcao: l.primeira_correcao,
+    vencimento: l.vencimento, fundo_reserva: l.fundo_reserva, observacoes: l.observacoes, creditos: l.creditos.map((c) => c.credito).sort((a, b) => b - a),
+    tipos: l.planos.DILUIDA, modalidades: l.modalidades, faixas: l.faixas,
+  });
 
 /** Guarda as leituras (já feitas no navegador), compara cada uma com a base e registra as diferenças a decidir. */
 export async function registrarLeituras(leituras: Leitura[], falhas: { arquivo: string; hash: string; motivo: string }[]): Promise<{ ok: true; resumo: ResumoLote } | Falha> {
@@ -56,9 +68,10 @@ export async function registrarLeituras(leituras: Leitura[], falhas: { arquivo: 
     const { data: existentes } = await supabase.from("importacao_item").select("id, hash_sha256, situacao").in("hash_sha256", hashes);
     porHash = new Map((existentes ?? []).map((x) => [x.hash_sha256 as string, x as { id: number; situacao: string }]));
     const { data: mesmos } = numeros.length
-      ? await supabase.from("importacao_item").select("arquivo, grupo_numero, assembleia_numero, leitura, situacao").in("grupo_numero", numeros).in("situacao", ["pendente", "sem_mudanca"])
+      ? await supabase.from("importacao_item").select("hash_sha256, arquivo, grupo_numero, assembleia_numero, leitura, situacao").in("grupo_numero", numeros).in("situacao", ["pendente", "sem_mudanca"])
       : { data: [] };
-    for (const m of mesmos ?? []) if (m.leitura) vistos.set(`${m.grupo_numero}|${m.assembleia_numero}`, { arquivo: m.arquivo as string, sig: assinatura(m.leitura as Leitura) });
+    // os itens deste mesmo lote (relidos) não contam como "outro PDF"
+    for (const m of mesmos ?? []) if (m.leitura && !hashes.includes(m.hash_sha256 as string)) vistos.set(`${m.grupo_numero}|${m.assembleia_numero}`, { arquivo: m.arquivo as string, sig: assinatura(m.leitura as Leitura) });
   } catch (e) {
     return { ok: false, erro: "Não foi possível consultar a base: " + ((e as { message?: string }).message ?? "erro") };
   }
@@ -66,11 +79,15 @@ export async function registrarLeituras(leituras: Leitura[], falhas: { arquivo: 
   async function gravar(linha: Record<string, unknown>, diffs: Diferenca[]) {
     const existente = porHash.get(linha.hash_sha256 as string);
     let id: number;
+    let antigas: { escopo: string; chave: string; campo: string; valor_atual: unknown; valor_novo: unknown; decisao: string; valor_final: unknown; decidido_por: string | null; decidido_em: string | null }[] = [];
     if (existente) {
-      if (existente.situacao !== "erro") return; // o mesmo arquivo já foi lido: desprezado
+      if (existente.situacao === "aplicado" || existente.situacao === "rejeitado") return; // já decidido: nunca é lido de novo
       const { error } = await supabase.from("importacao_item").update({ ...linha, lido_por: email }).eq("id", existente.id);
       if (error) throw error;
       id = existente.id;
+      // releitura (leitor mais novo): guarda as decisões já tomadas que continuam valendo
+      const { data: velhas } = await supabase.from("importacao_diferenca").select("escopo, chave, campo, valor_atual, valor_novo, decisao, valor_final, decidido_por, decidido_em").eq("item_id", id);
+      antigas = (velhas ?? []) as typeof antigas;
       await supabase.from("importacao_diferenca").delete().eq("item_id", id);
     } else {
       const { data, error } = await supabase.from("importacao_item").insert({ ...linha, lido_por: email }).select("id").single();
@@ -78,7 +95,11 @@ export async function registrarLeituras(leituras: Leitura[], falhas: { arquivo: 
       id = data.id as number;
     }
     if (diffs.length) {
-      const { error } = await supabase.from("importacao_diferenca").insert(diffs.map((d) => ({ item_id: id, ...d })));
+      const reaproveita = (d: Diferenca) => {
+        const v = antigas.find((a) => a.escopo === d.escopo && a.chave === d.chave && a.campo === d.campo && a.decisao !== "pendente" && JSON.stringify(a.valor_atual ?? null) === JSON.stringify(d.valor_atual ?? null) && JSON.stringify(a.valor_novo ?? null) === JSON.stringify(d.valor_novo ?? null));
+        return v ? { decisao: v.decisao, valor_final: v.valor_final, decidido_por: v.decidido_por, decidido_em: v.decidido_em } : {};
+      };
+      const { error } = await supabase.from("importacao_diferenca").insert(diffs.map((d) => ({ item_id: id, ...d, ...reaproveita(d) })));
       if (error) throw error;
     }
   }
