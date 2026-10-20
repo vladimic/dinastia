@@ -2,6 +2,13 @@
 // Regra: a cada mudança entregue, acrescentar uma entrada NO TOPO.
 export const VERSOES: { numero: string; data: string; itens: string[] }[] = [
   {
+    numero: "0096",
+    data: "21/10/2026",
+    itens: [
+      "Grupos e Tabelas: o box Ordenar saiu da lista de grupos; a lista fica sempre em ordem de número. Os filtros (parcela, crédito, participantes) seguem iguais.",
+    ],
+  },
+  {
     numero: "0095",
     data: "21/10/2026",
     itens: [
