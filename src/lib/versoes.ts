@@ -2,6 +2,14 @@
 // Regra: a cada mudança entregue, acrescentar uma entrada NO TOPO.
 export const VERSOES: { numero: string; data: string; itens: string[] }[] = [
   {
+    numero: "0094",
+    data: "21/10/2026",
+    itens: [
+      "Importação de PDFs: corrigido o erro “a base mudou desde a leitura; leia o PDF de novo” ao aplicar grupos novos (12210 e 12211) e, em geral, ao aplicar qualquer item. A conferência feita antes de gravar comparava textos JSON, e o banco (jsonb) devolve as chaves e a lista de modalidades numa ordem diferente da original. Agora a comparação ignora a ordem das chaves e o resumo do grupo novo usa uma ordem fixa. Testado com um banco de teste que reproduz essa reordenação.",
+      "A mesma ordem de chaves também podia fazer dois PDFs iguais parecerem “com dados diferentes” na detecção de duplicados; corrigido junto.",
+    ],
+  },
+  {
     numero: "0093",
     data: "21/10/2026",
     itens: [
