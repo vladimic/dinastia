@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Suspense } from "react";
 import { FAMILIAS, carregarGrupo, carregarPadroesSimulador, contarPorFamilia, listarCoresContemplacao, listarGrupos, listarIndices, nomeFamilia } from "@/lib/grupos";
 import { padroesDeLinha } from "@/lib/simulacao";
+import { ehAdministrador } from "@/lib/usuario";
 import { Cabecalho } from "./Cabecalho";
 import { GrupoDetalhe } from "./GrupoDetalhe";
 import { SeletorGrupo } from "./SeletorGrupo";
@@ -26,12 +27,13 @@ async function Conteudo({ searchParams }: { searchParams: PageProps<"/grupos">["
   // sem família na URL, a lista mostra a família do grupo aberto
   const familia = pedida ?? FAMILIAS.find((f) => f.slug === detalhe?.familia) ?? FAMILIAS[0];
 
-  const [grupos, cores, contagem, indices, padroes] = await Promise.all([
+  const [grupos, cores, contagem, indices, padroes, admin] = await Promise.all([
     listarGrupos(familia.slug),
     listarCoresContemplacao(),
     contarPorFamilia(),
     detalhe ? listarIndices() : Promise.resolve([]),
     detalhe ? carregarPadroesSimulador() : Promise.resolve(padroesDeLinha(null)),
+    ehAdministrador(),
   ]);
   const hoje = new Date().toISOString().slice(0, 10);
 
@@ -81,6 +83,7 @@ async function Conteudo({ searchParams }: { searchParams: PageProps<"/grupos">["
             hoje={hoje}
             padroes={padroes}
             abaInicial={aba}
+            podeEditar={admin}
           />
         ) : (
           <>

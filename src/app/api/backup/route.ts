@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { ehAdministrador } from "@/lib/usuario";
 import { exportarBackup, restaurarBackup, validarBackup } from "@/lib/backup";
 
 async function usuario() {
@@ -26,6 +27,7 @@ export async function GET() {
 export async function POST(request: NextRequest) {
   const { supabase, user } = await usuario();
   if (!user) return NextResponse.json({ erro: "Sessão expirada." }, { status: 401 });
+  if (!(await ehAdministrador())) return NextResponse.json({ erro: "Apenas administradores podem restaurar um backup." }, { status: 403 });
   try {
     const b = await request.json();
     validarBackup(b);

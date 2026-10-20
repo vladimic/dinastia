@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
+import { AcessoRestrito } from "@/components/AcessoRestrito";
 import { createClient } from "@/lib/supabase/server";
+import { ehAdministrador } from "@/lib/usuario";
 import { excluirModalidade, incluirModalidade, salvarModalidade } from "./actions";
 
 export const metadata: Metadata = { title: "Modalidades de Contemplação · Dinastia" };
@@ -28,6 +30,7 @@ export default function ModalidadesPage({ searchParams }: PageProps<"/modalidade
 }
 
 async function Lista({ searchParams }: { searchParams: PageProps<"/modalidades">["searchParams"] }) {
+  if (!(await ehAdministrador())) return <AcessoRestrito />;
   const sp = await searchParams;
   const supabase = await createClient();
   const { data, error } = await supabase.from("tipo_contemplacao").select("codigo, nome, cor").order("codigo");

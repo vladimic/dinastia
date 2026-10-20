@@ -10,7 +10,7 @@ Versão atual: veja `src/lib/version.ts` e o `CHANGELOG.md`.
 1. Em supabase.com, crie um projeto (região **South America (São Paulo)**).
 2. **SQL Editor** → cole e rode `supabase/migrations/0001_schema.sql`, depois `0002_seed.sql`.
 3. **Authentication › Sign In / Providers** → desligue **Allow new users to sign up** (só entra quem você cadastrar).
-4. **Authentication › Users › Add user** → seu e-mail e senha, marcando **Auto Confirm User**.
+4. **Authentication › Users › Add user** → seu e-mail e senha, marcando **Auto Confirm User**. Depois cadastre esse mesmo e-mail em `public.usuario` como administrador (CPF, nome, telefone e `administrador = true`); a partir daí os demais usuários são criados na tela **Cadastros › Usuários**.
 5. **Project Settings › API** → copie a **Project URL** e a **Publishable key**.
 
 ### 2. GitHub
@@ -22,6 +22,7 @@ Crie um repositório **privado** chamado `dinastia` e envie esta pasta (sem `nod
    - `NEXT_PUBLIC_SUPABASE_URL` = Project URL
    - `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` = Publishable key
    - `NEXT_PUBLIC_SITE_URL` = a URL que a Vercel der ao projeto (ex.: `https://dinastia.vercel.app`)
+   - `SUPABASE_SERVICE_ROLE_KEY` = chave **service_role** (opcional; sem ela a tela Usuários salva o cadastro, mas o login precisa ser criado no Supabase). Segredo: nunca no código.
 3. **Deploy**.
 
 ### 4. Voltar ao Supabase

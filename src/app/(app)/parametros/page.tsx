@@ -1,6 +1,9 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
+import { AcessoRestrito } from "@/components/AcessoRestrito";
 import { createClient } from "@/lib/supabase/server";
+import { PASTAS_PDF } from "@/lib/pastasPdf";
+import { ehAdministrador } from "@/lib/usuario";
 import { pct } from "@/lib/formato";
 import { padroesDeLinha, type TipoColuna } from "@/lib/simulacao";
 import { salvarParametros } from "./actions";
@@ -24,6 +27,7 @@ export default function ParametrosPage({ searchParams }: PageProps<"/parametros"
 }
 
 async function Formulario({ searchParams }: { searchParams: PageProps<"/parametros">["searchParams"] }) {
+  if (!(await ehAdministrador())) return <AcessoRestrito />;
   const sp = await searchParams;
   const supabase = await createClient();
   const { data, error } = await supabase
@@ -94,7 +98,7 @@ async function Formulario({ searchParams }: { searchParams: PageProps<"/parametr
           Parâmetros salvos.
         </p>
       )}
-      {["4", "5", "6", "7"].includes(String(sp.erro)) && (
+      {["4", "5", "6", "7", "8"].includes(String(sp.erro)) && (
         <p role="alert" className="rounded-lg bg-[#fbe4e4] px-3 py-2 text-sm font-semibold text-[#9b1c1c]">
           {sp.erro === "4"
             ? "Parcelas do lance inválidas. Informe números inteiros de 1 a 999."
@@ -102,7 +106,9 @@ async function Formulario({ searchParams }: { searchParams: PageProps<"/parametr
               ? "Concorrência inválida. Informe um percentual entre 0 e 100."
               : sp.erro === "7"
                 ? "Prazos de contemplação inválidos. Informe 7 prazos diferentes, números inteiros de 1 a 999."
-                : "Os textos do simulador não podem ficar vazios (título até 60 e texto até 80 caracteres)."}
+                : sp.erro === "8"
+                  ? "Pasta dos PDFs muito longa (até 500 caracteres)."
+                  : "Os textos do simulador não podem ficar vazios (título até 60 e texto até 80 caracteres)."}
         </p>
       )}
       {sp.erro === "3" && (
@@ -142,7 +148,37 @@ async function Formulario({ searchParams }: { searchParams: PageProps<"/parametr
           <input className="campo-sm !text-left" name={`rodape_${k}_texto`} defaultValue={pad.rodape[k].texto} maxLength={80} required aria-label={`${NOMES_COLUNA[k]}: texto`} />
         </div>
       ))}
-        <p className="text-[11px] leading-snug text-tinta">Aparecem sob o prazo restante de cada coluna do simulador. Salvar pelo botão da coluna ao lado.</p>
+        <p className="text-[11px] leading-snug text-tinta">Aparecem sob o prazo restante de cada coluna do simulador.</p>
+        <div className="flex justify-end border-t border-linha pt-3">
+          <button type="submit" className="min-h-9 rounded-[10px] bg-laranja px-5 text-sm font-bold text-navy hover:brightness-95">
+            Salvar
+          </button>
+        </div>
+      </div>
+
+      <div className="flex w-full max-w-[60rem] flex-col gap-3 rounded-2xl border border-borda bg-white p-5">
+        <h2 className="text-sm font-bold">Pastas dos PDFs das tabelas</h2>
+        {PASTAS_PDF.map(({ campo, rotulo }) => (
+          <label key={campo} className="grid grid-cols-[7rem_1fr] items-center gap-3 text-xs font-semibold text-tinta max-sm:grid-cols-1">
+            {rotulo}
+            <input
+              className="campo-sm !text-left font-mono"
+              name={campo}
+              defaultValue={(data as Record<string, string | null> | null)?.[campo] ?? ""}
+              maxLength={500}
+              spellCheck={false}
+              autoComplete="off"
+            />
+          </label>
+        ))}
+        <p className="text-[11px] leading-snug text-tinta">
+          Diretório padrão onde ficam os PDFs de cada família de tabelas; será usado pelo programa de importação.
+        </p>
+        <div className="flex justify-end border-t border-linha pt-3">
+          <button type="submit" className="min-h-9 rounded-[10px] bg-laranja px-5 text-sm font-bold text-navy hover:brightness-95">
+            Salvar
+          </button>
+        </div>
       </div>
     </form>
   );

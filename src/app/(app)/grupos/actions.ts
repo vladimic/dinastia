@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import { ehAdministrador } from "@/lib/usuario";
 import { lerInt, lerPct } from "@/lib/formato";
 import { gerarFaixas, validarEdicao, type Edicao } from "@/lib/sequencia";
 
@@ -9,7 +10,10 @@ import { gerarFaixas, validarEdicao, type Edicao } from "@/lib/sequencia";
 const CAMPOS_GRUPO = ["participantes", "taxa_adm_total", "fundo_reserva", "indice", "mes_reajuste", "dia_vencimento"] as const;
 export type CampoGrupo = (typeof CAMPOS_GRUPO)[number];
 
+const NEGADO = { ok: false, erro: "Apenas administradores podem alterar os dados dos grupos." } as const;
+
 export async function salvarCampoGrupo(numero: number, campo: CampoGrupo, valor: string): Promise<{ ok: true } | { ok: false; erro: string }> {
+  if (!(await ehAdministrador())) return NEGADO;
   if (!Number.isInteger(numero) || !CAMPOS_GRUPO.includes(campo)) return { ok: false, erro: "Campo inválido." };
   const bruto = String(valor ?? "").trim();
 
@@ -48,7 +52,7 @@ export async function salvarCampoGrupo(numero: number, campo: CampoGrupo, valor:
 
 // Marca ou desmarca um tipo de parcela oferecido pelo grupo na versão (assembleia) vigente.
 export async function alternarTipoParcela(versaoId: number, tipo: string, marcado: boolean): Promise<{ ok: boolean }> {
-  if (!Number.isInteger(versaoId) || !tipo) return { ok: false };
+  if (!(await ehAdministrador()) || !Number.isInteger(versaoId) || !tipo) return { ok: false };
   const supabase = await createClient();
   const { error } = marcado
     ? await supabase
@@ -62,7 +66,7 @@ export async function alternarTipoParcela(versaoId: number, tipo: string, marcad
 
 // Pagamento com furo na versão vigente: true = sim, false = não.
 export async function definirPagamentoComFuro(versaoId: number, valor: boolean): Promise<{ ok: boolean }> {
-  if (!Number.isInteger(versaoId)) return { ok: false };
+  if (!(await ehAdministrador()) || !Number.isInteger(versaoId)) return { ok: false };
   const supabase = await createClient();
   const { error } = await supabase.from("grupo_assembleia").update({ pagamento_com_furo: valor }).eq("id", versaoId);
   if (error) return { ok: false };
@@ -76,6 +80,7 @@ const FALHA: Resultado = { ok: false, erro: "Não foi possível salvar. Tente de
 // Edita a sequência de contemplação da versão vigente: refaz as faixas a partir de sorteios por mês,
 // ordem, "demais" e mês de liberação do fidelidade (tudo numa transação, pela função salvar_sequencia).
 export async function salvarSequencia(versaoId: number, entrada: Edicao): Promise<Resultado> {
+  if (!(await ehAdministrador())) return NEGADO;
   if (!Number.isInteger(versaoId)) return FALHA;
   const e: Edicao = {
     sorteios: (entrada.sorteios ?? []).map((x) => ({ de: Number(x.de), qtd: Number(x.qtd) })),
@@ -118,6 +123,7 @@ export async function salvarSequencia(versaoId: number, entrada: Edicao): Promis
 
 // Faixa de crédito da versão vigente (guardada do maior para o menor).
 export async function salvarCreditos(versaoId: number, valores: number[]): Promise<Resultado> {
+  if (!(await ehAdministrador())) return NEGADO;
   if (!Number.isInteger(versaoId)) return FALHA;
   const lista = (valores ?? []).map((v) => Math.round(Number(v) * 100) / 100);
   if (!lista.length || lista.length > 40 || lista.some((v) => !Number.isFinite(v) || v <= 0))

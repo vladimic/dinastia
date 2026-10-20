@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
+import { AcessoRestrito } from "@/components/AcessoRestrito";
 import { createClient } from "@/lib/supabase/server";
+import { ehAdministrador } from "@/lib/usuario";
 import { pct } from "@/lib/formato";
 import { excluirTipoParcela, incluirTipoParcela, salvarTipoParcela } from "./actions";
 
@@ -31,6 +33,7 @@ export default function TiposParcelaPage({ searchParams }: PageProps<"/tipos-par
 }
 
 async function Lista({ searchParams }: { searchParams: PageProps<"/tipos-parcela">["searchParams"] }) {
+  if (!(await ehAdministrador())) return <AcessoRestrito />;
   const sp = await searchParams;
   const supabase = await createClient();
   const [tipos, usos] = await Promise.all([
