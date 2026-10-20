@@ -2,6 +2,14 @@
 // Regra: a cada mudança entregue, acrescentar uma entrada NO TOPO.
 export const VERSOES: { numero: string; data: string; itens: string[] }[] = [
   {
+    numero: "0093",
+    data: "21/10/2026",
+    itens: [
+      "Importação de PDFs: o filtro das variações “- 1%” / “- 2%” passa a valer com o sufixo em qualquer parte do nome (ex.: “GRUPO 12210 - 1% - vigente a partir de 17.10.2026.pdf”); antes só valia no fim do nome, e as variações disputavam com o PDF principal, que acabava ignorado como “duplicado” (casos dos grupos 12210 e 12211).",
+      "Corrigido: itens relidos guardavam o motivo da leitura anterior (ex.: “Duplicado de …”) mesmo já estando sem diferenças. As leituras das variações e dos PDFs principais que tinham sido ignorados por causa delas foram apagadas; na próxima leitura da pasta os principais entram normalmente.",
+    ],
+  },
+  {
     numero: "0092",
     data: "21/10/2026",
     itens: [

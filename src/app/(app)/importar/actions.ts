@@ -78,7 +78,8 @@ export async function registrarLeituras(leituras: Leitura[], falhas: { arquivo: 
     let antigas: { escopo: string; chave: string; campo: string; valor_atual: unknown; valor_novo: unknown; decisao: string; valor_final: unknown; decidido_por: string | null; decidido_em: string | null }[] = [];
     if (existente) {
       if (existente.situacao === "rejeitado") return; // descartado pelo administrador: nunca é lido de novo
-      const { error } = await supabase.from("importacao_item").update({ ...linha, lido_por: email }).eq("id", existente.id);
+      // motivo e tipo antigos não podem sobrar numa releitura
+      const { error } = await supabase.from("importacao_item").update({ motivo: null, tipo: null, ...linha, lido_por: email }).eq("id", existente.id);
       if (error) throw error;
       id = existente.id;
       // releitura (leitor mais novo): guarda as decisões já tomadas que continuam valendo
