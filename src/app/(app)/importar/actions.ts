@@ -155,17 +155,22 @@ export async function registrarLeituras(leituras: Leitura[], falhas: { arquivo: 
 
 type Decisao = "aceita" | "rejeitada" | "editada";
 
-export async function decidir(ids: number[], decisao: "aceita" | "rejeitada" | "pendente"): Promise<{ ok: true } | Falha> {
+type Marca = { id: number; decisao: "aceita" | "rejeitada" | "pendente" };
+
+/** Grava de uma vez as marcações feitas na tela (a tela marca na hora e manda em lote). Não recarrega a página. */
+export async function decidirLote(marcas: Marca[]): Promise<{ ok: true } | Falha> {
   const email = await quem();
   if (!email) return NEGADO;
-  if (!ids.length) return { ok: true };
   const supabase = await createClient();
-  const nova = decisao === "pendente" ? { decisao, valor_final: null, decidido_por: null, decidido_em: null } : { decisao, valor_final: null, decidido_por: email, decidido_em: new Date().toISOString() };
-  for (let i = 0; i < ids.length; i += 200) {
-    const { error } = await supabase.from("importacao_diferenca").update(nova).in("id", ids.slice(i, i + 200));
-    if (error) return { ok: false, erro: "Não foi possível salvar a decisão." };
+  const agora = new Date().toISOString();
+  for (const decisao of ["aceita", "rejeitada", "pendente"] as const) {
+    const ids = [...new Set(marcas.filter((m) => m.decisao === decisao).map((m) => m.id))];
+    const nova = decisao === "pendente" ? { decisao, valor_final: null, decidido_por: null, decidido_em: null } : { decisao, valor_final: null, decidido_por: email, decidido_em: agora };
+    for (let i = 0; i < ids.length; i += 200) {
+      const { error } = await supabase.from("importacao_diferenca").update(nova).in("id", ids.slice(i, i + 200));
+      if (error) return { ok: false, erro: "Não foi possível salvar as marcações." };
+    }
   }
-  revalidatePath("/importar");
   return { ok: true };
 }
 
@@ -186,7 +191,7 @@ export async function decidirPorCampo(escopo: string, campo: string, decisao: "a
   return { ok: true, total: data?.length ?? 0 };
 }
 
-export async function editarDiferenca(id: number, texto: string): Promise<{ ok: true } | Falha> {
+export async function editarDiferenca(id: number, texto: string): Promise<{ ok: true; valor: unknown } | Falha> {
   const email = await quem();
   if (!email) return NEGADO;
   const supabase = await createClient();
@@ -199,8 +204,7 @@ export async function editarDiferenca(id: number, texto: string): Promise<{ ok: 
     .update({ decisao: "editada" satisfies Decisao, valor_final: r.valor, decidido_por: email, decidido_em: new Date().toISOString() })
     .eq("id", id);
   if (error) return { ok: false, erro: "Não foi possível salvar a edição." };
-  revalidatePath("/importar");
-  return { ok: true };
+  return { ok: true, valor: r.valor };
 }
 
 /** Descarta o PDF inteiro (nada dele entra na base). */

@@ -2,6 +2,13 @@
 // Regra: a cada mudança entregue, acrescentar uma entrada NO TOPO.
 export const VERSOES: { numero: string; data: string; itens: string[] }[] = [
   {
+    numero: "0089",
+    data: "20/10/2026",
+    itens: [
+      "Importar tabelas (PDF): Aceitar, Rejeitar, Editar e Desfazer agora aparecem na hora (cerca de 60 ms, antes cada clique esperava o servidor e recarregava a página inteira). As marcações são gravadas em segundo plano, em lote, e o contador “Falta decidir” e o botão “Aplicar os N prontos” se atualizam na hora. Ao aplicar, o que ainda não foi gravado é enviado antes; o mesmo ao trocar de lista ou de página.",
+    ],
+  },
+  {
     numero: "0088",
     data: "20/10/2026",
     itens: [
