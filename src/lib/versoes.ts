@@ -2,6 +2,13 @@
 // Regra: a cada mudança entregue, acrescentar uma entrada NO TOPO.
 export const VERSOES: { numero: string; data: string; itens: string[] }[] = [
   {
+    numero: "0095",
+    data: "21/10/2026",
+    itens: [
+      "Importação de PDFs: PDFs descartados, ignorados ou com erro ganham o botão “Ler de novo”: ele tira o PDF da lista e, na próxima leitura da pasta, ele volta a ser lido. Antes, um PDF descartado nunca mais era lido (caso do grupo 12208, descartado sem querer): o item do 12208 foi reativado.",
+    ],
+  },
+  {
     numero: "0094",
     data: "21/10/2026",
     itens: [

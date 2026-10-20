@@ -6,7 +6,7 @@ import { useCallback, useEffect, useRef, useState, useTransition } from "react";
 import { FILTROS, NOME_FILTRO, type Filtro } from "@/lib/pdf/filtros";
 import { paraEdicao, tipoDoCampo } from "@/lib/pdf/edicao";
 import { textoDoValor } from "@/lib/pdf/mostrar";
-import { aplicarItens, decidirLote, decidirPorCampo, descartarItem, editarDiferenca } from "./actions";
+import { aplicarItens, decidirLote, decidirPorCampo, descartarItem, editarDiferenca, reativarItem } from "./actions";
 
 export type Contagens = { pendentes: number; prontos: number; aplicados: number; sem_mudanca: number; erros: number; ignorados: number; diferencasPendentes: number };
 export type Agregado = { escopo: string; campo: string; total: number };
@@ -267,6 +267,17 @@ function Item({ item, ocupado, rodar, ctx }: { item: ItemTela; ocupado: boolean;
           {editavel && (
             <button type="button" disabled={ocupado} className={BTN + " border border-borda-campo text-tinta hover:bg-linha"} onClick={() => rodar(() => descartarItem(item.id), "PDF descartado.")}>
               Descartar PDF
+            </button>
+          )}
+          {["rejeitado", "ignorado", "erro"].includes(item.situacao) && (
+            <button
+              type="button"
+              disabled={ocupado}
+              title="Na próxima leitura da pasta este PDF volta a ser lido"
+              className={BTN + " border border-borda-campo text-tinta hover:bg-linha"}
+              onClick={() => rodar(() => reativarItem(item.id), "PDF reativado: ele volta a ser lido na próxima leitura da pasta.")}
+            >
+              Ler de novo
             </button>
           )}
         </span>
