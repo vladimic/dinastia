@@ -2,6 +2,13 @@
 // Regra: a cada mudança entregue, acrescentar uma entrada NO TOPO.
 export const VERSOES: { numero: string; data: string; itens: string[] }[] = [
   {
+    numero: "0084",
+    data: "20/10/2026",
+    itens: [
+      "Pastas dos PDFs (Parâmetros globais e Importar tabelas): o caminho agora ocupa um campo de duas linhas, quebrando o texto, para aparecer inteiro (antes ficava cortado numa linha só).",
+    ],
+  },
+  {
     numero: "0083",
     data: "20/10/2026",
     itens: [
