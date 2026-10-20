@@ -43,10 +43,10 @@ npm run dev
 ```
 
 ## Dinastia Local (importação de PDFs)
-Programa que roda no Mac e permite ao site abrir o Finder com o caminho completo e, na próxima etapa, ler os PDFs das pastas.
+Programa que roda no Mac (baixado pela tela Importar tabelas (PDF); o código está em `public/dinastia_local.py`) e permite ao site abrir o Finder com o caminho completo e, na próxima etapa, ler os PDFs das pastas.
 ```bash
-python3 scripts/dinastia_local.py                                   # deixe a janela aberta
-python3 scripts/dinastia_local.py --origem https://SEU-SITE.vercel.app   # se o endereço do site for outro
+python3 ~/Downloads/dinastia_local.py                                   # deixe a janela aberta
+python3 ~/Downloads/dinastia_local.py --origem https://SEU-SITE.vercel.app   # se o endereço do site for outro
 ```
 
 ## Versionamento

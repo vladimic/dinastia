@@ -2,6 +2,13 @@
 // Regra: a cada mudança entregue, acrescentar uma entrada NO TOPO.
 export const VERSOES: { numero: string; data: string; itens: string[] }[] = [
   {
+    numero: "0082",
+    data: "20/10/2026",
+    itens: [
+      "Importar tabelas (PDF): passo a passo na própria tela para baixar o Dinastia Local (já configurado para o endereço do site) e abri-lo pelo Terminal do Mac, sem precisar de pasta de projeto nem de git.",
+    ],
+  },
+  {
     numero: "0081",
     data: "20/10/2026",
     itens: [

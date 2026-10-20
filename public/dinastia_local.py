@@ -7,8 +7,10 @@ Este programa faz isso por ele: o site chama http://127.0.0.1:8765 e este progra
 próxima etapa, lê os PDFs das pastas).
 
 Uso (Terminal):
-  python3 scripts/dinastia_local.py
-  python3 scripts/dinastia_local.py --origem https://SEU-SITE.vercel.app     # se o endereço do site for outro
+  python3 ~/Downloads/dinastia_local.py
+  python3 ~/Downloads/dinastia_local.py --origem https://SEU-SITE.vercel.app     # se o endereço do site for outro
+
+Baixe este arquivo pela tela Importar tabelas (PDF) do Dinastia: ele já vem com o endereço do site autorizado.
 
 Só aceita pedidos vindos dos sites informados em --origem (padrão: https://dinastia.vercel.app e http://localhost:3000)
 e só responde em 127.0.0.1 (nada sai do seu computador por aqui).
