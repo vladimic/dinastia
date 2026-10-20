@@ -2,6 +2,14 @@
 // Regra: a cada mudança entregue, acrescentar uma entrada NO TOPO.
 export const VERSOES: { numero: string; data: string; itens: string[] }[] = [
   {
+    numero: "0083",
+    data: "20/10/2026",
+    itens: [
+      "Pastas dos PDFs (Parâmetros globais e Importar tabelas): voltam a ser texto livre, sem o ícone do Finder, e o campo passa para uma segunda linha, com a largura toda, para o caminho caber. O Dinastia Local foi retirado.",
+      "Importar tabelas (PDF): o caminho e o liga/desliga de cada família valem só para a sessão do navegador (não alteram os Parâmetros globais; ao fechar a aba voltam ao padrão).",
+    ],
+  },
+  {
     numero: "0082",
     data: "20/10/2026",
     itens: [
