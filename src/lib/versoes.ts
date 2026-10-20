@@ -2,6 +2,15 @@
 // Regra: a cada mudança entregue, acrescentar uma entrada NO TOPO.
 export const VERSOES: { numero: string; data: string; itens: string[] }[] = [
   {
+    numero: "0085",
+    data: "20/10/2026",
+    itens: [
+      "Importar tabelas (PDF), família Imóveis: o botão “Escolher a pasta e ler os PDFs” abre o seletor de pastas do navegador; só os PDFs da raiz são lidos, no próprio navegador (nenhum PDF é enviado), arquivos duplicados são desprezados e os já lidos antes não são lidos de novo. O leitor foi reescrito em JavaScript e conferido contra os PDFs de exemplo; passou a ler também as tabelas com antecipado em várias parcelas e com parcelas reduzidas (grupos 560 e 12000).",
+      "Cada PDF é comparado com a versão atual da base e cada diferença vira uma decisão: Aceitar, Rejeitar ou Editar (grupo, créditos, tipos de parcela, modalidades e sequência). Dá para decidir em bloco (ex.: aceitar todos os “Número de participantes”) e a tela mostra sempre quanto falta decidir. Nada entra na base antes de tudo estar decidido.",
+      "Ao aplicar: grupo novo é criado; assembleia nova cria a versão em Grupo × Assembleia a partir da versão atual, já com as decisões; a mesma assembleia é atualizada. Antes de gravar, o sistema confere se a base mudou desde a leitura. Migração 0025 (tabelas importacao_item e importacao_diferenca e função aplicar_importacao).",
+    ],
+  },
+  {
     numero: "0084",
     data: "20/10/2026",
     itens: [

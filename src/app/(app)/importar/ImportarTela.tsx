@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { LeituraPdfs } from "./LeituraPdfs";
 
 type Pasta = { campo: string; rotulo: string; caminho: string };
 
@@ -32,12 +33,11 @@ export function ImportarTela({ pastas }: { pastas: Pasta[] }) {
   }
 
   const ligada = (c: string) => prefs[c]?.ativa !== false; // padrão: ligada
-  const quantas = pastas.filter((p) => ligada(p.campo)).length;
 
   return (
     <div className="flex max-w-[60rem] flex-col gap-4">
       <p className="text-sm text-tinta">
-        Ligue as famílias que serão lidas e confira a pasta de PDFs de cada uma. O caminho padrão vem dos Parâmetros globais; o que você mudar aqui vale só para esta sessão e não altera os Parâmetros.
+        Ligue as famílias que serão lidas. O caminho vem dos Parâmetros globais e serve de referência (o que você mudar aqui vale só para esta sessão e não altera os Parâmetros); na hora de ler, o navegador pede para escolher a pasta no Finder.
       </p>
       <ul className="flex flex-col gap-3">
         {pastas.map((p) => (
@@ -50,14 +50,6 @@ export function ImportarTela({ pastas }: { pastas: Pasta[] }) {
           />
         ))}
       </ul>
-      <div className="flex items-center gap-3 border-t border-linha pt-3">
-        <button type="button" disabled title="Próxima etapa" className="min-h-9 rounded-[10px] bg-navy px-5 text-sm font-bold text-white opacity-60">
-          Ler os PDFs das pastas ativas
-        </button>
-        <span className="text-xs text-tinta">
-          {quantas} {quantas === 1 ? "família ligada" : "famílias ligadas"} · leitura e comparação com a base: próxima etapa
-        </span>
-      </div>
     </div>
   );
 }
@@ -108,6 +100,12 @@ function Familia({
         autoComplete="off"
         aria-label={`Pasta dos PDFs de ${pasta.rotulo}`}
       />
+      {ligada &&
+        (pasta.campo === "pasta_pdf_imoveis" ? (
+          <LeituraPdfs rotulo={pasta.rotulo} caminho={caminho} />
+        ) : (
+          <p className="pl-[3.5rem] text-[11px] text-tinta">Leitura desta família ainda não disponível (por enquanto só Imóveis).</p>
+        ))}
     </li>
   );
 }
