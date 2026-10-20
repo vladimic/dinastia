@@ -2,6 +2,15 @@
 // Regra: a cada mudança entregue, acrescentar uma entrada NO TOPO.
 export const VERSOES: { numero: string; data: string; itens: string[] }[] = [
   {
+    numero: "0092",
+    data: "21/10/2026",
+    itens: [
+      "grupo_modalidade perde o campo transferível (nenhuma tela ou cálculo usava) e a tabela obsoleta usuario_autorizado foi apagada. Migração 0028.",
+      "Importação de PDFs: arquivos com sufixo “- 1%” ou “- 2%” (variações do PDF principal do grupo) deixam de ser lidos; a tela informa quantos foram desprezados. As leituras já feitas desses arquivos saíram da lista de decisões (as já aplicadas ficam como histórico).",
+      "Todos os PDFs voltam a ser lidos na próxima leitura da pasta (o leitor mudou).",
+    ],
+  },
+  {
     numero: "0091",
     data: "21/10/2026",
     itens: [

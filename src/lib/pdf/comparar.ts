@@ -84,7 +84,6 @@ const CAMPOS_MODALIDADE: { campo: keyof Modalidade; rotulo: string; vazioConta: 
   { campo: "emb_pct", rotulo: "embutido: % do lance", vazioConta: true },
   { campo: "a_partir", rotulo: "a partir da assembleia da cota", vazioConta: false },
   { campo: "req", rotulo: "requisitos", vazioConta: false },
-  { campo: "transf", rotulo: "transferível", vazioConta: false },
 ];
 
 const NOME_MODALIDADE: Record<string, string> = { SOR: "Sorteio", LIV: "Lance livre", LIM: "Lance limitado", FIX: "Lance fixo", FID: "Lance fidelidade" };

@@ -10,6 +10,9 @@ import { hashesJaLidos, registrarLeituras, type ResumoLote } from "./actions";
 
 const LOTE = 15;
 
+// "GRUPO 540 - 1%.pdf", "GRUPO 540 - 2%.pdf": variações do plano de antecipado do PDF principal (que é o "GRUPO 540.pdf"). Não são lidas.
+const VARIACAO = /[-–]\s*\d+\s*%\s*\.pdf$/i;
+
 async function sha256(dados: ArrayBuffer) {
   const h = await crypto.subtle.digest("SHA-256", dados);
   return [...new Uint8Array(h)].map((b) => b.toString(16).padStart(2, "0")).join("");
@@ -22,7 +25,7 @@ export function LeituraPdfs({ rotulo, caminho, chave }: { rotulo: string; caminh
   const router = useRouter();
   const entrada = useRef<HTMLInputElement>(null);
   const [estado, setEstado] = useState<{ fase: string; feito: number; total: number } | null>(null);
-  const [resumo, setResumo] = useState<{ pdfs: number; duplicados: number; jaLidos: number; r: ResumoLote; ilegiveis: string[] } | null>(null);
+  const [resumo, setResumo] = useState<{ pdfs: number; variacoes: number; duplicados: number; jaLidos: number; r: ResumoLote; ilegiveis: string[] } | null>(null);
   const [erro, setErro] = useState("");
   const ocupado = estado !== null;
   const [guardada, setGuardada] = useState<PastaHandle | null>(null);
@@ -62,7 +65,9 @@ export function LeituraPdfs({ rotulo, caminho, chave }: { rotulo: string; caminh
     setResumo(null);
     try {
       // só a raiz da pasta: caminho relativo "pasta/arquivo.pdf" (sem subpastas)
-      const pdfs = arquivos.filter((f) => /\.pdf$/i.test(f.name) && (f.webkitRelativePath || f.name).split("/").length <= 2);
+      const todosPdfs = arquivos.filter((f) => /\.pdf$/i.test(f.name) && (f.webkitRelativePath || f.name).split("/").length <= 2);
+      const variacoes = todosPdfs.filter((f) => VARIACAO.test(f.name)).length;
+      const pdfs = todosPdfs.filter((f) => !VARIACAO.test(f.name));
       if (!pdfs.length) {
         setErro("Nenhum PDF na raiz da pasta escolhida.");
         return;
@@ -122,7 +127,7 @@ export function LeituraPdfs({ rotulo, caminho, chave }: { rotulo: string; caminh
       }
       setEstado({ fase: "Comparando com a base", feito: novos.length, total: novos.length });
       await enviar();
-      setResumo({ pdfs: pdfs.length, duplicados, jaLidos: unicos.size - novos.length, r: total, ilegiveis });
+      setResumo({ pdfs: pdfs.length, variacoes, duplicados, jaLidos: unicos.size - novos.length, r: total, ilegiveis });
       router.refresh();
     } catch (e) {
       setErro((e as Error).message || "Não foi possível concluir a leitura.");
@@ -177,7 +182,7 @@ export function LeituraPdfs({ rotulo, caminho, chave }: { rotulo: string; caminh
       )}
       {resumo && (
         <p role="status" className="text-xs text-tinta">
-          <strong className="text-navy">{resumo.pdfs} PDFs na pasta:</strong> {resumo.duplicados} duplicados desprezados · {resumo.jaLidos} já lidos antes · {resumo.r.lidos} lidos agora
+          <strong className="text-navy">{resumo.pdfs} PDFs na pasta:</strong> {resumo.variacoes > 0 && `${resumo.variacoes} variações “- 1%” / “- 2%” desprezadas · `}{resumo.duplicados} duplicados desprezados · {resumo.jaLidos} já lidos antes · {resumo.r.lidos} lidos agora
           {resumo.r.lidos > 0 && ` (${resumo.r.novos} grupos novos, ${resumo.r.novasAssembleias} novas assembleias, ${resumo.r.semMudanca} sem mudança, ${resumo.r.ignorados} ignorados, ${resumo.r.erros} com erro)`}.
           {resumo.ilegiveis.length > 0 && (
             <span className="font-semibold text-[#9b1c1c]">

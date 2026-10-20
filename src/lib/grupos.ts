@@ -154,7 +154,6 @@ export type Modalidade = {
   embutido_pct: number | null;
   a_partir_assembleia_cota: number;
   requisitos: string | null;
-  transferivel: boolean;
   tipo_contemplacao: TipoRef;
 };
 
@@ -175,7 +174,7 @@ export async function carregarGrupo(numero: number) {
          arquivo_importado(nome),
          grupo_assembleia_tipo_parcela(tipo_parcela(codigo, descricao, pct)),
          grupo_modalidade(tipo, max_parcelas_lance, embutido_max_parcelas, embutido_pct,
-           a_partir_assembleia_cota, requisitos, transferivel, tipo_contemplacao(codigo, nome)),
+           a_partir_assembleia_cota, requisitos, tipo_contemplacao(codigo, nome)),
          grupo_sequencia_faixa(assembleia_de, assembleia_ate, demais_tipo, tipo_contemplacao(nome),
            grupo_sequencia(ordem, quantidade, tipo, tipo_contemplacao(codigo, nome)))`,
       )

@@ -22,7 +22,6 @@ function modalidadeDoBackup(m: Linha) {
     emb_pct: pct,
     a_partir: m.a_partir_assembleia_cota,
     req: m.requisitos,
-    transf: m.transferivel,
   };
 }
 
@@ -53,7 +52,7 @@ export async function exportarBackup(supabase: SupabaseClient, email: string) {
        arquivo:arquivo_importado(nome, hash_sha256, status, recebido_em, dados_extraidos),
        tipos_parcela:grupo_assembleia_tipo_parcela(tipo_parcela),
        modalidades:grupo_modalidade(tipo, max_parcelas_lance, embutido_max_parcelas, embutido_pct,
-         a_partir_assembleia_cota, requisitos, transferivel),
+         a_partir_assembleia_cota, requisitos),
        faixas:grupo_sequencia_faixa(assembleia_de, assembleia_ate, demais_tipo,
          itens:grupo_sequencia(ordem, tipo, quantidade))`,
       "id",

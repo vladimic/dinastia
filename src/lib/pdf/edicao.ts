@@ -3,7 +3,7 @@
 export type TipoValor = "numero" | "texto" | "booleano" | "data" | "lista_numeros" | "lista_codigos" | "nenhum";
 
 const CAMPOS_NUMERO = new Set(["prazo_grupo_meses", "participantes", "taxa_adm_total", "fundo_reserva", "mes_reajuste", "dia_vencimento", "prazo_cota", "max", "emb_parc", "emb_pct", "a_partir"]);
-const CAMPOS_BOOL = new Set(["transf"]);
+const CAMPOS_BOOL = new Set<string>(); // nenhum campo sim/não editável por enquanto
 const CAMPOS_DATA = new Set(["data_assembleia", "primeira_correcao"]);
 
 export function tipoDoCampo(escopo: string, campo: string): TipoValor {

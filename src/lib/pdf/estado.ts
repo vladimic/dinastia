@@ -6,7 +6,7 @@ import type { EstadoGrupo, GrupoBase, VersaoBase } from "./comparar";
 const SELECT = `numero, familia, prazo_grupo_meses, participantes, taxa_adm_total, fundo_reserva, indice, mes_reajuste, primeira_correcao, dia_vencimento,
   grupo_assembleia (assembleia_numero, data_assembleia, prazo_cota_meses, creditos, observacoes, pagamento_com_furo,
     grupo_assembleia_tipo_parcela (tipo_parcela),
-    grupo_modalidade (tipo, max_parcelas_lance, embutido_max_parcelas, embutido_pct, a_partir_assembleia_cota, requisitos, transferivel),
+    grupo_modalidade (tipo, max_parcelas_lance, embutido_max_parcelas, embutido_pct, a_partir_assembleia_cota, requisitos),
     grupo_sequencia_faixa (assembleia_de, assembleia_ate, demais_tipo, grupo_sequencia (ordem, tipo, quantidade)))`;
 
 type Linha = Record<string, any>; // eslint-disable-line @typescript-eslint/no-explicit-any
@@ -22,7 +22,6 @@ function versao(v: Linha): VersaoBase {
       emb_pct: num(m.embutido_pct),
       a_partir: m.a_partir_assembleia_cota,
       req: m.requisitos,
-      transf: m.transferivel,
     };
   }
   const faixas: Faixa[] = (v.grupo_sequencia_faixa ?? [])
