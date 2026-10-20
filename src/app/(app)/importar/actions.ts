@@ -215,6 +215,16 @@ export async function descartarItem(itemId: number): Promise<{ ok: true } | Falh
   return { ok: true };
 }
 
+/** Tira da lista um PDF descartado, ignorado ou com erro: na próxima leitura da pasta ele volta a ser lido. */
+export async function reativarItem(itemId: number): Promise<{ ok: true } | Falha> {
+  if (!(await quem())) return NEGADO;
+  const supabase = await createClient();
+  const { error } = await supabase.from("importacao_item").delete().eq("id", itemId).in("situacao", ["rejeitado", "ignorado", "erro"]);
+  if (error) return { ok: false, erro: "Não foi possível reativar." };
+  revalidatePath("/importar");
+  return { ok: true };
+}
+
 // ---------------------------------------------------------------- aplicar na base
 
 type ItemLinha = { id: number; hash_sha256: string; arquivo: string; grupo_numero: number; assembleia_numero: number; leitura: Leitura; situacao: string; tipo: string };
