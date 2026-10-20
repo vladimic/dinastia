@@ -2,11 +2,10 @@
 
 import { useState } from "react";
 import { BotaoPasta } from "@/components/BotaoPasta";
-import { ajustarCaminho } from "@/lib/pastaLocal";
 
 export function CampoPasta({ nome, rotulo, inicial }: { nome: string; rotulo: string; inicial: string }) {
   const [valor, setValor] = useState(inicial);
-  const [aviso, setAviso] = useState("");
+  const [aviso, setAviso] = useState<{ erro: boolean; texto: string } | null>(null);
 
   return (
     <div className="flex flex-col gap-1">
@@ -19,7 +18,7 @@ export function CampoPasta({ nome, rotulo, inicial }: { nome: string; rotulo: st
             value={valor}
             onChange={(e) => {
               setValor(e.target.value);
-              setAviso("");
+              setAviso(null);
             }}
             maxLength={500}
             spellCheck={false}
@@ -27,21 +26,18 @@ export function CampoPasta({ nome, rotulo, inicial }: { nome: string; rotulo: st
           />
           <BotaoPasta
             rotulo={rotulo}
-            onEscolher={(pasta) => {
-              const r = ajustarCaminho(valor, pasta.name);
-              setValor(r.caminho);
-              setAviso(
-                r.confere
-                  ? "Pasta confirmada."
-                  : "O navegador informa só o nome da pasta (" + pasta.name + "): confira o início do caminho e depois salve.",
-              );
+            inicio={valor}
+            onEscolher={(c) => {
+              setValor(c);
+              setAviso({ erro: false, texto: "Pasta escolhida. Clique em Salvar para gravar." });
             }}
+            onErro={(texto) => setAviso({ erro: true, texto })}
           />
         </span>
       </label>
       {aviso && (
-        <p role="status" className="pl-[7.75rem] text-[11px] text-tinta max-sm:pl-0">
-          {aviso}
+        <p role="status" className={"pl-[7.75rem] text-[11px] max-sm:pl-0 " + (aviso.erro ? "font-semibold text-[#9b1c1c]" : "text-tinta")}>
+          {aviso.texto}
         </p>
       )}
     </div>
