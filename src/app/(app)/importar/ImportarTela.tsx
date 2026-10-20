@@ -102,7 +102,7 @@ function Familia({
       />
       {ligada &&
         (pasta.campo === "pasta_pdf_imoveis" ? (
-          <LeituraPdfs rotulo={pasta.rotulo} caminho={caminho} />
+          <LeituraPdfs rotulo={pasta.rotulo} caminho={caminho} chave={pasta.campo} />
         ) : (
           <p className="pl-[3.5rem] text-[11px] text-tinta">Leitura desta família ainda não disponível (por enquanto só Imóveis).</p>
         ))}

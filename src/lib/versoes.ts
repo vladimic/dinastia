@@ -2,6 +2,13 @@
 // Regra: a cada mudança entregue, acrescentar uma entrada NO TOPO.
 export const VERSOES: { numero: string; data: string; itens: string[] }[] = [
   {
+    numero: "0086",
+    data: "20/10/2026",
+    itens: [
+      "Importar tabelas (PDF): a leitura agora usa o seletor de pastas do Chrome. O navegador não consegue abrir o seletor num caminho digitado, então na primeira vez você escolhe a pasta; depois ela fica lembrada neste navegador e o botão passa a “Ler os PDFs de Imóveis”, que reabre a mesma pasta direto (só pede a permissão de leitura). Há o link “Trocar pasta”. A raiz da pasta é lida pelo próprio navegador, sem a janela de “enviar arquivos” de antes. Em navegadores sem esse recurso, continua o seletor comum.",
+    ],
+  },
+  {
     numero: "0085",
     data: "20/10/2026",
     itens: [

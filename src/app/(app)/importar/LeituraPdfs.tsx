@@ -1,7 +1,8 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import { escolherPasta, guardarPasta, lerPastaGuardada, liberarLeitura, pdfsDaRaiz, suportaSeletorDePasta, type PastaHandle } from "@/lib/pastaLocal";
 import { extrairLinhas } from "@/lib/pdf/extrair";
 import { interpretar } from "@/lib/pdf/interpretar";
 import type { Leitura } from "@/lib/pdf/tipos";
@@ -17,13 +18,44 @@ async function sha256(dados: ArrayBuffer) {
 const VAZIO: ResumoLote = { lidos: 0, novos: 0, novasAssembleias: 0, semMudanca: 0, comDiferencas: 0, ignorados: 0, erros: 0 };
 
 // Lê os PDFs da pasta escolhida (só a raiz), no próprio navegador, e manda ao Dinastia o que foi lido (não os PDFs).
-export function LeituraPdfs({ rotulo, caminho }: { rotulo: string; caminho: string }) {
+export function LeituraPdfs({ rotulo, caminho, chave }: { rotulo: string; caminho: string; chave: string }) {
   const router = useRouter();
   const entrada = useRef<HTMLInputElement>(null);
   const [estado, setEstado] = useState<{ fase: string; feito: number; total: number } | null>(null);
   const [resumo, setResumo] = useState<{ pdfs: number; duplicados: number; jaLidos: number; r: ResumoLote; ilegiveis: string[] } | null>(null);
   const [erro, setErro] = useState("");
   const ocupado = estado !== null;
+  const [guardada, setGuardada] = useState<PastaHandle | null>(null);
+  const [seletor, setSeletor] = useState(false);
+  useEffect(() => {
+    /* eslint-disable react-hooks/set-state-in-effect -- lê a pasta lembrada neste navegador */
+    setSeletor(suportaSeletorDePasta());
+    lerPastaGuardada(chave).then(setGuardada);
+    /* eslint-enable react-hooks/set-state-in-effect */
+  }, [chave]);
+
+  // Chrome: reabre a pasta lembrada (só pede a permissão de leitura) ou abre o seletor; outros navegadores: seletor comum.
+  async function comecar(trocar: boolean) {
+    setErro("");
+    if (!seletor) {
+      entrada.current?.click();
+      return;
+    }
+    try {
+      let pasta = trocar ? null : guardada;
+      if (pasta && !(await liberarLeitura(pasta))) pasta = null;
+      if (!pasta) {
+        pasta = await escolherPasta(chave, guardada);
+        if (!pasta) return;
+        await guardarPasta(chave, pasta);
+        setGuardada(pasta);
+      }
+      await ler(await pdfsDaRaiz(pasta));
+    } catch (e) {
+      const nome = (e as DOMException).name;
+      setErro(nome === "SecurityError" ? "O Chrome não permite ler esta pasta (é protegida). Escolha outra ou use o seletor comum abaixo." : (e as Error).message || "Não foi possível abrir a pasta.");
+    }
+  }
 
   async function ler(arquivos: File[]) {
     setErro("");
@@ -113,10 +145,22 @@ export function LeituraPdfs({ rotulo, caminho }: { rotulo: string; caminho: stri
           onChange={(e) => e.target.files && ler(Array.from(e.target.files))}
           aria-label={`Pasta dos PDFs de ${rotulo}`}
         />
-        <button type="button" disabled={ocupado} onClick={() => entrada.current?.click()} className="min-h-9 rounded-[10px] bg-navy px-4 text-sm font-bold text-white hover:brightness-110 disabled:opacity-60">
-          {ocupado ? "Lendo…" : `Escolher a pasta e ler os PDFs de ${rotulo}`}
+        <button type="button" disabled={ocupado} onClick={() => comecar(false)} className="min-h-9 rounded-[10px] bg-navy px-4 text-sm font-bold text-white hover:brightness-110 disabled:opacity-60">
+          {ocupado ? "Lendo…" : guardada ? `Ler os PDFs de ${rotulo}` : `Escolher a pasta e ler os PDFs de ${rotulo}`}
         </button>
-        <span className="text-[11px] text-tinta">Escolha a pasta {caminho ? <code className="font-mono">{caminho.split("/").pop()}</code> : "dos PDFs"}; só os PDFs da raiz são lidos.</span>
+        {guardada && !ocupado && (
+          <span className="text-[11px] text-tinta">
+            Pasta lembrada: <code className="font-mono">{guardada.name}</code>{" "}
+            <button type="button" className="font-semibold text-navy underline" onClick={() => comecar(true)}>
+              Trocar pasta
+            </button>
+          </span>
+        )}
+        {!guardada && (
+          <span className="text-[11px] text-tinta">
+            O navegador não abre direto no caminho cadastrado{caminho ? <> (<code className="font-mono">{caminho.split("/").pop()}</code>)</> : ""}: escolha a pasta esta primeira vez; depois ela fica lembrada. Só os PDFs da raiz são lidos.
+          </span>
+        )}
       </div>
       {estado && (
         <div role="status" className="flex flex-col gap-1">
