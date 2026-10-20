@@ -89,7 +89,7 @@ export function LeituraPdfs({ rotulo, caminho, chave }: { rotulo: string; caminh
       const conhecidos = new Set<string>();
       const hashes = [...unicos.keys()];
       for (let i = 0; i < hashes.length; i += 200) for (const h of await hashesJaLidos(hashes.slice(i, i + 200))) conhecidos.add(h);
-      const novos = hashes.filter((h) => !conhecidos.has(h));
+      const novos = hashes.filter((h) => !conhecidos.has(h)).sort((a, b) => unicos.get(a)!.file.name.localeCompare(unicos.get(b)!.file.name, "pt-BR", { numeric: true }));
 
       const pdfjs = await import("pdfjs-dist");
       pdfjs.GlobalWorkerOptions.workerSrc = "/pdf.worker.min.mjs";

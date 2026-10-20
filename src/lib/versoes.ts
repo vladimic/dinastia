@@ -2,6 +2,15 @@
 // Regra: a cada mudança entregue, acrescentar uma entrada NO TOPO.
 export const VERSOES: { numero: string; data: string; itens: string[] }[] = [
   {
+    numero: "0087",
+    data: "20/10/2026",
+    itens: [
+      "Leitor de PDFs: corrigido o embutido dos lances quando o PDF cita uma regra mais de uma vez para a mesma modalidade (ex.: grupo 540, Lance livre e Fidelidade). Valia só o texto da última regra, mas os números (parcelas, base, %) ficavam da primeira; agora ficam coerentes e a modalidade sem “embutir” na regra final fica sem embutido.",
+      "PDFs lidos por um leitor mais antigo são lidos de novo automaticamente na próxima leitura da pasta (os já aplicados ou descartados nunca). As decisões já tomadas que continuam valendo são mantidas.",
+      "Vários PDFs do mesmo grupo e assembleia que só diferem no que a base não guarda (plano de antecipado 1% ou 2%, valores das parcelas) passam a contar como duplicados: fica o primeiro, em ordem de nome, e os demais aparecem em Ignorados como “Duplicado de …”.",
+    ],
+  },
+  {
     numero: "0086",
     data: "20/10/2026",
     itens: [

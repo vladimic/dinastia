@@ -1,4 +1,4 @@
-import type { Faixa, Leitura, Linha, LinhaCredito, Modalidade, Parcela } from "./tipos";
+import { LEITOR, type Faixa, type Leitura, type Linha, type LinhaCredito, type Modalidade, type Parcela } from "./tipos";
 
 // Interpreta as linhas de texto (com posição) de um PDF de tabela de grupo da Ademicon.
 // Porta do antigo scripts/importar_tabelas.py; o que muda é o texto de entrada (pdf.js em vez de pdftotext)
@@ -178,6 +178,8 @@ export function interpretar(linhas: Linha[], arquivo: string, hash: string): Lei
           continue;
         }
         d.emb_texto = regra.trim().replace(/\.$/, "");
+        // vale a última regra citada para a modalidade: sem "embutir" nela, não há embutido (zera o que uma regra anterior tenha preenchido)
+        Object.assign(d, { emb_parc: null, emb_pct: null, emb_base: null });
         if (r1) Object.assign(d, { emb_parc: Number(r1[2]), emb_pct: Number(r1[3]), emb_base: r1[4].includes("ofertado") ? "ofertado" : "categoria" });
         else if (r2) Object.assign(d, { emb_pct: Number(r2[1]), emb_base: "ofertado" });
         d.rec_proprio = !(d.emb_base === "ofertado" && d.emb_pct === 100);
@@ -230,6 +232,7 @@ export function interpretar(linhas: Linha[], arquivo: string, hash: string): Lei
   if (Math.max(...razoesSeg) - Math.min(...razoesSeg) > 0.000002) avisos.push("seguro não é proporcional ao crédito em todas as linhas");
 
   return {
+    leitor: LEITOR,
     arquivo,
     hash,
     numero,
