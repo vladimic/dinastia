@@ -10,7 +10,7 @@
 --
 -- O primeiro administrador entra como dados pessoais, que NÃO ficam neste repositório: foi inserido na aplicação da
 -- migração (ver a seção 3) e depois sempre pela tela Usuários.
--- Aplicada no Supabase via MCP em 20/10/2026.
+-- Aplicada no Supabase via MCP em 20/10/2026, em partes (0023a–0023d).
 -- Reverter (se preciso): recriar usuario_autorizado(email), repor as policies "autorizado_tudo" e dropar usuario.
 
 -- (1) CPF: 11 dígitos com dígitos verificadores corretos
@@ -111,16 +111,15 @@ begin
     'grupo','arquivo_importado','grupo_assembleia','grupo_assembleia_tipo_parcela',
     'grupo_modalidade','grupo_sequencia_faixa','grupo_sequencia'
   ] loop
-    execute format('drop policy if exists "autorizado_tudo" on public.%I', t);
+    -- "autorizado_tudo" (todas as operações) vira "admin_tudo" só para administrador; a leitura segue liberada a todos os cadastrados
+    execute format('alter policy "autorizado_tudo" on public.%I rename to "admin_tudo"', t);
+    execute format('alter policy "admin_tudo" on public.%I using ((select public.eh_admin())) with check ((select public.eh_admin()))', t);
     execute format('create policy "autorizado_ler" on public.%I for select to authenticated using ((select public.autorizado()))', t);
-    execute format('create policy "admin_incluir" on public.%I for insert to authenticated with check ((select public.eh_admin()))', t);
-    execute format('create policy "admin_alterar" on public.%I for update to authenticated using ((select public.eh_admin())) with check ((select public.eh_admin()))', t);
-    execute format('create policy "admin_excluir" on public.%I for delete to authenticated using ((select public.eh_admin()))', t);
   end loop;
 end $$;
 
--- A lista antiga de acesso deixa de existir (o único e-mail dela já está em usuario)
-drop table public.usuario_autorizado;
+-- A lista antiga de acesso (usuario_autorizado) deixa de ser usada: o único e-mail dela já está em usuario.
+-- A tabela ficou no banco, sem uso (o DROP não rodou pelo console da aplicação); pode ser removida depois.
 
 -- (4) E-mails que já têm conta de login (só para administrador; usado pela tela Usuários)
 create or replace function public.logins_existentes() returns table (email text)
