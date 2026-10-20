@@ -7,22 +7,21 @@ export type Parcela = { plano: "DILUIDA" | "ANTECIPADO_1"; pct: number; primeira
 export type LinhaCredito = { cod: string; credito: number; seguro: number; parcelas: Parcela[] };
 
 export type Modalidade = {
+  /** máximo de parcelas do lance; nulo = qualquer quantidade até o prazo do grupo */
   max: number | null;
-  pct_cat: number | null;
+  /** máximo de parcelas do lance que podem ser embutidas (pagas com a carta); nulo = sem limite em parcelas */
   emb_parc: number | null;
-  emb_base: "ofertado" | "categoria" | null;
+  /** % do lance ofertado que pode ser embutido; nulo = sem limite em % (100%). Os dois nulos = sem embutido */
   emb_pct: number | null;
-  rec_proprio: boolean | null;
   a_partir: number;
   req: string | null;
   transf: boolean;
-  emb_texto: string | null;
 };
 
 export type Faixa = { de: number; ate: number; itens: { qtd: number; tipo: string }[]; demais: string | null };
 
 /** Versão do leitor de PDFs: sobe quando uma correção muda o que é lido (PDFs lidos antes com versão menor são lidos de novo). */
-export const LEITOR = 3;
+export const LEITOR = 4;
 
 export type Leitura = {
   leitor: number;

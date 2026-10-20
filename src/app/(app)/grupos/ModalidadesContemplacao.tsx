@@ -17,10 +17,10 @@ const DICA_EMBUTIDO =
 
 // % do lance que pode ser embutido, calculado no lance máximo; sem limite de parcelas usa o prazo do grupo
 function pctEmbutido(m: Modalidade, prazo: number): number {
-  if (m.embutido_pct === null) return 0;
-  if (m.embutido_base === "ofertado") return Math.round(Number(m.embutido_pct));
-  if (m.embutido_max_parcelas === null) return Math.round(Number(m.embutido_pct));
-  return Math.floor((100 * m.embutido_max_parcelas) / (m.max_parcelas_lance ?? prazo)); // "aprox. 50 parcelas" de 99 = 50%
+  if (m.embutido_pct === null && m.embutido_max_parcelas === null) return 0;
+  const porPct = m.embutido_pct === null ? 100 : Number(m.embutido_pct);
+  const porParcelas = m.embutido_max_parcelas === null ? 100 : (100 * m.embutido_max_parcelas) / (m.max_parcelas_lance ?? prazo); // "aprox. 50 parcelas" de 99 = 50%
+  return Math.floor(Math.min(100, porPct, porParcelas));
 }
 
 export function ModalidadesContemplacao({ modalidades, tipos, prazoGrupo }: Props) {

@@ -24,15 +24,11 @@ export async function hashesJaLidos(hashes: string[]): Promise<string[]> {
   const conhecidos = new Set<string>();
   for (let i = 0; i < hashes.length; i += 100) {
     const parte = hashes.slice(i, i + 100);
-    const [a, b] = await Promise.all([
-      supabase.from("importacao_item").select("hash_sha256, situacao, leitor:leitura->>leitor").in("hash_sha256", parte),
-      supabase.from("arquivo_importado").select("hash_sha256").in("hash_sha256", parte),
-    ]);
-    // já decidido (aplicado/descartado) nunca é lido de novo; o resto só se foi lido por um leitor mais antigo ou com erro
-    for (const r of (a.data ?? []) as { hash_sha256: string; situacao: string; leitor: string | null }[]) {
-      if (r.situacao === "aplicado" || r.situacao === "rejeitado" || (r.situacao !== "erro" && Number(r.leitor ?? 0) >= LEITOR)) conhecidos.add(r.hash_sha256);
+    const { data } = await supabase.from("importacao_item").select("hash_sha256, situacao, leitor:leitura->>leitor").in("hash_sha256", parte);
+    // descartado pelo administrador nunca volta; o resto só é lido de novo se o leitor mudou desde a última leitura (ou deu erro)
+    for (const r of (data ?? []) as { hash_sha256: string; situacao: string; leitor: string | null }[]) {
+      if (r.situacao === "rejeitado" || (r.situacao !== "erro" && Number(r.leitor ?? 0) >= LEITOR)) conhecidos.add(r.hash_sha256);
     }
-    for (const r of b.data ?? []) conhecidos.add(r.hash_sha256 as string);
   }
   return [...conhecidos];
 }
@@ -81,7 +77,7 @@ export async function registrarLeituras(leituras: Leitura[], falhas: { arquivo: 
     let id: number;
     let antigas: { escopo: string; chave: string; campo: string; valor_atual: unknown; valor_novo: unknown; decisao: string; valor_final: unknown; decidido_por: string | null; decidido_em: string | null }[] = [];
     if (existente) {
-      if (existente.situacao === "aplicado" || existente.situacao === "rejeitado") return; // já decidido: nunca é lido de novo
+      if (existente.situacao === "rejeitado") return; // descartado pelo administrador: nunca é lido de novo
       const { error } = await supabase.from("importacao_item").update({ ...linha, lido_por: email }).eq("id", existente.id);
       if (error) throw error;
       id = existente.id;

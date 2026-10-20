@@ -2,7 +2,6 @@
 
 import { useMemo, useRef, useState, useTransition } from "react";
 import {
-  CANCELADA,
   linhaDetalhada,
   notaFidelidade,
   notaSorteios,
@@ -96,7 +95,7 @@ export function SequenciaContemplacao({ versaoId, modelo, linha, faixas, tipos, 
   const fila = useRef<Edicao | null>(null);
   const emVoo = useRef(false);
 
-  const livres = tipos.filter((t) => t.codigo !== SORTEIO && t.codigo !== CANCELADA);
+  const livres = tipos.filter((t) => t.codigo !== SORTEIO);
   const porCodigo = useMemo(() => new Map(tipos.map((t) => [t.codigo, t])), [tipos]);
   const codigos = useMemo(() => new Set(tipos.map((t) => t.codigo)), [tipos]);
 

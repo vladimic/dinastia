@@ -12,9 +12,12 @@ function faixa(f: Faixa) {
 function modalidade(m: Modalidade) {
   const partes: string[] = [];
   if (m.max !== null) partes.push(`máx. ${m.max} parcelas`);
-  if (m.pct_cat !== null) partes.push(`${String(m.pct_cat).replace(".", ",")}% da categoria`);
-  if (m.emb_texto) partes.push(m.emb_texto);
-  return partes.join(" · ") || "sem regras adicionais";
+  if (m.emb_parc === null && m.emb_pct === null) partes.push("sem embutido");
+  else {
+    if (m.emb_parc !== null) partes.push(`embutir até ${m.emb_parc} parcelas`);
+    if (m.emb_pct !== null) partes.push(`embutir até ${String(m.emb_pct).replace(".", ",")}% do lance`);
+  }
+  return partes.join(" · ");
 }
 
 export function textoDoValor(escopo: string, campo: string, v: unknown): string {

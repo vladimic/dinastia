@@ -2,6 +2,15 @@
 // Regra: a cada mudança entregue, acrescentar uma entrada NO TOPO.
 export const VERSOES: { numero: string; data: string; itens: string[] }[] = [
   {
+    numero: "0090",
+    data: "21/10/2026",
+    itens: [
+      "Modelo de dados das modalidades (grupo_modalidade) enxuto: saem % da categoria (é máx. de parcelas ÷ prazo do grupo), base do embutido, texto do embutido e recurso próprio obrigatório (é o lance menos o embutido). O embutido passa a ter dois campos: limite em parcelas e % do lance (os dois vazios = sem embutido). O simulador, o quadro Modalidades de contemplação, a Tabela Resumo, o backup e a importação de PDFs foram ajustados; o simulador continua calculando o mesmo embutido (o menor entre o % do lance e o limite em parcelas). Migração 0026.",
+      "Sorteio Cota Cancelada (CAN) removido de todo o sistema (cadastro, modalidades, sequências, editor de sequência, leitor de PDF, backup); fica só o Sorteio ativo (SOR).",
+      "Importação de PDFs: o leitor passa a guardar só os campos novos. Todos os PDFs, inclusive os já aplicados, são lidos de novo na próxima leitura da pasta (só os que você descartou não voltam). A carga antiga de imóveis (tela Importar carga) foi removida.",
+    ],
+  },
+  {
     numero: "0089",
     data: "20/10/2026",
     itens: [

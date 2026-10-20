@@ -31,7 +31,7 @@ export async function carregarGruposImoveis(supabase: SupabaseClient): Promise<G
       .select(
         `id, pagamento_com_furo, fidelidade_meses,
          tipos:grupo_assembleia_tipo_parcela(tipo_parcela(pct)),
-         modalidades:grupo_modalidade(tipo, max_parcelas_lance, embutido_max_parcelas, embutido_base, embutido_pct, embutido_texto),
+         modalidades:grupo_modalidade(tipo, max_parcelas_lance, embutido_max_parcelas, embutido_pct),
          faixas:grupo_sequencia_faixa(assembleia_de, assembleia_ate, demais_tipo, itens:grupo_sequencia(ordem, tipo, quantidade))`,
       )
       .in("id", ids.slice(i, i + 60));
@@ -59,9 +59,7 @@ export async function carregarGruposImoveis(supabase: SupabaseClient): Promise<G
           tipo: String(m.tipo),
           max: num(m.max_parcelas_lance),
           emb_parc: num(m.embutido_max_parcelas),
-          emb_base: (m.embutido_base as ModalidadeEntrada["emb_base"]) ?? null,
           emb_pct: num(m.embutido_pct),
-          emb_texto: (m.embutido_texto as string | null) ?? null,
         }),
       ),
       faixas: faixas

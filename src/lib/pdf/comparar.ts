@@ -77,20 +77,17 @@ const CAMPOS_GRUPO: { campo: keyof GrupoBase; rotulo: string; leitura: (l: Leitu
   { campo: "dia_vencimento", rotulo: "Dia de vencimento", leitura: (l) => l.vencimento },
 ];
 
-const CAMPOS_MODALIDADE: { campo: keyof Modalidade; rotulo: string }[] = [
-  { campo: "max", rotulo: "máx. de parcelas do lance" },
-  { campo: "pct_cat", rotulo: "% da categoria" },
-  { campo: "emb_parc", rotulo: "embutido: parcelas" },
-  { campo: "emb_base", rotulo: "embutido: base" },
-  { campo: "emb_pct", rotulo: "embutido: %" },
-  { campo: "rec_proprio", rotulo: "recurso próprio obrigatório" },
-  { campo: "a_partir", rotulo: "a partir da assembleia da cota" },
-  { campo: "req", rotulo: "requisitos" },
-  { campo: "transf", rotulo: "transferível" },
-  { campo: "emb_texto", rotulo: "texto do embutido" },
+const CAMPOS_MODALIDADE: { campo: keyof Modalidade; rotulo: string; vazioConta: boolean }[] = [
+  { campo: "max", rotulo: "máx. de parcelas do lance", vazioConta: false },
+  // o embutido é sempre decidido pelo PDF: vazio = sem embutido (ou sem limite naquele critério)
+  { campo: "emb_parc", rotulo: "embutido: máx. de parcelas", vazioConta: true },
+  { campo: "emb_pct", rotulo: "embutido: % do lance", vazioConta: true },
+  { campo: "a_partir", rotulo: "a partir da assembleia da cota", vazioConta: false },
+  { campo: "req", rotulo: "requisitos", vazioConta: false },
+  { campo: "transf", rotulo: "transferível", vazioConta: false },
 ];
 
-const NOME_MODALIDADE: Record<string, string> = { SOR: "Sorteio", CAN: "Sorteio cota cancelada", LIV: "Lance livre", LIM: "Lance limitado", FIX: "Lance fixo", FID: "Lance fidelidade" };
+const NOME_MODALIDADE: Record<string, string> = { SOR: "Sorteio", LIV: "Lance livre", LIM: "Lance limitado", FIX: "Lance fixo", FID: "Lance fidelidade" };
 export const nomeModalidade = (t: string) => NOME_MODALIDADE[t] ?? t;
 
 export function comparar(l: Leitura, e: EstadoGrupo, c: Classificacao): Diferenca[] {
@@ -131,8 +128,8 @@ export function comparar(l: Leitura, e: EstadoGrupo, c: Classificacao): Diferenc
       continue;
     }
     for (const f of CAMPOS_MODALIDADE) {
-      // o PDF só traz regras de embutido em parte das modalidades; campo vazio no PDF não apaga o que a base tem
-      if (b[f.campo] === null) continue;
+      // campo vazio no PDF não apaga o que a base tem (exceto o embutido, que o PDF sempre define)
+      if (!f.vazioConta && b[f.campo] === null) continue;
       if (!mesmo(a[f.campo], b[f.campo])) d.push({ escopo: "modalidade", chave: t, campo: f.campo, rotulo: `${nomeModalidade(t)}: ${f.rotulo}`, valor_atual: a[f.campo] ?? null, valor_novo: b[f.campo] });
     }
   }
