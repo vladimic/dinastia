@@ -1,3 +1,4 @@
+import { canon } from "./canon";
 import type { Faixa, Leitura, Modalidade } from "./tipos";
 
 // Compara o que veio de um PDF com o que está na base e lista cada diferença (que o administrador aceita, rejeita ou edita).
@@ -138,7 +139,7 @@ export function comparar(l: Leitura, e: EstadoGrupo, c: Classificacao): Diferenc
   for (const de of [...new Set([...fa.keys(), ...fb.keys()])].sort((x, y) => x - y)) {
     const a = fa.get(de);
     const b = fb.get(de);
-    if (JSON.stringify(a ?? null) !== JSON.stringify(b ?? null))
+    if (canon(a) !== canon(b))
       d.push({ escopo: "sequencia", chave: String(de), campo: "*", rotulo: `Sequência de contemplação, a partir da ${de}ª assembleia`, valor_atual: a ?? null, valor_novo: b ?? null });
   }
   return d;
@@ -154,7 +155,8 @@ function resumoGrupoNovo(l: Leitura) {
     taxa_adm: l.taxa_adm,
     creditos: l.creditos.length,
     tipos_parcela: tiposParcelaDe(l),
-    modalidades: Object.keys(l.modalidades),
+    // em ordem fixa: o banco (jsonb) devolve as chaves de l.modalidades noutra ordem e a conferência antes de aplicar compara este resumo
+    modalidades: ["SOR", "LIV", "LIM", "FIX", "FID"].filter((t) => t in l.modalidades),
   };
 }
 

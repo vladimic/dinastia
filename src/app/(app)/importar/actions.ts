@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 import { ehAdministrador, usuarioAtual } from "@/lib/usuario";
 import { carregarEstados } from "@/lib/pdf/estado";
 import { classificar, comparar, montarFinal, tiposParcelaDe, type Decidida, type Diferenca } from "@/lib/pdf/comparar";
+import { canon } from "@/lib/pdf/canon";
 import { converterEdicao } from "@/lib/pdf/edicao";
 import { LEITOR, type Leitura } from "@/lib/pdf/tipos";
 
@@ -38,7 +39,7 @@ export type ResumoLote = { lidos: number; novos: number; novasAssembleias: numbe
 // Dois PDFs do mesmo grupo e assembleia são "o mesmo" quando trazem os mesmos dados que o Dinastia guarda;
 // o que a base não guarda (plano de antecipado, valores das parcelas) não conta (ex.: "GRUPO 540 - 1%" e "- 2%").
 const assinatura = (l: Leitura) =>
-  JSON.stringify({
+  canon({
     numero: l.numero, familia: l.familia, assembleia: l.assembleia, data: l.data_assembleia, prazo_cota: l.prazo_cota, prazo_grupo: l.prazo_grupo,
     participantes: l.participantes, taxa_adm: l.taxa_adm, indice: l.indice, mes_reajuste: l.mes_reajuste, primeira_correcao: l.primeira_correcao,
     vencimento: l.vencimento, fundo_reserva: l.fundo_reserva, observacoes: l.observacoes, creditos: l.creditos.map((c) => c.credito).sort((a, b) => b - a),
@@ -93,7 +94,7 @@ export async function registrarLeituras(leituras: Leitura[], falhas: { arquivo: 
     }
     if (diffs.length) {
       const reaproveita = (d: Diferenca) => {
-        const v = antigas.find((a) => a.escopo === d.escopo && a.chave === d.chave && a.campo === d.campo && a.decisao !== "pendente" && JSON.stringify(a.valor_atual ?? null) === JSON.stringify(d.valor_atual ?? null) && JSON.stringify(a.valor_novo ?? null) === JSON.stringify(d.valor_novo ?? null));
+        const v = antigas.find((a) => a.escopo === d.escopo && a.chave === d.chave && a.campo === d.campo && a.decisao !== "pendente" && canon(a.valor_atual) === canon(d.valor_atual) && canon(a.valor_novo) === canon(d.valor_novo));
         return v ? { decisao: v.decisao, valor_final: v.valor_final, decidido_por: v.decidido_por, decidido_em: v.decidido_em } : {};
       };
       const { error } = await supabase.from("importacao_diferenca").insert(diffs.map((d) => ({ item_id: id, ...d, ...reaproveita(d) })));
@@ -233,7 +234,7 @@ async function aplicarUm(supabase: Awaited<ReturnType<typeof createClient>>, ite
     novas.length !== lista.length ||
     novas.some((n) => {
       const g = guardadas.get(chave(n));
-      return !g || JSON.stringify(g.valor_atual ?? null) !== JSON.stringify(n.valor_atual ?? null) || JSON.stringify(g.valor_novo ?? null) !== JSON.stringify(n.valor_novo ?? null);
+      return !g || canon(g.valor_atual) !== canon(n.valor_atual) || canon(g.valor_novo) !== canon(n.valor_novo);
     });
   if (mudou || c.tipo === "anterior") return { erro: "a base mudou desde a leitura; leia o PDF de novo" };
 
