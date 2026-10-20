@@ -6,6 +6,7 @@ import { PASTAS_PDF } from "@/lib/pastasPdf";
 import { ehAdministrador } from "@/lib/usuario";
 import { pct } from "@/lib/formato";
 import { padroesDeLinha, type TipoColuna } from "@/lib/simulacao";
+import { CampoPasta } from "./CampoPasta";
 import { salvarParametros } from "./actions";
 
 export const metadata: Metadata = { title: "Parâmetros globais · Dinastia" };
@@ -159,17 +160,7 @@ async function Formulario({ searchParams }: { searchParams: PageProps<"/parametr
       <div className="flex w-full max-w-[60rem] flex-col gap-3 rounded-2xl border border-borda bg-white p-5">
         <h2 className="text-sm font-bold">Pastas dos PDFs das tabelas</h2>
         {PASTAS_PDF.map(({ campo, rotulo }) => (
-          <label key={campo} className="grid grid-cols-[7rem_1fr] items-center gap-3 text-xs font-semibold text-tinta max-sm:grid-cols-1">
-            {rotulo}
-            <input
-              className="campo-sm !text-left font-mono"
-              name={campo}
-              defaultValue={(data as Record<string, string | null> | null)?.[campo] ?? ""}
-              maxLength={500}
-              spellCheck={false}
-              autoComplete="off"
-            />
-          </label>
+          <CampoPasta key={campo} nome={campo} rotulo={rotulo} inicial={(data as Record<string, string | null> | null)?.[campo] ?? ""} />
         ))}
         <p className="text-[11px] leading-snug text-tinta">
           Diretório padrão onde ficam os PDFs de cada família de tabelas; será usado pelo programa de importação.
