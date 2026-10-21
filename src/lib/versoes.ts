@@ -2,6 +2,13 @@
 // Regra: a cada mudança entregue, acrescentar uma entrada NO TOPO.
 export const VERSOES: { numero: string; data: string; itens: string[] }[] = [
   {
+    numero: "0105",
+    data: "21/10/2026",
+    itens: [
+      "Simulador: os tipos de parcela da lateral ficam numa linha só, sem o rótulo “Tipo de parcela”; o título é a frase logo acima (“Parcela Reduzida 50% · com furo”).",
+    ],
+  },
+  {
     numero: "0104",
     data: "21/10/2026",
     itens: [
