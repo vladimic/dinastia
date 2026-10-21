@@ -255,7 +255,7 @@ function Cotas({ cotas, setCotas }: { cotas: number; setCotas: (v: number) => vo
 /** Faixa fixa no topo, igual nas duas abas: o essencial do grupo. */
 function Resumo() {
   const { grupo: g, realizadas, faltam, creditos, disponiveis, cotas, setCotas } = useDados();
-  const { furo, creditoSel, setCreditoSel, tipoSel, setTipoSel } = useSimulacao();
+  const { furo, creditoSel, setCreditoSel } = useSimulacao();
   // todos os percentuais do cadastro (do maior para o menor); em verde os oferecidos pelo grupo
   const tipos = [...g.tiposParcela].sort((a, b) => b.pct - a.pct);
   const item = "flex min-w-0 flex-col gap-1 px-4 py-2.5";
@@ -336,30 +336,21 @@ function Resumo() {
         <span id="rotulo-tipos-grupo" className={rotulo}>
           Tipos de parcela
         </span>
-        {/* em verde os oferecidos (clicar escolhe o tipo usado no simulador); os demais ficam apagados */}
+        {/* em verde os oferecidos; os demais ficam apagados. A escolha do tipo é feita no simulador */}
         <div role="group" aria-labelledby="rotulo-tipos-grupo" className="flex flex-wrap gap-1">
           {tipos.map((t) => {
             const on = disponiveis.has(t.codigo);
-            const sel = on && t.codigo === tipoSel;
             return (
-              <button
+              <span
                 key={t.codigo}
-                type="button"
-                disabled={!on}
-                aria-pressed={sel}
-                onClick={() => setTipoSel(t.codigo)}
-                title={!on ? `${t.descricao}: não oferecido pelo grupo` : sel ? `${t.descricao}: usado no simulador` : `${t.descricao}: usar no simulador`}
+                title={on ? `${t.descricao}: oferecido pelo grupo` : `${t.descricao}: não oferecido pelo grupo`}
                 className={
                   "rounded-md border px-1.5 py-0.5 text-[12px] font-bold tabular-nums " +
-                  (!on
-                    ? "cursor-not-allowed border-borda bg-linha text-tinta/50"
-                    : sel
-                      ? "border-laranja bg-laranja-claro text-navy"
-                      : "border-[#b8dcc0] bg-ok-fundo text-ok hover:border-ok")
+                  (on ? "border-[#b8dcc0] bg-ok-fundo text-ok" : "border-borda bg-linha text-tinta/50")
                 }
               >
                 {t.pct}%<span className="sr-only">{on ? " oferecido" : " não oferecido"}</span>
-              </button>
+              </span>
             );
           })}
         </div>
