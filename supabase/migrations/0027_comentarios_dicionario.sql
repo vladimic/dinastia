@@ -113,6 +113,12 @@ comment on column public.importacao_diferenca.decisao is 'pendente, aceita, reje
 comment on column public.importacao_diferenca.valor_final is 'Valor digitado, quando a decisão é editada.';
 comment on column public.importacao_diferenca.decidido_por is 'E-mail de quem decidiu.';
 comment on column public.importacao_diferenca.decidido_em is 'Quando decidiu.';
+comment on table public.importacao_faltante is 'Grupos para os quais não veio PDF na leitura da pasta e o administrador escolheu esperar o PDF (reimportar). O salto automático de assembleia não precisa de registro aqui: ele grava a nova versão do grupo (e um item em importacao_item).';
+comment on column public.importacao_faltante.grupo_numero is 'Grupo sem PDF na assembleia de referência.';
+comment on column public.importacao_faltante.decisao is 'aguardando_pdf: o administrador vai reimportar o PDF deste grupo.';
+comment on column public.importacao_faltante.data_ref is 'Data da assembleia de referência da leitura em que o PDF faltou.';
+comment on column public.importacao_faltante.decidido_por is 'E-mail de quem decidiu.';
+comment on column public.importacao_faltante.decidido_em is 'Quando decidiu.';
 comment on table public.usuario is 'Quem pode entrar no Dinastia e se é administrador. Contém dados pessoais (CPF, telefone): proteja o arquivo exportado. Tela: Cadastros › Usuários.';
 comment on column public.usuario.cpf is 'CPF, só dígitos, validado. Chave do cadastro.';
 comment on column public.usuario.email is 'E-mail do login (minúsculo, único).';

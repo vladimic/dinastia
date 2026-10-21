@@ -11,7 +11,7 @@ pos={
  'tipo_parcela':(730,30),'grupo_assembleia_tipo_parcela':(730,150),
  'grupo_modalidade':(730,300),'tipo_contemplacao':(1080,380),
  'grupo_sequencia_faixa':(380,640),'grupo_sequencia':(730,640),
- 'importacao_item':(30,900),'importacao_diferenca':(380,900),
+ 'importacao_item':(30,900),'importacao_diferenca':(380,900),'importacao_faltante':(730,900),
  'parametros_gerais':(1080,900),'usuario':(1080,30),
 }
 def alt(t): return HH+len(tb[t]['colunas'])*LH+10
@@ -48,6 +48,7 @@ rel('grupo_sequencia_faixa','r','grupo_sequencia','l','faixa_id')
 rel('tipo_contemplacao','b','grupo_sequencia','r','tipo',via=((1220,600),(1030,600),(1030,690)),offp=0.5,offf=0.3)
 rel('tipo_contemplacao','b','grupo_sequencia_faixa','b','demais_tipo',via=((1260,800),(520,800)),offp=0.85,offf=0.5)
 rel('importacao_item','r','importacao_diferenca','l','item_id')
+rel('grupo','b','importacao_faltante','t','grupo_numero',via=((130,830),(870,830)),offp=0.2,offf=0.5)
 body=[]
 for t,(x,y) in pos.items():
     d=tb[t]; h=alt(t); c=cor[d['grupo']]
