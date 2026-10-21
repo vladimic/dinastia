@@ -182,6 +182,7 @@ export function montarFinal(l: Leitura, e: EstadoGrupo, c: Classificacao, decidi
       grupo: { familia: l.familia.replace("-", "_"), prazo_grupo_meses: l.prazo_grupo, participantes: l.participantes, taxa_adm_total: l.taxa_adm, fundo_reserva: l.fundo_reserva, indice: l.indice, mes_reajuste: l.mes_reajuste, primeira_correcao: l.primeira_correcao, dia_vencimento: l.vencimento },
       versao: {
         data_assembleia: l.data_assembleia, prazo_cota: l.prazo_cota, observacoes: l.observacoes, creditos: l.creditos.map((x) => x.credito), tipos_parcela: tiposParcelaDe(l),
+        pagamento_com_furo: true, // grupo novo entra com pagamento com furo = sim
         modalidades: Object.entries(l.modalidades).map(([tipo, m]) => limpa({ tipo, ...m })),
         faixas: l.faixas.map((f) => limpa({ de: f.de, ate: f.ate, demais: f.demais, itens: f.itens })),
       },

@@ -2,6 +2,15 @@
 // Regra: a cada mudança entregue, acrescentar uma entrada NO TOPO.
 export const VERSOES: { numero: string; data: string; itens: string[] }[] = [
   {
+    numero: "0098",
+    data: "21/10/2026",
+    itens: [
+      "Exportar Tabela Resumo: a coluna Emb (embutido) deixa de mostrar parcelas (“50P”) e passa a mostrar sempre o percentual, calculado como no quadro Modalidades de contemplação de Grupos e Tabelas (o menor entre o % do lance e o limite em parcelas sobre o lance máximo, arredondado para baixo).",
+      "Exportar Tabela Resumo: com 3 sorteios ou mais, a ordem de contemplação começa com uma célula só (“sor3”, “sor4”, “sor5”); antes isso valia só a partir de 4. Com 1 ou 2 sorteios, continuam um a um.",
+      "Importação de PDFs: grupo NOVO passa a entrar com pagamento com furo = sim. Os últimos grupos novos importados (12208, 12210 e 12211) foram atualizados para furo = sim; o 12208 estava como não.",
+    ],
+  },
+  {
     numero: "0097",
     data: "21/10/2026",
     itens: [
