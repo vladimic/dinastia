@@ -74,17 +74,19 @@ function qtd(m: ModalidadeEntrada | undefined, prazo: number): string {
   return m.max === null || m.max >= prazo ? "*" : `${m.max}P`;
 }
 
-// "Emb": fração do lance que pode ser embutida (1 = 100%) ou, quando a regra é só um limite de parcelas,
-// esse limite ("60P"). Sem regra de embutido, 0.
-function emb(m: ModalidadeEntrada | undefined): number | string | null {
+// "Emb": fração do lance que pode ser embutida (1 = 100%), sempre em percentual, como no quadro Modalidades de contemplação
+// de Grupos e Tabelas: o menor entre o % do lance e o limite em parcelas sobre o lance máximo (sem máximo, o prazo do grupo),
+// arredondado para baixo. Sem regra de embutido, 0.
+function emb(m: ModalidadeEntrada | undefined, prazo: number): number | null {
   if (!m) return null;
-  if (m.emb_pct !== null) return Number(m.emb_pct) / 100;
-  if (m.emb_parc !== null) return `${m.emb_parc}P`;
-  return 0;
+  if (m.emb_pct === null && m.emb_parc === null) return 0;
+  const porPct = m.emb_pct === null ? 100 : Number(m.emb_pct);
+  const porParcelas = m.emb_parc === null ? 100 : (100 * m.emb_parc) / (m.max ?? prazo);
+  return Math.floor(Math.min(100, porPct, porParcelas)) / 100;
 }
 
 // Ordem de contemplação: o máximo de sorteios + a ordem do grupo, até POSICOES posições.
-// Até 3 sorteios aparecem um a um ("sor sor sor"); a partir de 4 viram uma célula só ("sor5").
+// Até 2 sorteios aparecem um a um ("sor sor"); a partir de 3 viram uma célula só ("sor3", "sor5").
 export function ordemResumo(faixas: Faixa[]): string[] {
   const m = modelar(faixas);
   if (!m) return [];
@@ -93,7 +95,7 @@ export function ordemResumo(faixas: Faixa[]): string[] {
     return ult ? montarOrdem(ult.itens, ult.demais, POSICOES).map((c) => c.toLowerCase()) : [];
   }
   const maxSor = Math.max(0, ...m.sorteios.map((s) => s.qtd));
-  const junta = maxSor > 3;
+  const junta = maxSor >= 3;
   const linha = linhaDoModelo(m, POSICOES + (junta ? maxSor - 1 : 0));
   const final = junta ? [`SOR${maxSor}`, ...linha.slice(maxSor)] : linha;
   return final.slice(0, POSICOES).map((c) => c.toLowerCase());
@@ -122,7 +124,7 @@ export function montarLinhas(grupos: GrupoEntrada[], base: Mes): LinhaResumo[] {
     .sort((a, b) => a.numero - b.numero)
     .map((g) => {
       const mods = new Map(g.modalidades.map((m) => [m.tipo, m]));
-      const mod = (t: string) => ({ qtd: qtd(mods.get(t), g.prazo_grupo), emb: emb(mods.get(t)) });
+      const mod = (t: string) => ({ qtd: qtd(mods.get(t), g.prazo_grupo), emb: emb(mods.get(t), g.prazo_grupo) });
       const total = base.ano * 12 + (base.mes - 1) + (g.prazo_cota - 1);
       const f = mods.get("FID");
       return {
@@ -142,7 +144,7 @@ export function montarLinhas(grupos: GrupoEntrada[], base: Mes): LinhaResumo[] {
           // o banco guarda o mês em que o FID entra na sequência (37); aqui vale a parcela em que libera (36)
           meses: !f ? "não" : g.fid_meses ? g.fid_meses - 1 : "?",
           qtd: qtd(f, g.prazo_grupo),
-          emb: emb(f),
+          emb: emb(f, g.prazo_grupo),
         },
         liv: mod("LIV"),
         creditos: [...g.creditos].sort((a, b) => a - b).map((c) => c / 1000),
