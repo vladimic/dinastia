@@ -2,6 +2,14 @@
 // Regra: a cada mudança entregue, acrescentar uma entrada NO TOPO.
 export const VERSOES: { numero: string; data: string; itens: string[] }[] = [
   {
+    numero: "0100",
+    data: "21/10/2026",
+    itens: [
+      "Simulador: o “% próprio” do cabeçalho de cada lance (bolinha amarela) passa a ser calculado: lance com recurso próprio ÷ crédito contratado. Fixo, Limitado, Livre e Fidelidade mostram o seu percentual; fora do que o grupo oferece, aparece “—”.",
+      "Simulador: o Dinheiro Novo passa a ser o crédito disponível após a contemplação menos o lance com recurso próprio. Antes também descontava as parcelas já pagas até a contemplação; o Custo Mensal e o Custo Anual mudam junto, porque são calculados sobre o dinheiro novo.",
+    ],
+  },
+  {
     numero: "0099",
     data: "21/10/2026",
     itens: [

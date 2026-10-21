@@ -7,22 +7,23 @@ import { useSimulacao } from "./SimulacaoContext";
 import { reais0, useDados } from "./GrupoDetalhe";
 
 // Simulador do grupo: os cálculos vêm de src/lib/simulacao.ts, com os parâmetros numa coluna à esquerda
-// e a grade de resultados à direita. Só o "% Próprio" do cabeçalho de cada lance ainda é número de exemplo (bolinha amarela).
+// e a grade de resultados à direita.
 
+const p1 = (v: number) => v.toLocaleString("pt-BR", { minimumFractionDigits: 1, maximumFractionDigits: 1 }) + "%";
 const p2 = (v: number) => v.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + "%";
 const dinheiro = (v: number | null | undefined) => (v === null || v === undefined ? "—" : reais0(v));
 const nf2 = new Intl.NumberFormat("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 const nf4 = new Intl.NumberFormat("pt-BR", { minimumFractionDigits: 4, maximumFractionDigits: 4 });
 
 type Cor = "navy" | "ouro" | "laranja" | "livre";
-type Meta = { chave: string; tipo: TipoColuna; titulo: string; numero?: number; proprioPct?: number; icone?: "cadeado" | "martelo"; cor: Cor };
+type Meta = { chave: string; tipo: TipoColuna; titulo: string; numero?: number; icone?: "cadeado" | "martelo"; cor: Cor };
 
 const COLUNAS: Meta[] = [
   { chave: "sorteio", tipo: "SOR", titulo: "Sorteio", cor: "navy" },
-  { chave: "fixo", tipo: "FIX", titulo: "Lance Fixo", numero: 1, proprioPct: 0, icone: "cadeado", cor: "navy" },
-  { chave: "limitado", tipo: "LIM", titulo: "Lance Limitado", numero: 2, proprioPct: 25, icone: "cadeado", cor: "ouro" },
-  { chave: "livre", tipo: "LIV", titulo: "Lance Livre", numero: 3, proprioPct: 35, icone: "martelo", cor: "livre" },
-  { chave: "fidelidade", tipo: "FID", titulo: "Lance Fidelidade", numero: 4, proprioPct: 42, icone: "martelo", cor: "laranja" },
+  { chave: "fixo", tipo: "FIX", titulo: "Lance Fixo", numero: 1, icone: "cadeado", cor: "navy" },
+  { chave: "limitado", tipo: "LIM", titulo: "Lance Limitado", numero: 2, icone: "cadeado", cor: "ouro" },
+  { chave: "livre", tipo: "LIV", titulo: "Lance Livre", numero: 3, icone: "martelo", cor: "livre" },
+  { chave: "fidelidade", tipo: "FID", titulo: "Lance Fidelidade", numero: 4, icone: "martelo", cor: "laranja" },
 ];
 
 // cor de cada coluna só na borda de cima e em fundos claros: o corpo da página fica claro, distinto do menu azul
@@ -40,15 +41,6 @@ type Coluna = Meta & {
   rodape: { titulo: string; texto: string };
 };
 
-function Fic() {
-  return (
-    <i
-      aria-label="Ainda não calculado"
-      title="Ainda não calculado (valor de exemplo)"
-      className="inline-block h-2 w-2 shrink-0 rounded-full bg-[#f5c400] ring-1 ring-[#b38f00]"
-    />
-  );
-}
 function Cadeado() {
   return (
     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-label="Valor fixo">
@@ -103,7 +95,7 @@ function Cabecalho({ c, aoMudarQtd }: { c: Coluna; aoMudarQtd: (v: string) => vo
             </div>
           </div>
           <div className="mt-auto flex items-center gap-1 text-[10px] font-bold whitespace-nowrap text-tinta">
-            <Fic /> {c.proprioPct}% {c.icone === "cadeado" ? <Cadeado /> : <Martelo />} próprio
+            {c.calc ? p1(c.calc.proprioPct) : "—"} {c.icone === "cadeado" ? <Cadeado /> : <Martelo />} próprio
           </div>
         </>
       )}
