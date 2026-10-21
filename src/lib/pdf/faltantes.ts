@@ -92,7 +92,7 @@ export function montarSalto(estado: EstadoGrupo, dataRef: string, email: string)
       creditos: v.creditos.map(Number),
       tipos_parcela: v.tipos_parcela,
       modalidades: Object.entries(v.modalidades).map(([tipo, m]) => Object.fromEntries(Object.entries({ tipo, ...m }).filter(([, x]) => x !== null && x !== undefined))),
-      faixas: v.faixas.map((f) => Object.fromEntries(Object.entries({ de: f.de, ate: f.ate, demais: f.demais, itens: f.itens }).filter(([, x]) => x !== null && x !== undefined))),
+      faixas: v.faixas.map((f) => Object.fromEntries(Object.entries({ de: f.de, ate: f.ate, demais: f.demais, demais2: f.demais2, itens: f.itens }).filter(([, x]) => x !== null && x !== undefined))),
     },
     _nova: nova,
     _de: v.assembleia_numero,

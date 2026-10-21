@@ -92,7 +92,7 @@ export function ordemResumo(faixas: Faixa[]): string[] {
   if (!m) return [];
   if (!m.simples) {
     const ult = [...faixas].sort((a, b) => a.de - b.de).at(-1);
-    return ult ? montarOrdem(ult.itens, ult.demais, POSICOES).map((c) => c.toLowerCase()) : [];
+    return ult ? montarOrdem(ult.itens, ult.demais, POSICOES, ult.demais2).map((c) => c.toLowerCase()) : [];
   }
   const maxSor = Math.max(0, ...m.sorteios.map((s) => s.qtd));
   const junta = maxSor >= 3;

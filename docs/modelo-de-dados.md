@@ -21,6 +21,7 @@ erDiagram
   tipo_contemplacao ||--o{ grupo_modalidade : "tipo"
   grupo_assembleia ||--o{ grupo_sequencia_faixa : "grupo_assembleia_id"
   tipo_contemplacao ||--o{ grupo_sequencia_faixa : "demais_tipo"
+  tipo_contemplacao ||--o{ grupo_sequencia_faixa : "demais_tipo_2"
   grupo_sequencia_faixa ||--o{ grupo_sequencia : "faixa_id"
   tipo_contemplacao ||--o{ grupo_sequencia : "tipo"
   grupo ||--o{ importacao_faltante : "grupo_numero"
@@ -115,6 +116,7 @@ erDiagram
     int assembleia_de
     int assembleia_ate
     string demais_tipo FK
+    string demais_tipo_2 FK
   }
   grupo_sequencia {
     int id PK
@@ -183,6 +185,7 @@ erDiagram
 | grupo_modalidade | tipo | tipo_contemplacao | codigo | bloqueia | De qual modalidade é a regra. |
 | grupo_sequencia_faixa | grupo_assembleia_id | grupo_assembleia | id | apaga junto | Faixas da sequência de contemplação da versão. |
 | grupo_sequencia_faixa | demais_tipo | tipo_contemplacao | codigo | bloqueia | Modalidade das demais contemplações. |
+| grupo_sequencia_faixa | demais_tipo_2 | tipo_contemplacao | codigo | bloqueia | Segunda modalidade, alternada com a primeira, nas demais contemplações. |
 | grupo_sequencia | faixa_id | grupo_sequencia_faixa | id | apaga junto | Itens (ordem) de cada faixa. |
 | grupo_sequencia | tipo | tipo_contemplacao | codigo | bloqueia | Modalidade do item da sequência. |
 | importacao_faltante | grupo_numero | grupo | numero | apaga junto | Grupo que ficou aguardando PDF na leitura. |
@@ -321,6 +324,7 @@ Faixas de assembleias da sequência de contemplação (ex.: da 1ª à 36ª; da 3
 | `assembleia_de` | inteiro | sim |  | Primeira assembleia da cota da faixa. |
 | `assembleia_ate` | inteiro | sim |  | Última assembleia da cota da faixa. |
 | `demais_tipo` | texto | não | FK→tipo_contemplacao.codigo | Modalidade das demais contemplações depois da sequência. Vazio = repete a sequência (sem o sorteio). |
+| `demais_tipo_2` | texto | não | FK→tipo_contemplacao.codigo | Segunda modalidade das demais contemplações (“seguem com Livre e Fidelidade”). Preenchida, as demais alternam demais_tipo, demais_tipo_2, demais_tipo… Vazio = só demais_tipo. |
 
 #### `grupo_sequencia`
 

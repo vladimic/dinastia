@@ -72,19 +72,20 @@ function Codigos({ itens, porLinha }: { itens: Posicao[]; porLinha?: number }) {
   );
 }
 
-type Campos = { sorteios: { de: string; qtd: string }[]; ordem: string[]; demais: string; fid: string };
+type Campos = { sorteios: { de: string; qtd: string }[]; ordem: string[]; demais: string; demais2: string; fid: string };
 type Estado = { tipo: "ocioso" } | { tipo: "salvando" } | { tipo: "salvo" } | { tipo: "erro"; msg: string };
 
 const paraEdicao = (c: Campos): Edicao => ({
   sorteios: c.sorteios.map((s) => ({ de: Number(s.de), qtd: Number(s.qtd) })),
   ordem: c.ordem,
   demais: c.demais || null,
+  demais2: c.demais && c.demais2 ? c.demais2 : null,
   fidelidadeMeses: c.fid.trim() ? Number(c.fid) : null,
 });
 
 export function SequenciaContemplacao({ versaoId, modelo, linha, faixas, tipos, fidelidadeMeses }: Props) {
   const [editando, setEditando] = useState(false);
-  const [campos, setCampos] = useState<Campos>({ sorteios: [], ordem: [], demais: "", fid: "" });
+  const [campos, setCampos] = useState<Campos>({ sorteios: [], ordem: [], demais: "", demais2: "", fid: "" });
   const [estado, setEstado] = useState<Estado>({ tipo: "ocioso" });
   const [descartar, setDescartar] = useState(false);
   const [, iniciar] = useTransition();
@@ -105,6 +106,7 @@ export function SequenciaContemplacao({ versaoId, modelo, linha, faixas, tipos, 
       sorteios: modelo.sorteios.map((s) => ({ de: String(s.de), qtd: String(s.qtd) })),
       ordem: [...modelo.ordem],
       demais: modelo.demais ?? "",
+      demais2: modelo.demais2 ?? "",
       fid: fidelidadeMeses ? String(fidelidadeMeses) : "",
     };
     atual.current = c;
@@ -164,6 +166,7 @@ export function SequenciaContemplacao({ versaoId, modelo, linha, faixas, tipos, 
       sorteios: s.length ? s : [{ de: 1, qtd: 1 }],
       ordem: campos.ordem,
       demais: campos.demais || null,
+      demais2: campos.demais && campos.demais2 ? campos.demais2 : null,
     };
     const fid = Number(campos.fid) || null;
     return linhaDetalhada(m, fid).map((p) => ({ ...(porCodigo.get(p.codigo) ?? { codigo: p.codigo, nome: p.codigo, cor: "#5b5680" }), desde: p.desde }));
@@ -353,7 +356,7 @@ export function SequenciaContemplacao({ versaoId, modelo, linha, faixas, tipos, 
           <select
             className={CTRL + " w-full"}
             value={campos.demais}
-            onChange={(e) => mudar((c) => ({ ...c, demais: e.target.value }), true)}
+            onChange={(e) => mudar((c) => ({ ...c, demais: e.target.value, demais2: e.target.value ? c.demais2 : "" }), true)}
           >
             <option value="">repetir a ordem (sem sorteio)</option>
             {livres.map((t) => (
@@ -362,6 +365,23 @@ export function SequenciaContemplacao({ versaoId, modelo, linha, faixas, tipos, 
               </option>
             ))}
           </select>
+          {campos.demais && (
+            <select
+              className={CTRL + " w-full"}
+              value={campos.demais2}
+              onChange={(e) => mudar((c) => ({ ...c, demais2: e.target.value }), true)}
+              aria-label="Alternar com"
+            >
+              <option value="">sem alternar</option>
+              {livres
+                .filter((t) => t.codigo !== campos.demais)
+                .map((t) => (
+                  <option key={t.codigo} value={t.codigo}>
+                    alternar com {t.codigo}
+                  </option>
+                ))}
+            </select>
+          )}
         </label>
         <label className="flex flex-col gap-1 text-xs font-bold text-tinta">
           Fidelidade entra na sequência no mês

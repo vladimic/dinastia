@@ -17,10 +17,10 @@ export type Modalidade = {
   req: string | null;
 };
 
-export type Faixa = { de: number; ate: number; itens: { qtd: number; tipo: string }[]; demais: string | null };
+export type Faixa = { de: number; ate: number; itens: { qtd: number; tipo: string }[]; demais: string | null; demais2?: string | null };
 
 /** Versão do leitor de PDFs: sobe quando uma correção muda o que é lido (PDFs lidos antes com versão menor são lidos de novo). */
-export const LEITOR = 5;
+export const LEITOR = 6;
 
 export type Leitura = {
   leitor: number;

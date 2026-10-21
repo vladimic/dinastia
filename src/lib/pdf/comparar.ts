@@ -146,7 +146,7 @@ export function comparar(l: Leitura, e: EstadoGrupo, c: Classificacao): Diferenc
 }
 
 // Mesma ordem de chaves nos dois lados, para a comparação por texto não depender de quem montou o objeto.
-const normalizarFaixa = (f: Faixa): Faixa => ({ de: f.de, ate: f.ate, itens: f.itens.map((i) => ({ qtd: i.qtd, tipo: i.tipo })), demais: f.demais ?? null });
+const normalizarFaixa = (f: Faixa): Faixa => ({ de: f.de, ate: f.ate, itens: f.itens.map((i) => ({ qtd: i.qtd, tipo: i.tipo })), demais: f.demais ?? null, demais2: f.demais2 ?? null });
 
 function resumoGrupoNovo(l: Leitura) {
   return {
@@ -184,7 +184,7 @@ export function montarFinal(l: Leitura, e: EstadoGrupo, c: Classificacao, decidi
         data_assembleia: l.data_assembleia, prazo_cota: l.prazo_cota, observacoes: l.observacoes, creditos: l.creditos.map((x) => x.credito), tipos_parcela: tiposParcelaDe(l),
         pagamento_com_furo: true, // grupo novo entra com pagamento com furo = sim
         modalidades: Object.entries(l.modalidades).map(([tipo, m]) => limpa({ tipo, ...m })),
-        faixas: l.faixas.map((f) => limpa({ de: f.de, ate: f.ate, demais: f.demais, itens: f.itens })),
+        faixas: l.faixas.map((f) => limpa({ de: f.de, ate: f.ate, demais: f.demais, demais2: f.demais2, itens: f.itens })),
       },
     };
   }
@@ -238,7 +238,7 @@ export function montarFinal(l: Leitura, e: EstadoGrupo, c: Classificacao, decidi
       tipos_parcela: val("tipos_parcela", "", "tipos_parcela", v.tipos_parcela),
       pagamento_com_furo: v.pagamento_com_furo ?? false,
       modalidades: Object.entries(mods).map(([tipo, m]) => limpa({ tipo, ...m })),
-      faixas: [...faixas.values()].filter((f): f is Faixa => !!f).sort((a, b) => a.de - b.de).map((f) => limpa({ de: f.de, ate: f.ate, demais: f.demais, itens: f.itens })),
+      faixas: [...faixas.values()].filter((f): f is Faixa => !!f).sort((a, b) => a.de - b.de).map((f) => limpa({ de: f.de, ate: f.ate, demais: f.demais, demais2: f.demais2, itens: f.itens })),
     },
   };
 }

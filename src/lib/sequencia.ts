@@ -9,7 +9,7 @@ export const SORTEIO = "SOR";
 export const FIDELIDADE = "FID";
 
 export type Item = { codigo: string; qtd: number };
-export type Faixa = { de: number; ate: number; itens: Item[]; demais: string | null };
+export type Faixa = { de: number; ate: number; itens: Item[]; demais: string | null; demais2?: string | null };
 
 export type ModeloSequencia = {
   /** false = as faixas diferem por outro motivo além de SOR/FID (regra específica) */
@@ -20,6 +20,8 @@ export type ModeloSequencia = {
   ordem: string[];
   /** tipo das demais contemplações; nulo = repete a ordem, sem o sorteio */
   demais: string | null;
+  /** 2º tipo das demais: com ele, as demais alternam demais, demais2, demais, ... */
+  demais2: string | null;
   /** último mês da sequência (prazo do grupo) */
   prazo: number;
 };
@@ -27,7 +29,7 @@ export type ModeloSequencia = {
 const soma = (itens: Item[], codigo: string) => itens.filter((i) => i.codigo === codigo).reduce((s, i) => s + i.qtd, 0);
 const expandir = (itens: Item[]) => itens.flatMap((i) => Array<string>(Math.max(1, i.qtd)).fill(i.codigo));
 const assinatura = (f: Faixa) =>
-  JSON.stringify([f.itens.filter((i) => ![SORTEIO, FIDELIDADE].includes(i.codigo)).map((i) => [i.codigo, i.qtd]), f.demais]);
+  JSON.stringify([f.itens.filter((i) => ![SORTEIO, FIDELIDADE].includes(i.codigo)).map((i) => [i.codigo, i.qtd]), f.demais, f.demais2 ?? null]);
 
 export function modelar(faixas: Faixa[]): ModeloSequencia | null {
   if (!faixas.length) return null;
@@ -48,19 +50,20 @@ export function modelar(faixas: Faixa[]): ModeloSequencia | null {
     sorteios,
     ordem: expandir(base.itens).filter((c) => c !== SORTEIO),
     demais: ultima.demais,
+    demais2: ultima.demais2 ?? null,
     prazo: ultima.ate,
   };
 }
 
-// Completa a ordem até o limite: se há tipo para as demais contemplações, repete esse tipo;
-// se a regra é "mesma ordem", repete a ordem sem o sorteio.
-export function montarOrdem(itens: Item[], demais: string | null, limite = LIMITE_ORDEM): string[] {
+// Completa a ordem até o limite: se há tipo para as demais contemplações, repete esse tipo
+// (ou alterna os dois, quando há demais2); se a regra é "mesma ordem", repete a ordem sem o sorteio.
+export function montarOrdem(itens: Item[], demais: string | null, limite = LIMITE_ORDEM, demais2: string | null = null): string[] {
   const base = expandir(itens);
   const ordem = base.slice(0, limite);
   if (ordem.length >= limite) return ordem;
 
   if (demais) {
-    while (ordem.length < limite) ordem.push(demais);
+    for (let i = 0; ordem.length < limite; i++) ordem.push(demais2 && i % 2 === 1 ? demais2 : demais);
     return ordem;
   }
 
@@ -74,7 +77,7 @@ export function montarOrdem(itens: Item[], demais: string | null, limite = LIMIT
 export function linhaDoModelo(m: ModeloSequencia, limite = LIMITE_ORDEM): string[] {
   const maxSor = Math.max(0, ...m.sorteios.map((s) => s.qtd));
   const itens: Item[] = [...(maxSor > 0 ? [{ codigo: SORTEIO, qtd: maxSor }] : []), ...m.ordem.map((codigo) => ({ codigo, qtd: 1 }))];
-  return montarOrdem(itens, m.demais, limite);
+  return montarOrdem(itens, m.demais, limite, m.demais2);
 }
 
 // "Sorteios: 1 até o mês 47; 2 do mês 48 ao 71; 3 a partir do mês 72." (só quando a quantidade muda)
@@ -118,6 +121,7 @@ export type Edicao = {
   sorteios: { de: number; qtd: number }[];
   ordem: string[];
   demais: string | null;
+  demais2: string | null;
   /** mês em que o fidelidade libera; é também o mês em que o FID passa a constar na ordem */
   fidelidadeMeses: number | null;
 };
@@ -135,6 +139,7 @@ export function validarEdicao(e: Edicao, codigosValidos: Set<string>): string | 
   const livres = (c: string) => codigosValidos.has(c) && c !== SORTEIO;
   if (!e.ordem.every(livres)) return "Modalidade inválida na ordem (o sorteio não entra aqui).";
   if (e.demais !== null && !livres(e.demais)) return "Modalidade inválida nas demais contemplações.";
+  if (e.demais2 !== null && (e.demais === null || !livres(e.demais2))) return "Modalidade inválida nas demais contemplações.";
   if (e.fidelidadeMeses !== null && (!Number.isInteger(e.fidelidadeMeses) || e.fidelidadeMeses < 2))
     return "Mês de liberação do fidelidade: número maior que 1.";
   if (e.ordem.includes(FIDELIDADE) && !e.fidelidadeMeses)
@@ -162,6 +167,6 @@ export function gerarFaixas(e: Edicao, prazo: number): Faixa[] {
         poe(SORTEIO, qtd);
       }
       for (const c of ordem) poe(c, 1);
-      return { de, ate: i + 1 < arr.length ? arr[i + 1] - 1 : prazo, itens, demais: e.demais };
+      return { de, ate: i + 1 < arr.length ? arr[i + 1] - 1 : prazo, itens, demais: e.demais, demais2: e.demais2 };
     });
 }
