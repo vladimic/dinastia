@@ -406,12 +406,9 @@ export function Simulador({ hoje, padroes }: { hoje: string; padroes: PadroesSim
             {tipo ? `Parcela ${tipo.descricao}` : "Escolha o tipo de parcela no cabeçalho"}
             {furo ? " · com furo" : " · sem furo"}
           </span>
-          <div className="flex items-start justify-between gap-2 pt-1">
-            <span className="pt-0.5 text-[13px] text-tinta" id="tipo-sim-rotulo">
-              Tipo de parcela
-            </span>
-            {/* verde = o grupo oferece; laranja = o escolhido nesta simulação */}
-            <div role="group" aria-labelledby="tipo-sim-rotulo" className="flex flex-wrap justify-end gap-1">
+          <div className="pt-1">
+            {/* verde = o grupo oferece; laranja = o escolhido nesta simulação; o título é a frase "Parcela … · com furo" logo acima */}
+            <div role="group" aria-label="Tipo de parcela" className="flex gap-1">
               {[...tipos]
                 .sort((a, b) => b.pct - a.pct)
                 .map((t) => {
@@ -426,7 +423,7 @@ export function Simulador({ hoje, padroes }: { hoje: string; padroes: PadroesSim
                       onClick={() => setTipoSel(t.codigo)}
                       title={possivel ? `${t.descricao}: simular com este tipo` : `${t.descricao}: não oferecido pelo grupo`}
                       className={
-                        "h-6 rounded-md border px-1.5 text-[12px] font-bold tabular-nums " +
+                        "h-6 min-w-0 flex-1 rounded-md border px-1 text-[12px] font-bold tabular-nums " +
                         (!possivel
                           ? "cursor-not-allowed border-borda bg-linha text-tinta/50"
                           : marcado
