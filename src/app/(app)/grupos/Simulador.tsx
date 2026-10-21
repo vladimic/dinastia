@@ -159,15 +159,15 @@ function Grade({ colunas, aoMudarQtd }: { colunas: Coluna[]; aoMudarQtd: (t: Tip
         ))}
       </div>
       {/* bloco LANCE: recurso da carta, recurso próprio e o total */}
-      <div className="flex border-b border-linha">
-        <div className="w-[10.5rem] shrink-0 pr-1.5">
+      <div className={GRADE + " border-b border-linha"}>
+        <div>
           <div className="flex h-full overflow-hidden rounded-l-lg border border-borda-campo">
             <div className="flex w-6 shrink-0 items-center justify-center bg-navy text-white">
               <span className="text-[10px] font-extrabold tracking-[0.14em] [writing-mode:vertical-rl] rotate-180">LANCE</span>
             </div>
             <div className="flex flex-1 flex-col">
               {visiveis.map((l) => (
-                <div key={l.r} className={"flex min-h-[2.5rem] flex-1 items-center gap-1 px-2 text-[12px] leading-tight text-tinta " + (l.forte ? "bg-lavanda font-extrabold" : "font-bold")}>
+                <div key={l.r} className={(aberto ? "min-h-[2.5rem] " : "min-h-[3.25rem] ") + "flex flex-1 items-center gap-1 px-2 text-[12px] leading-tight text-tinta " + (l.forte ? "bg-lavanda font-extrabold" : "font-bold")}>
                   {l.r}
                   {l.forte && (
                     <button
@@ -188,13 +188,12 @@ function Grade({ colunas, aoMudarQtd }: { colunas: Coluna[]; aoMudarQtd: (t: Tip
             </div>
           </div>
         </div>
-        <div className="grid min-w-0 flex-1 grid-cols-5 gap-x-1.5">
-          {colunas.map((c) => {
+        {colunas.map((c) => {
             const msg = aviso(c);
             return (
               <div key={c.chave} className="flex flex-col rounded-md border border-linha">
                 {visiveis.map((l) => (
-                  <div key={l.r} className={"flex min-h-[2.5rem] flex-1 flex-col items-center justify-center px-1 text-center " + (l.forte ? "bg-lavanda" : "")}>
+                  <div key={l.r} className={(aberto ? "min-h-[2.5rem] " : "min-h-[3.25rem] ") + "flex flex-1 flex-col items-center justify-center px-1 text-center " + (l.forte ? "bg-lavanda" : "")}>
                     {msg ? (
                       l === visiveis[0] && <span className="text-[10px] leading-tight text-tinta">{msg}</span>
                     ) : (
@@ -205,7 +204,6 @@ function Grade({ colunas, aoMudarQtd }: { colunas: Coluna[]; aoMudarQtd: (t: Tip
               </div>
             );
           })}
-        </div>
       </div>
       {linhasCima.map((l) => (
         <div key={l.r} className={GRADE}>
@@ -319,7 +317,7 @@ function Par({ r, v, className = "" }: { r: string; v: React.ReactNode; classNam
 
 export function Simulador({ hoje, padroes }: { hoje: string; padroes: PadroesSimulador }) {
   const { grupo: g, cotas, meses, setMeses, faltam, taxaAdm } = useDados();
-  const { creditoSel, tipoSel, tipos, furo } = useSimulacao();
+  const { creditoSel, tipoSel, tipos, furo: furoGrupo, furoSim: furo, setFuroSim } = useSimulacao();
   const [vagas, setVagas] = useState("17");
   const [validade, setValidade] = useState(() => somarDias(hoje, 7));
   const [validadeAjustada, setValidadeAjustada] = useState(false); // uma data passada foi trocada por hoje
@@ -408,6 +406,37 @@ export function Simulador({ hoje, padroes }: { hoje: string; padroes: PadroesSim
             {tipo ? `Parcela ${tipo.descricao}` : "Escolha o tipo de parcela no cabeçalho"}
             {furo ? " · com furo" : " · sem furo"}
           </span>
+          <div className="flex items-center justify-between gap-2 pt-1">
+            <span className="text-[13px] text-tinta" id="furo-sim-rotulo">
+              Pagamento com furo
+            </span>
+            <div role="group" aria-labelledby="furo-sim-rotulo" className="flex gap-1">
+              {[true, false].map((opcao) => {
+                const possivel = opcao ? furoGrupo : true; // sem furo no grupo, não libera o sim
+                const marcado = furo === opcao;
+                return (
+                  <button
+                    key={String(opcao)}
+                    type="button"
+                    disabled={!possivel}
+                    aria-pressed={marcado}
+                    onClick={() => setFuroSim(opcao)}
+                    title={possivel ? (opcao ? "Simular com furo" : "Simular sem furo (não altera o grupo)") : "O grupo não tem pagamento com furo"}
+                    className={
+                      "h-6 min-w-11 rounded-md border px-2 text-[12px] font-bold " +
+                      (!possivel
+                        ? "cursor-not-allowed border-borda bg-linha text-tinta/50"
+                        : marcado
+                          ? "border-ok bg-ok text-white"
+                          : "border-[#b8dcc0] bg-ok-fundo text-ok hover:border-ok")
+                    }
+                  >
+                    {opcao ? "Sim" : "Não"}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
         </Bloco>
 
         {/* "Contemplação em" da proposta D: número grande, régua e atalhos */}
