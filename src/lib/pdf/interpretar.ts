@@ -219,7 +219,6 @@ export function interpretar(linhas: Linha[], arquivo: string, hash: string): Lei
 
   // ---------------- sequência ----------------
   const faixas: Faixa[] = [];
-  const demaisMultiplo: string[] = [];
   const rxSeq = new RegExp(`Da (\\d+)ª a (\\d+)ª Assembleia: (.*?) - Demais contemplações seguem com (a mesma sequencia|Lance ${L}+(?: e Lance ${L}+)?)`, "gu");
   for (const f of plano.matchAll(rxSeq)) {
     const itens = f[3].split(" - ").flatMap((parte) => {
@@ -229,14 +228,14 @@ export function interpretar(linhas: Linha[], arquivo: string, hash: string): Lei
       return tipo ? [{ qtd: Number(r[1]), tipo }] : []; // Sorteio Cota Cancelada não é guardado
     });
     let demais: string | null = null;
+    let demais2: string | null = null;
     if (!f[4].startsWith("a mesma")) {
       const tipos = f[4].split(" e ").map(tipoPorNome).filter((t): t is string => t !== null);
-      demais = tipos[0];
-      if (tipos.length > 1) demaisMultiplo.push(`Da ${f[1]}ª a ${f[2]}ª assembleia, demais contemplações seguem com ${f[4]}.`);
+      demais = tipos[0] ?? null;
+      demais2 = tipos[1] ?? null; // "seguem com Livre e Fidelidade": as demais alternam os dois tipos
     }
-    faixas.push({ de: Number(f[1]), ate: Number(f[2]), itens, demais });
+    faixas.push({ de: Number(f[1]), ate: Number(f[2]), itens, demais, demais2 });
   }
-  if (demaisMultiplo.length) avisos.push("demais contemplações com mais de uma modalidade (gravado o 1º tipo; texto completo em observações)");
   if (!faixas.length) erros.push("sequência de contemplação não encontrada");
   else {
     // as faixas têm de cobrir da 1ª assembleia ao prazo do grupo, sem buracos, e só usar modalidades que o grupo oferece
@@ -246,7 +245,7 @@ export function interpretar(linhas: Linha[], arquivo: string, hash: string): Lei
     for (const f of faixas) for (const i of f.itens) if (!modal[i.tipo]) erros.push(`sequência cita ${i.tipo}, que não está nas modalidades do grupo`);
   }
 
-  const obs = [...demaisMultiplo];
+  const obs: string[] = [];
   if (plano.includes("Entregas condicionadas a efetiva arrecadação")) obs.push("Entregas condicionadas à efetiva arrecadação do grupo.");
   if (plano.includes("Loteria Federal")) obs.push("Sorteio e desempate dos lances pela Loteria Federal.");
   if (plano.includes("sofrer alterações sem aviso prévio")) obs.push("Valores e condições podem mudar sem aviso prévio.");

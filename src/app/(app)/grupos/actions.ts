@@ -86,6 +86,7 @@ export async function salvarSequencia(versaoId: number, entrada: Edicao): Promis
     sorteios: (entrada.sorteios ?? []).map((x) => ({ de: Number(x.de), qtd: Number(x.qtd) })),
     ordem: (entrada.ordem ?? []).map(String),
     demais: entrada.demais ? String(entrada.demais) : null,
+    demais2: entrada.demais && entrada.demais2 ? String(entrada.demais2) : null,
     fidelidadeMeses: entrada.fidelidadeMeses ? Number(entrada.fidelidadeMeses) : null,
   };
 
@@ -110,6 +111,7 @@ export async function salvarSequencia(versaoId: number, entrada: Edicao): Promis
     de: f.de,
     ate: f.ate,
     demais: f.demais,
+    demais2: f.demais2 ?? null,
     itens: f.itens.map((i) => ({ tipo: i.codigo, qtd: i.qtd })),
   }));
   const r1 = await supabase.rpc("salvar_sequencia", { p: { versao_id: versaoId, faixas } });

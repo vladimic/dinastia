@@ -53,7 +53,7 @@ export async function exportarBackup(supabase: SupabaseClient, email: string) {
        tipos_parcela:grupo_assembleia_tipo_parcela(tipo_parcela),
        modalidades:grupo_modalidade(tipo, max_parcelas_lance, embutido_max_parcelas, embutido_pct,
          a_partir_assembleia_cota, requisitos),
-       faixas:grupo_sequencia_faixa(assembleia_de, assembleia_ate, demais_tipo,
+       faixas:grupo_sequencia_faixa(assembleia_de, assembleia_ate, demais_tipo, demais_tipo_2,
          itens:grupo_sequencia(ordem, tipo, quantidade))`,
       "id",
     ),
@@ -183,6 +183,7 @@ export async function restaurarBackup(supabase: SupabaseClient, b: Backup, email
           de: f.assembleia_de,
           ate: f.assembleia_ate,
           demais: f.demais_tipo === "CAN" ? null : f.demais_tipo,
+          demais2: f.demais_tipo_2 ?? null,
           itens: [...((f.itens as Linha[]) ?? [])]
             .filter((i) => i.tipo !== "CAN")
             .sort((a, b) => Number(a.ordem) - Number(b.ordem))

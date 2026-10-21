@@ -32,7 +32,7 @@ export async function carregarGruposImoveis(supabase: SupabaseClient): Promise<G
         `id, pagamento_com_furo, fidelidade_meses,
          tipos:grupo_assembleia_tipo_parcela(tipo_parcela(pct)),
          modalidades:grupo_modalidade(tipo, max_parcelas_lance, embutido_max_parcelas, embutido_pct),
-         faixas:grupo_sequencia_faixa(assembleia_de, assembleia_ate, demais_tipo, itens:grupo_sequencia(ordem, tipo, quantidade))`,
+         faixas:grupo_sequencia_faixa(assembleia_de, assembleia_ate, demais_tipo, demais_tipo_2, itens:grupo_sequencia(ordem, tipo, quantidade))`,
       )
       .in("id", ids.slice(i, i + 60));
     if (error) throw new Error(`grupo_assembleia: ${error.message}`);
@@ -43,7 +43,7 @@ export async function carregarGruposImoveis(supabase: SupabaseClient): Promise<G
     const v = versoes.get(Number(g.grupo_assembleia_id)) ?? {};
     const tipos = (v.tipos ?? []) as { tipo_parcela: { pct: number | string } | null }[];
     const mods = (v.modalidades ?? []) as Linha[];
-    const faixas = (v.faixas ?? []) as { assembleia_de: number; assembleia_ate: number; demais_tipo: string | null; itens: { ordem: number; tipo: string; quantidade: number }[] }[];
+    const faixas = (v.faixas ?? []) as { assembleia_de: number; assembleia_ate: number; demais_tipo: string | null; demais_tipo_2: string | null; itens: { ordem: number; tipo: string; quantidade: number }[] }[];
     return {
       numero: Number(g.numero),
       prazo_grupo: Number(g.prazo_grupo_meses),
@@ -68,6 +68,7 @@ export async function carregarGruposImoveis(supabase: SupabaseClient): Promise<G
             de: f.assembleia_de,
             ate: f.assembleia_ate,
             demais: f.demais_tipo,
+            demais2: f.demais_tipo_2,
             itens: [...f.itens].sort((a, b) => a.ordem - b.ordem).map((i) => ({ codigo: i.tipo, qtd: i.quantidade })),
           }),
         )

@@ -6,7 +6,7 @@ import type { Faixa, Modalidade } from "./tipos";
 
 function faixa(f: Faixa) {
   const itens = f.itens.map((i) => `${i.qtd} ${nomeModalidade(i.tipo)}`).join(" + ");
-  return `${f.de}ª a ${f.ate}ª: ${itens}${f.demais ? ` · demais: ${nomeModalidade(f.demais)}` : " · demais: repete a sequência"}`;
+  return `${f.de}ª a ${f.ate}ª: ${itens}${f.demais ? ` · demais: ${nomeModalidade(f.demais)}${f.demais2 ? ` e ${nomeModalidade(f.demais2)}` : ""}` : " · demais: repete a sequência"}`;
 }
 
 function modalidade(m: Modalidade) {

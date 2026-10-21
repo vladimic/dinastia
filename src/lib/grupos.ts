@@ -71,7 +71,7 @@ export async function listarGrupos(familia: string): Promise<GrupoResumo[]> {
     const { data: versoes, error: e2 } = await supabase
       .from("grupo_assembleia")
       .select(
-        "id, fidelidade_meses, pagamento_com_furo, grupo_assembleia_tipo_parcela(tipo_parcela(pct)), grupo_sequencia_faixa(assembleia_de, assembleia_ate, demais_tipo, grupo_sequencia(ordem, quantidade, tipo))",
+        "id, fidelidade_meses, pagamento_com_furo, grupo_assembleia_tipo_parcela(tipo_parcela(pct)), grupo_sequencia_faixa(assembleia_de, assembleia_ate, demais_tipo, demais_tipo_2, grupo_sequencia(ordem, quantidade, tipo))",
       )
       .in("id", ids);
     if (e2) throw e2;
@@ -81,6 +81,7 @@ export async function listarGrupos(familia: string): Promise<GrupoResumo[]> {
           assembleia_de: number;
           assembleia_ate: number;
           demais_tipo: string | null;
+          demais_tipo_2: string | null;
           grupo_sequencia: { ordem: number; quantidade: number; tipo: string }[];
         }[]
       )
@@ -89,12 +90,13 @@ export async function listarGrupos(familia: string): Promise<GrupoResumo[]> {
           de: f.assembleia_de,
           ate: f.assembleia_ate,
           demais: f.demais_tipo,
+          demais2: f.demais_tipo_2,
           itens: [...f.grupo_sequencia].sort((a, b) => a.ordem - b.ordem).map((i) => ({ codigo: i.tipo, qtd: i.quantidade })),
         }));
       const m = modelar(faixas);
       let seq: string[] = [];
       if (m?.simples) seq = linhaDetalhada(m, (ver.fidelidade_meses as number | null) ?? null, TAMANHO_POPUP).map((p) => p.codigo);
-      else if (faixas.length) seq = montarOrdem(faixas[faixas.length - 1].itens, faixas[faixas.length - 1].demais, TAMANHO_POPUP);
+      else if (faixas.length) seq = montarOrdem(faixas[faixas.length - 1].itens, faixas[faixas.length - 1].demais, TAMANHO_POPUP, faixas[faixas.length - 1].demais2);
       seqPorVersao.set(ver.id as number, seq);
       const pcts = ((ver.grupo_assembleia_tipo_parcela ?? []) as unknown as { tipo_parcela: { pct: number | string } | null }[]).map((t) => Number(t.tipo_parcela?.pct));
       marcasPorVersao.set(ver.id as number, {
@@ -175,7 +177,7 @@ export async function carregarGrupo(numero: number) {
          grupo_assembleia_tipo_parcela(tipo_parcela(codigo, descricao, pct)),
          grupo_modalidade(tipo, max_parcelas_lance, embutido_max_parcelas, embutido_pct,
            a_partir_assembleia_cota, requisitos, tipo_contemplacao(codigo, nome)),
-         grupo_sequencia_faixa(assembleia_de, assembleia_ate, demais_tipo, tipo_contemplacao(nome),
+         grupo_sequencia_faixa(assembleia_de, assembleia_ate, demais_tipo, demais_tipo_2,
            grupo_sequencia(ordem, quantidade, tipo, tipo_contemplacao(codigo, nome)))`,
       )
       .eq("id", g.grupo_assembleia_id)
@@ -210,7 +212,7 @@ export async function carregarGrupo(numero: number) {
     assembleia_de: number;
     assembleia_ate: number;
     demais_tipo: string | null;
-    tipo_contemplacao: { nome: string } | null;
+    demais_tipo_2: string | null;
     grupo_sequencia: { ordem: number; quantidade: number; tipo: string; tipo_contemplacao: TipoRef }[];
   };
   const tipos = new Map((cadastroTipos.data ?? []).map((t) => [t.codigo as string, { nome: t.nome as string, cor: t.cor as string }]));
@@ -220,6 +222,7 @@ export async function carregarGrupo(numero: number) {
       de: f.assembleia_de,
       ate: f.assembleia_ate,
       demais: f.demais_tipo,
+      demais2: f.demais_tipo_2,
       itens: [...f.grupo_sequencia]
         .sort((a, b) => a.ordem - b.ordem)
         .map((i) => ({ codigo: i.tipo, qtd: i.quantidade })),
@@ -241,7 +244,7 @@ export async function carregarGrupo(numero: number) {
   const sequencia = {
     modelo,
     linha: modelo?.simples ? linhaDetalhada(modelo, (v.fidelidade_meses as number | null) ?? null).map((p) => enriquecer(p.codigo, p.desde)) : [],
-    faixas: modelo && !modelo.simples ? faixas.map((f) => ({ de: f.de, ate: f.ate, ordem: montarOrdem(f.itens, f.demais).map((c) => enriquecer(c)) })) : [],
+    faixas: modelo && !modelo.simples ? faixas.map((f) => ({ de: f.de, ate: f.ate, ordem: montarOrdem(f.itens, f.demais, undefined, f.demais2).map((c) => enriquecer(c)) })) : [],
   };
 
   return {

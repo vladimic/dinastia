@@ -165,6 +165,7 @@ export const DICIONARIO: TabelaDic[] = [
       t("assembleia_de", "inteiro", true, "Primeira assembleia da cota da faixa."),
       t("assembleia_ate", "inteiro", true, "Última assembleia da cota da faixa."),
       t("demais_tipo", "texto", false, "Modalidade das demais contemplações depois da sequência. Vazio = repete a sequência (sem o sorteio).", "FK→tipo_contemplacao.codigo"),
+      t("demais_tipo_2", "texto", false, "Segunda modalidade das demais contemplações (“seguem com Livre e Fidelidade”). Preenchida, as demais alternam demais_tipo, demais_tipo_2, demais_tipo… Vazio = só demais_tipo.", "FK→tipo_contemplacao.codigo"),
     ],
   },
   {
@@ -264,6 +265,7 @@ export const RELACIONAMENTOS: Relacionamento[] = [
   { origem: "grupo_modalidade", colunaOrigem: "tipo", destino: "tipo_contemplacao", colunaDestino: "codigo", apagar: "bloqueia", significado: "De qual modalidade é a regra." },
   { origem: "grupo_sequencia_faixa", colunaOrigem: "grupo_assembleia_id", destino: "grupo_assembleia", colunaDestino: "id", apagar: "apaga junto", significado: "Faixas da sequência de contemplação da versão." },
   { origem: "grupo_sequencia_faixa", colunaOrigem: "demais_tipo", destino: "tipo_contemplacao", colunaDestino: "codigo", apagar: "bloqueia", significado: "Modalidade das demais contemplações." },
+  { origem: "grupo_sequencia_faixa", colunaOrigem: "demais_tipo_2", destino: "tipo_contemplacao", colunaDestino: "codigo", apagar: "bloqueia", significado: "Segunda modalidade, alternada com a primeira, nas demais contemplações." },
   { origem: "grupo_sequencia", colunaOrigem: "faixa_id", destino: "grupo_sequencia_faixa", colunaDestino: "id", apagar: "apaga junto", significado: "Itens (ordem) de cada faixa." },
   { origem: "grupo_sequencia", colunaOrigem: "tipo", destino: "tipo_contemplacao", colunaDestino: "codigo", apagar: "bloqueia", significado: "Modalidade do item da sequência." },
   { origem: "importacao_faltante", colunaOrigem: "grupo_numero", destino: "grupo", colunaDestino: "numero", apagar: "apaga junto", significado: "Grupo que ficou aguardando PDF na leitura." },

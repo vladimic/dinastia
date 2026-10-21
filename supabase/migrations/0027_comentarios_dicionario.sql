@@ -80,6 +80,7 @@ comment on column public.grupo_sequencia_faixa.grupo_assembleia_id is 'Versão d
 comment on column public.grupo_sequencia_faixa.assembleia_de is 'Primeira assembleia da cota da faixa.';
 comment on column public.grupo_sequencia_faixa.assembleia_ate is 'Última assembleia da cota da faixa.';
 comment on column public.grupo_sequencia_faixa.demais_tipo is 'Modalidade das demais contemplações depois da sequência. Vazio = repete a sequência (sem o sorteio).';
+comment on column public.grupo_sequencia_faixa.demais_tipo_2 is 'Segunda modalidade das demais contemplações (“seguem com Livre e Fidelidade”). Preenchida, as demais alternam demais_tipo, demais_tipo_2, demais_tipo… Vazio = só demais_tipo.';
 comment on table public.grupo_sequencia is 'Itens de cada faixa: a ordem em que as modalidades contemplam em cada assembleia.';
 comment on column public.grupo_sequencia.id is 'Identificador do item.';
 comment on column public.grupo_sequencia.faixa_id is 'Faixa a que o item pertence.';

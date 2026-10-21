@@ -2,6 +2,15 @@
 // Regra: a cada mudança entregue, acrescentar uma entrada NO TOPO.
 export const VERSOES: { numero: string; data: string; itens: string[] }[] = [
   {
+    numero: "0099",
+    data: "21/10/2026",
+    itens: [
+      "“Demais contemplações seguem com Livre e Fidelidade” (e “Livre e Limitado”) agora são guardadas de verdade: a faixa da sequência ganhou uma segunda modalidade (demais_tipo_2) e as demais alternam as duas, como no manual. Antes só a primeira era gravada e a frase ia para as observações.",
+      "Tabela Resumo e telas de Grupos: grupos 530, 540, 550, 560, 640 e 690 passam a mostrar a ordem “… fid liv fid liv …” e o grupo 900, “… liv lim liv lim …”. Os dados atuais foram convertidos a partir do texto das observações (a frase saiu de lá).",
+      "Editor da sequência (Grupos): ao escolher o tipo das demais, aparece o campo “alternar com”. Leitor de PDF passou para a versão 6, então os PDFs são lidos de novo na próxima importação. Dicionário de dados e diagrama ER atualizados (migração 0030).",
+    ],
+  },
+  {
     numero: "0098",
     data: "21/10/2026",
     itens: [

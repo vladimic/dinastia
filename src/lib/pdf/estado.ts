@@ -7,7 +7,7 @@ const SELECT = `numero, familia, prazo_grupo_meses, participantes, taxa_adm_tota
   grupo_assembleia (assembleia_numero, data_assembleia, prazo_cota_meses, creditos, observacoes, pagamento_com_furo,
     grupo_assembleia_tipo_parcela (tipo_parcela),
     grupo_modalidade (tipo, max_parcelas_lance, embutido_max_parcelas, embutido_pct, a_partir_assembleia_cota, requisitos),
-    grupo_sequencia_faixa (assembleia_de, assembleia_ate, demais_tipo, grupo_sequencia (ordem, tipo, quantidade)))`;
+    grupo_sequencia_faixa (assembleia_de, assembleia_ate, demais_tipo, demais_tipo_2, grupo_sequencia (ordem, tipo, quantidade)))`;
 
 type Linha = Record<string, any>; // eslint-disable-line @typescript-eslint/no-explicit-any
 
@@ -29,6 +29,7 @@ function versao(v: Linha): VersaoBase {
       de: f.assembleia_de,
       ate: f.assembleia_ate,
       demais: f.demais_tipo,
+      demais2: f.demais_tipo_2 ?? null,
       itens: [...(f.grupo_sequencia ?? [])].sort((a: Linha, b: Linha) => a.ordem - b.ordem).map((s: Linha) => ({ qtd: s.quantidade, tipo: s.tipo })),
     }))
     .sort((a: Faixa, b: Faixa) => a.de - b.de);
