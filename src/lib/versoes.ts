@@ -2,6 +2,14 @@
 // Regra: a cada mudança entregue, acrescentar uma entrada NO TOPO.
 export const VERSOES: { numero: string; data: string; itens: string[] }[] = [
   {
+    numero: "0104",
+    data: "21/10/2026",
+    itens: [
+      "Simulador: o tipo de parcela passa a ser escolhido na coluna lateral, acima do Pagamento com furo. Verde = o grupo oferece; laranja = o escolhido na simulação. O Pagamento com furo também usa laranja no escolhido.",
+      "Cabeçalho do grupo: os tipos de parcela ficam só indicativos (verde = oferecido) e o Furo mostra sempre o valor real do grupo, sem mudar com a simulação.",
+    ],
+  },
+  {
     numero: "0103",
     data: "21/10/2026",
     itens: [

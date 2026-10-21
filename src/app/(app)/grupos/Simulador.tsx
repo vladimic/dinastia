@@ -316,8 +316,8 @@ function Par({ r, v, className = "" }: { r: string; v: React.ReactNode; classNam
 }
 
 export function Simulador({ hoje, padroes }: { hoje: string; padroes: PadroesSimulador }) {
-  const { grupo: g, cotas, meses, setMeses, faltam, taxaAdm } = useDados();
-  const { creditoSel, tipoSel, tipos, furo: furoGrupo, furoSim: furo, setFuroSim } = useSimulacao();
+  const { grupo: g, cotas, meses, setMeses, faltam, taxaAdm, disponiveis } = useDados();
+  const { creditoSel, tipoSel, setTipoSel, tipos, furo: furoGrupo, furoSim: furo, setFuroSim } = useSimulacao();
   const [vagas, setVagas] = useState("17");
   const [validade, setValidade] = useState(() => somarDias(hoje, 7));
   const [validadeAjustada, setValidadeAjustada] = useState(false); // uma data passada foi trocada por hoje
@@ -406,6 +406,40 @@ export function Simulador({ hoje, padroes }: { hoje: string; padroes: PadroesSim
             {tipo ? `Parcela ${tipo.descricao}` : "Escolha o tipo de parcela no cabeçalho"}
             {furo ? " · com furo" : " · sem furo"}
           </span>
+          <div className="flex items-start justify-between gap-2 pt-1">
+            <span className="pt-0.5 text-[13px] text-tinta" id="tipo-sim-rotulo">
+              Tipo de parcela
+            </span>
+            {/* verde = o grupo oferece; laranja = o escolhido nesta simulação */}
+            <div role="group" aria-labelledby="tipo-sim-rotulo" className="flex flex-wrap justify-end gap-1">
+              {[...tipos]
+                .sort((a, b) => b.pct - a.pct)
+                .map((t) => {
+                  const possivel = disponiveis.has(t.codigo);
+                  const marcado = possivel && t.codigo === tipoSel;
+                  return (
+                    <button
+                      key={t.codigo}
+                      type="button"
+                      disabled={!possivel}
+                      aria-pressed={marcado}
+                      onClick={() => setTipoSel(t.codigo)}
+                      title={possivel ? `${t.descricao}: simular com este tipo` : `${t.descricao}: não oferecido pelo grupo`}
+                      className={
+                        "h-6 rounded-md border px-1.5 text-[12px] font-bold tabular-nums " +
+                        (!possivel
+                          ? "cursor-not-allowed border-borda bg-linha text-tinta/50"
+                          : marcado
+                            ? "border-laranja bg-laranja-claro text-navy"
+                            : "border-[#b8dcc0] bg-ok-fundo text-ok hover:border-ok")
+                      }
+                    >
+                      {t.pct}%
+                    </button>
+                  );
+                })}
+            </div>
+          </div>
           <div className="flex items-center justify-between gap-2 pt-1">
             <span className="text-[13px] text-tinta" id="furo-sim-rotulo">
               Pagamento com furo
@@ -427,7 +461,7 @@ export function Simulador({ hoje, padroes }: { hoje: string; padroes: PadroesSim
                       (!possivel
                         ? "cursor-not-allowed border-borda bg-linha text-tinta/50"
                         : marcado
-                          ? "border-ok bg-ok text-white"
+                          ? "border-laranja bg-laranja-claro text-navy"
                           : "border-[#b8dcc0] bg-ok-fundo text-ok hover:border-ok")
                     }
                   >
