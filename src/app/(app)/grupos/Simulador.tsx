@@ -18,14 +18,14 @@ const nf2 = new Intl.NumberFormat("pt-BR", { minimumFractionDigits: 2, maximumFr
 const nf4 = new Intl.NumberFormat("pt-BR", { minimumFractionDigits: 4, maximumFractionDigits: 4 });
 
 type Cor = "navy" | "ouro" | "laranja" | "livre";
-type Meta = { chave: string; tipo: TipoColuna; titulo: string; numero?: number; icone?: "cadeado" | "martelo"; cor: Cor };
+type Meta = { chave: string; tipo: TipoColuna; titulo: string; numero?: number; cor: Cor };
 
 const COLUNAS: Meta[] = [
   { chave: "sorteio", tipo: "SOR", titulo: "Sorteio", cor: "navy" },
-  { chave: "fixo", tipo: "FIX", titulo: "Lance Fixo", numero: 1, icone: "cadeado", cor: "navy" },
-  { chave: "limitado", tipo: "LIM", titulo: "Lance Limitado", numero: 2, icone: "cadeado", cor: "ouro" },
-  { chave: "livre", tipo: "LIV", titulo: "Lance Livre", numero: 3, icone: "martelo", cor: "livre" },
-  { chave: "fidelidade", tipo: "FID", titulo: "Lance Fidelidade", numero: 4, icone: "martelo", cor: "laranja" },
+  { chave: "fixo", tipo: "FIX", titulo: "Lance Fixo", numero: 1, cor: "navy" },
+  { chave: "limitado", tipo: "LIM", titulo: "Lance Limitado", numero: 2, cor: "ouro" },
+  { chave: "livre", tipo: "LIV", titulo: "Lance Livre", numero: 3, cor: "livre" },
+  { chave: "fidelidade", tipo: "FID", titulo: "Lance Fidelidade", numero: 4, cor: "laranja" },
 ];
 
 // cor de cada coluna só na borda de cima e em fundos claros: o corpo da página fica claro, distinto do menu azul
@@ -37,6 +37,7 @@ type Coluna = Meta & {
   bloqueio: string | null;
   qtd: string | null;
   qtdFixa: boolean;
+  icone: "cadeado" | "martelo";
   /** máximo de parcelas do lance nesta simulação (nulo = sem teto) */
   teto: number | null;
   calc: Calc | null;
@@ -81,15 +82,15 @@ function Cabecalho({ c, aoMudarQtd }: { c: Coluna; aoMudarQtd: (v: string) => vo
               <label
                 className="flex items-center gap-1 text-[11px] font-semibold text-tinta"
                 title={
-                  c.qtdFixa
-                    ? "Lance pré-definido: o grupo fixa o máximo de parcelas"
-                    : `Lance em leilão: parcelas editáveis nesta simulação${c.teto !== null ? ` (máximo ${c.teto})` : ""}`
+                  c.icone === "cadeado"
+                    ? `Lance com máximo pré-definido pelo grupo${c.teto !== null ? ` (${c.teto} parcelas)` : ""}`
+                    : "Lance em leilão: você define as parcelas nesta simulação"
                 }
               >
                 <span
                   className={
                     "flex h-6 items-center gap-0.5 rounded border px-0.5 text-navy " +
-                    (c.qtdFixa ? "border-dashed border-navy bg-linha" : "border-solid border-[#c2410c] bg-white")
+                    (c.icone === "cadeado" ? "border-dashed border-navy " : "border-solid border-[#c2410c] ") + (c.qtdFixa ? "bg-linha" : "bg-white")
                   }
                 >
                   {c.icone === "cadeado" ? <Cadeado /> : <Martelo />}
@@ -104,7 +105,6 @@ function Cabecalho({ c, aoMudarQtd }: { c: Coluna; aoMudarQtd: (v: string) => vo
                 </span>
                 parcelas
               </label>
-              {!c.qtdFixa && c.teto !== null && <span className="text-[10px] text-tinta">máx. {c.teto}</span>}
             </div>
           )}
           <div className="text-[10px] font-bold text-tinta">
@@ -130,11 +130,13 @@ function Grade({ colunas, aoMudarQtd }: { colunas: Coluna[]; aoMudarQtd: (t: Tip
   const celula = "flex min-h-[2.5rem] flex-col items-center justify-center border-b border-linha px-1 text-center";
   const valor = "text-[14px] leading-tight font-bold tabular-nums";
   const aviso = (c: Coluna) => c.bloqueio ?? (c.oferecido ? null : "Grupo não oferece");
+  const [aberto, setAberto] = useState(true); // mostra ou recolhe recurso da carta e recurso próprio
   const lance: { r: string; v: (c: Coluna) => string; forte?: boolean }[] = [
     { r: "Recurso da Carta (embutido)", v: (c) => (c.calc && c.tipo !== "SOR" ? dinheiro(c.calc.recursoCarta) : "—") },
     { r: "Recurso Próprio (dinheiro)", v: (c) => (c.calc && c.tipo !== "SOR" ? dinheiro(c.calc.recursoProprio) : "—") },
     { r: "Lance Total", v: (c) => (c.calc && c.tipo !== "SOR" ? dinheiro(c.calc.lanceTotal) : "—"), forte: true },
   ];
+  const visiveis = aberto ? lance : lance.slice(-1);
   const linhasCima: { r: string; v: (c: Coluna) => string; avisar?: boolean; forte?: boolean }[] = [
     { r: "Crédito Disponível após a Contemplação", v: (c) => dinheiro(c.calc?.creditoDisponivel), forte: true },
     { r: "Valor da Parcela após a Contemplação", v: (c) => dinheiro(c.calc?.parcelaApos), forte: true },
@@ -164,9 +166,23 @@ function Grade({ colunas, aoMudarQtd }: { colunas: Coluna[]; aoMudarQtd: (t: Tip
               <span className="text-[10px] font-extrabold tracking-[0.14em] [writing-mode:vertical-rl] rotate-180">LANCE</span>
             </div>
             <div className="flex flex-1 flex-col">
-              {lance.map((l) => (
-                <div key={l.r} className={"flex min-h-[2.5rem] flex-1 items-center px-2 text-[12px] leading-tight text-tinta " + (l.forte ? "bg-lavanda font-extrabold" : "font-bold")}>
+              {visiveis.map((l) => (
+                <div key={l.r} className={"flex min-h-[2.5rem] flex-1 items-center gap-1 px-2 text-[12px] leading-tight text-tinta " + (l.forte ? "bg-lavanda font-extrabold" : "font-bold")}>
                   {l.r}
+                  {l.forte && (
+                    <button
+                      type="button"
+                      onClick={() => setAberto((v) => !v)}
+                      aria-expanded={aberto}
+                      aria-label={aberto ? "Recolher recurso da carta e recurso próprio" : "Expandir recurso da carta e recurso próprio"}
+                      title={aberto ? "Recolher embutido e dinheiro" : "Expandir embutido e dinheiro"}
+                      className="ml-auto flex h-5 w-5 shrink-0 items-center justify-center rounded border border-borda-campo bg-white text-navy hover:border-navy"
+                    >
+                      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" aria-hidden="true" className={aberto ? "" : "rotate-180"}>
+                        <path d="M6 15l6-6 6 6" />
+                      </svg>
+                    </button>
+                  )}
                 </div>
               ))}
             </div>
@@ -177,10 +193,10 @@ function Grade({ colunas, aoMudarQtd }: { colunas: Coluna[]; aoMudarQtd: (t: Tip
             const msg = aviso(c);
             return (
               <div key={c.chave} className="flex flex-col rounded-md border border-linha">
-                {lance.map((l) => (
+                {visiveis.map((l) => (
                   <div key={l.r} className={"flex min-h-[2.5rem] flex-1 flex-col items-center justify-center px-1 text-center " + (l.forte ? "bg-lavanda" : "")}>
                     {msg ? (
-                      l === lance[0] && <span className="text-[10px] leading-tight text-tinta">{msg}</span>
+                      l === visiveis[0] && <span className="text-[10px] leading-tight text-tinta">{msg}</span>
                     ) : (
                       <span className={`${valor} ${l.forte ? "text-navy" : "text-ouro-texto"}`}>{l.v(c)}</span>
                     )}
@@ -364,6 +380,8 @@ export function Simulador({ hoje, padroes }: { hoje: string; padroes: PadroesSim
       bloqueio,
       qtd,
       qtdFixa: c.tipo === "FIX" || c.tipo === "LIM",
+      // cadeado = o grupo limita as parcelas do lance (ex.: fidelidade até 99); martelo = leilão sem teto do grupo
+      icone: m?.max_parcelas_lance != null ? ("cadeado" as const) : ("martelo" as const),
       teto: c.tipo === "SOR" ? null : tetoQtd(c.tipo),
       calc,
       prazoRestante: base?.prazoRestante ?? 0,
