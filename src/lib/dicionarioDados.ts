@@ -219,6 +219,18 @@ export const DICIONARIO: TabelaDic[] = [
     ],
   },
   {
+    tabela: "importacao_faltante",
+    grupo: "Importação de PDFs",
+    descricao: "Grupos para os quais não veio PDF na leitura da pasta e o administrador escolheu esperar o PDF (reimportar). O salto automático de assembleia não precisa de registro aqui: ele grava a nova versão do grupo (e um item em importacao_item).",
+    colunas: [
+      t("grupo_numero", "inteiro", true, "Grupo sem PDF na assembleia de referência.", "PK · FK→grupo.numero"),
+      t("decisao", "texto", true, "aguardando_pdf: o administrador vai reimportar o PDF deste grupo."),
+      t("data_ref", "data", true, "Data da assembleia de referência da leitura em que o PDF faltou."),
+      t("decidido_por", "texto", false, "E-mail de quem decidiu."),
+      t("decidido_em", "data e hora", true, "Quando decidiu."),
+    ],
+  },
+  {
     tabela: "usuario",
     grupo: "Acesso",
     descricao: "Quem pode entrar no Dinastia e se é administrador. Contém dados pessoais (CPF, telefone): proteja o arquivo exportado. Tela: Cadastros › Usuários.",
@@ -254,6 +266,7 @@ export const RELACIONAMENTOS: Relacionamento[] = [
   { origem: "grupo_sequencia_faixa", colunaOrigem: "demais_tipo", destino: "tipo_contemplacao", colunaDestino: "codigo", apagar: "bloqueia", significado: "Modalidade das demais contemplações." },
   { origem: "grupo_sequencia", colunaOrigem: "faixa_id", destino: "grupo_sequencia_faixa", colunaDestino: "id", apagar: "apaga junto", significado: "Itens (ordem) de cada faixa." },
   { origem: "grupo_sequencia", colunaOrigem: "tipo", destino: "tipo_contemplacao", colunaDestino: "codigo", apagar: "bloqueia", significado: "Modalidade do item da sequência." },
+  { origem: "importacao_faltante", colunaOrigem: "grupo_numero", destino: "grupo", colunaDestino: "numero", apagar: "apaga junto", significado: "Grupo que ficou aguardando PDF na leitura." },
   { origem: "importacao_diferenca", colunaOrigem: "item_id", destino: "importacao_item", colunaDestino: "id", apagar: "apaga junto", significado: "Diferenças encontradas em cada PDF lido." },
 ];
 

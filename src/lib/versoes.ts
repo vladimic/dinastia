@@ -2,6 +2,14 @@
 // Regra: a cada mudança entregue, acrescentar uma entrada NO TOPO.
 export const VERSOES: { numero: string; data: string; itens: string[] }[] = [
   {
+    numero: "0097",
+    data: "21/10/2026",
+    itens: [
+      "Importar tabelas (PDF): grupos que não vieram na leitura. A assembleia de referência é a mais recente entre os PDFs lidos; os grupos de Imóveis que ainda estão numa assembleia mais antiga e não têm PDF dessa data aparecem num quadro “Grupos sem PDF”, e para cada um você escolhe: “Vou reimportar o PDF” (fica em “Aguardando PDF”) ou “Salto automático” (não existe PDF específico).",
+      "Salto automático: o grupo ganha a próxima assembleia (número = anterior + meses entre as datas) com a data de referência e o prazo da cota recalculado (prazo do grupo − (assembleia − 1)); créditos, tipos de parcela, modalidades, sequência, pagamento com furo e dados do grupo ficam iguais aos da anterior. Fica registrado em importacao_item como “(sem PDF) salto automático”. Para vários grupos de uma vez, o sistema pede confirmação. Migração 0029 (tabela importacao_faltante).",
+    ],
+  },
+  {
     numero: "0096",
     data: "21/10/2026",
     itens: [

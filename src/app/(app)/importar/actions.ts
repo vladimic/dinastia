@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { ehAdministrador, usuarioAtual } from "@/lib/usuario";
 import { carregarEstados } from "@/lib/pdf/estado";
+import { calcularFaltantes, montarSalto } from "@/lib/pdf/faltantes";
 import { classificar, comparar, montarFinal, tiposParcelaDe, type Decidida, type Diferenca } from "@/lib/pdf/comparar";
 import { canon } from "@/lib/pdf/canon";
 import { converterEdicao } from "@/lib/pdf/edicao";
@@ -223,6 +224,69 @@ export async function reativarItem(itemId: number): Promise<{ ok: true } | Falha
   if (error) return { ok: false, erro: "Não foi possível reativar." };
   revalidatePath("/importar");
   return { ok: true };
+}
+
+// ---------------------------------------------------------------- grupos sem PDF
+
+/** "Vou reimportar o PDF deste grupo": só registra a escolha (o grupo fica na lista "aguardando PDF"). Desfazer = volta a pendente. */
+export async function aguardarPdf(grupos: number[], aguardar: boolean): Promise<{ ok: true } | Falha> {
+  const email = await quem();
+  if (!email) return NEGADO;
+  const supabase = await createClient();
+  const { dataRef } = await calcularFaltantes(supabase);
+  if (!dataRef) return { ok: false, erro: "Não há assembleia de referência na leitura." };
+  if (aguardar) {
+    const { error } = await supabase.from("importacao_faltante").upsert(grupos.map((g) => ({ grupo_numero: g, decisao: "aguardando_pdf", data_ref: dataRef, decidido_por: email, decidido_em: new Date().toISOString() })), { onConflict: "grupo_numero" });
+    if (error) return { ok: false, erro: "Não foi possível registrar." };
+  } else {
+    const { error } = await supabase.from("importacao_faltante").delete().in("grupo_numero", grupos);
+    if (error) return { ok: false, erro: "Não foi possível desfazer." };
+  }
+  revalidatePath("/importar");
+  return { ok: true };
+}
+
+/** Salto automático: o grupo sem PDF ganha a assembleia seguinte, com todo o resto igual à versão anterior. */
+export async function aplicarSaltos(grupos: number[]): Promise<{ ok: true; aplicados: number; falhas: { grupo: number; motivo: string }[] } | Falha> {
+  const email = await quem();
+  if (!email) return NEGADO;
+  const supabase = await createClient();
+  // só entra quem realmente ainda falta (a lista é recalculada aqui, não vem da tela)
+  const { dataRef, faltantes } = await calcularFaltantes(supabase);
+  if (!dataRef) return { ok: false, erro: "Não há assembleia de referência na leitura." };
+  const permitidos = new Set(faltantes.map((f) => f.numero));
+  const estados = await carregarEstados(supabase, grupos.filter((g) => permitidos.has(g)));
+  let aplicados = 0;
+  const falhas: { grupo: number; motivo: string }[] = [];
+  for (const g of grupos) {
+    const estado = estados.get(g);
+    if (!permitidos.has(g) || !estado?.grupo) {
+      falhas.push({ grupo: g, motivo: "o grupo não está mais na lista de faltantes" });
+      continue;
+    }
+    const { _nova, _de, _prazoCota, ...payload } = montarSalto(estado, dataRef, email);
+    const { error } = await supabase.rpc("aplicar_importacao", { p: payload });
+    if (error) {
+      falhas.push({ grupo: g, motivo: error.message });
+      continue;
+    }
+    await supabase.from("importacao_item").insert({
+      hash_sha256: payload.hash,
+      arquivo: payload.arquivo,
+      familia: String(payload.grupo.familia),
+      grupo_numero: g,
+      assembleia_numero: _nova,
+      situacao: "aplicado",
+      tipo: "nova_assembleia",
+      motivo: `Salto automático da ${_de}ª para a ${_nova}ª assembleia (prazo da cota ${_prazoCota}): sem PDF específico, dados iguais aos da ${_de}ª.`,
+      lido_por: email,
+    });
+    await supabase.from("importacao_faltante").delete().eq("grupo_numero", g);
+    aplicados++;
+  }
+  revalidatePath("/importar");
+  revalidatePath("/grupos");
+  return { ok: true, aplicados, falhas };
 }
 
 // ---------------------------------------------------------------- aplicar na base

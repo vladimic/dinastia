@@ -23,6 +23,7 @@ erDiagram
   tipo_contemplacao ||--o{ grupo_sequencia_faixa : "demais_tipo"
   grupo_sequencia_faixa ||--o{ grupo_sequencia : "faixa_id"
   tipo_contemplacao ||--o{ grupo_sequencia : "tipo"
+  grupo ||--o{ importacao_faltante : "grupo_numero"
   importacao_item ||--o{ importacao_diferenca : "item_id"
   parametros_gerais {
     int id PK
@@ -151,6 +152,13 @@ erDiagram
     string decidido_por
     datetime decidido_em
   }
+  importacao_faltante {
+    int grupo_numero PK
+    string decisao
+    datetime data_ref
+    string decidido_por
+    datetime decidido_em
+  }
   usuario {
     string cpf PK
     string email UK
@@ -177,6 +185,7 @@ erDiagram
 | grupo_sequencia_faixa | demais_tipo | tipo_contemplacao | codigo | bloqueia | Modalidade das demais contemplações. |
 | grupo_sequencia | faixa_id | grupo_sequencia_faixa | id | apaga junto | Itens (ordem) de cada faixa. |
 | grupo_sequencia | tipo | tipo_contemplacao | codigo | bloqueia | Modalidade do item da sequência. |
+| importacao_faltante | grupo_numero | grupo | numero | apaga junto | Grupo que ficou aguardando PDF na leitura. |
 | importacao_diferenca | item_id | importacao_item | id | apaga junto | Diferenças encontradas em cada PDF lido. |
 
 ## Dicionário de dados
@@ -378,6 +387,18 @@ Cada diferença entre um PDF e a base, com a decisão do administrador (aceitar,
 | `valor_final` | JSON | não |  | Valor digitado, quando a decisão é editada. |
 | `decidido_por` | texto | não |  | E-mail de quem decidiu. |
 | `decidido_em` | data e hora | não |  | Quando decidiu. |
+
+#### `importacao_faltante`
+
+Grupos para os quais não veio PDF na leitura da pasta e o administrador escolheu esperar o PDF (reimportar). O salto automático de assembleia não precisa de registro aqui: ele grava a nova versão do grupo (e um item em importacao_item).
+
+| Campo | Tipo | Obrig. | Chave | Descrição |
+|---|---|---|---|---|
+| `grupo_numero` | inteiro | sim | PK · FK→grupo.numero | Grupo sem PDF na assembleia de referência. |
+| `decisao` | texto | sim |  | aguardando_pdf: o administrador vai reimportar o PDF deste grupo. |
+| `data_ref` | data | sim |  | Data da assembleia de referência da leitura em que o PDF faltou. |
+| `decidido_por` | texto | não |  | E-mail de quem decidiu. |
+| `decidido_em` | data e hora | sim |  | Quando decidiu. |
 
 ### Acesso
 
