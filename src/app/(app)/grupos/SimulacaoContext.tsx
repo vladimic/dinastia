@@ -14,6 +14,9 @@ type Ctx = {
   /** pagamento com furo do grupo (muda no card "Pagamento com furo" e o simulador acompanha) */
   furo: boolean;
   setFuro: (v: boolean) => void;
+  /** furo usado só na simulação: com furo = sim no grupo, dá para simular como não; com não, nunca como sim */
+  furoSim: boolean;
+  setFuroSim: (v: boolean) => void;
 };
 
 const SimulacaoCtx = createContext<Ctx | null>(null);
@@ -40,8 +43,9 @@ export function SimulacaoProvider({
   const [creditoSel, setCreditoSel] = useState(creditoInicial);
   const [tipoSel, setTipoSel] = useState(tipoInicial);
   const [furo, setFuro] = useState(furoInicial);
+  const [escolhaSim, setFuroSim] = useState(true); // a escolha só vale enquanto o grupo tem furo
   return (
-    <SimulacaoCtx.Provider value={{ creditoSel, setCreditoSel, tipoSel, setTipoSel, tipos, furo, setFuro }}>
+    <SimulacaoCtx.Provider value={{ creditoSel, setCreditoSel, tipoSel, setTipoSel, tipos, furo, setFuro, furoSim: furo && escolhaSim, setFuroSim }}>
       {children}
     </SimulacaoCtx.Provider>
   );

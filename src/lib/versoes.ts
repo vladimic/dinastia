@@ -2,6 +2,14 @@
 // Regra: a cada mudança entregue, acrescentar uma entrada NO TOPO.
 export const VERSOES: { numero: string; data: string; itens: string[] }[] = [
   {
+    numero: "0103",
+    data: "21/10/2026",
+    itens: [
+      "Simulador: novo seletor “Pagamento com furo: Sim / Não” na coluna de parâmetros. Com furo = sim no grupo, dá para simular também sem furo (sem alterar o grupo); com furo = não, só o Não fica disponível. Verde = possível; o escolhido fica em verde forte.",
+      "Simulador: com o Lance Total recolhido, a linha fica alinhada com as colunas de cima e a palavra LANCE não é mais cortada.",
+    ],
+  },
+  {
     numero: "0102",
     data: "21/10/2026",
     itens: [
