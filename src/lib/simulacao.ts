@@ -86,8 +86,10 @@ export type Coluna = {
   saldoDevedor: number | null;
   /** parcelas pagas até a contemplação */
   valorInvestido: number;
-  /** crédito disponível − lance próprio − parcelas pagas */
+  /** crédito disponível após a contemplação − lance com recurso próprio */
   dinheiroNovo: number;
+  /** lance com recurso próprio ÷ crédito contratado, em pontos (42,3 = 42,3%) */
+  proprioPct: number;
   /** taxa mensal que iguala o dinheiro novo às parcelas após a contemplação (função TAXA); nulo se não houver taxa positiva */
   custoMensal: number | null;
   /** (1 + custo mensal)^12 − 1 */
@@ -103,7 +105,7 @@ export function calcularColuna(base: Base, credito: number, lance: { qtdParcelas
   const creditoDisponivel = credito - recursoCarta;
   const saldoAntes = credito + base.taxaAdmValor - base.totalPago;
   const parcelaApos = base.prazoRestante > 0 ? Math.max(0, (saldoAntes - totalLance) / base.prazoRestante) : null;
-  const dinheiroNovo = creditoDisponivel - recursoProprio - base.totalPago;
+  const dinheiroNovo = creditoDisponivel - recursoProprio;
   const custoMensal = parcelaApos === null ? null : taxaMensal(base.prazoRestante, parcelaApos, dinheiroNovo);
   return {
     fracaoCarta,
@@ -114,6 +116,7 @@ export function calcularColuna(base: Base, credito: number, lance: { qtdParcelas
     saldoDevedor: parcelaApos === null ? null : parcelaApos * base.prazoRestante,
     valorInvestido: base.totalPago,
     dinheiroNovo,
+    proprioPct: credito > 0 ? (recursoProprio / credito) * 100 : 0,
     custoMensal,
     custoAnual: custoMensal === null ? null : (Math.pow(1 + custoMensal, 12) - 1),
   };
