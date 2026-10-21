@@ -2,6 +2,15 @@
 // Regra: a cada mudança entregue, acrescentar uma entrada NO TOPO.
 export const VERSOES: { numero: string; data: string; itens: string[] }[] = [
   {
+    numero: "0102",
+    data: "21/10/2026",
+    itens: [
+      "Simulador: o cadeado passa a aparecer em todo lance em que o grupo limita as parcelas (Fixo, Limitado e também o Fidelidade quando tem máximo, como 99 parcelas); o martelo fica nos lances de leilão sem limite do grupo, como o Livre.",
+      "Simulador: sai a informação “máx.” embaixo do lance livre (a validação dos meses que faltam continua). A explicação do ícone fica só no tooltip.",
+      "Simulador: botão de recolher/expandir na linha Lance Total, que esconde ou mostra o recurso da carta (embutido) e o recurso próprio (dinheiro).",
+    ],
+  },
+  {
     numero: "0101",
     data: "21/10/2026",
     itens: [
