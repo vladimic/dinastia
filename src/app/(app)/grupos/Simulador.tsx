@@ -4,14 +4,16 @@ import { useState } from "react";
 import type { Modalidade } from "@/lib/grupos";
 import { calcularBase, calcularColuna, type Coluna as Calc, type PadroesSimulador, type TipoColuna } from "@/lib/simulacao";
 import { useSimulacao } from "./SimulacaoContext";
-import { reais0, useDados } from "./GrupoDetalhe";
+import { useDados } from "./GrupoDetalhe";
 
 // Simulador do grupo: os cálculos vêm de src/lib/simulacao.ts, com os parâmetros numa coluna à esquerda
 // e a grade de resultados à direita.
 
 const p1 = (v: number) => v.toLocaleString("pt-BR", { minimumFractionDigits: 1, maximumFractionDigits: 1 }) + "%";
 const p2 = (v: number) => v.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + "%";
-const dinheiro = (v: number | null | undefined) => (v === null || v === undefined ? "—" : reais0(v));
+const brl2 = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL", minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const reais2 = (v: number) => brl2.format(v);
+const dinheiro = (v: number | null | undefined) => (v === null || v === undefined ? "—" : reais2(v));
 const nf2 = new Intl.NumberFormat("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 const nf4 = new Intl.NumberFormat("pt-BR", { minimumFractionDigits: 4, maximumFractionDigits: 4 });
 
@@ -35,6 +37,8 @@ type Coluna = Meta & {
   bloqueio: string | null;
   qtd: string | null;
   qtdFixa: boolean;
+  /** máximo de parcelas do lance nesta simulação (nulo = sem teto) */
+  teto: number | null;
   calc: Calc | null;
   prazoRestante: number;
   concorrencia: number | null;
@@ -73,17 +77,35 @@ function Cabecalho({ c, aoMudarQtd }: { c: Coluna; aoMudarQtd: (v: string) => vo
       ) : (
         <>
           {c.oferecido && c.qtd !== null && (
-            <label className="flex items-center gap-1 text-[11px] font-semibold text-tinta" title={c.qtdFixa ? "Parcelas do lance definidas pelo grupo" : "Parcelas do lance (editável nesta simulação)"}>
-              <input
-                inputMode="numeric"
-                readOnly={c.qtdFixa}
-                value={c.qtd}
-                aria-label={`Parcelas do ${c.titulo}`}
-                onChange={(e) => aoMudarQtd(e.target.value.replace(/\D/g, "").slice(0, 3))}
-                className={"h-6 w-11 rounded border border-borda-campo px-1 text-right text-[12px] font-bold tabular-nums text-navy outline-none focus:border-laranja " + (c.qtdFixa ? "bg-linha" : "bg-white")}
-              />
-              parcelas
-            </label>
+            <div className="flex flex-col gap-0.5">
+              <label
+                className="flex items-center gap-1 text-[11px] font-semibold text-tinta"
+                title={
+                  c.qtdFixa
+                    ? "Lance pré-definido: o grupo fixa o máximo de parcelas"
+                    : `Lance em leilão: parcelas editáveis nesta simulação${c.teto !== null ? ` (máximo ${c.teto})` : ""}`
+                }
+              >
+                <span
+                  className={
+                    "flex h-6 items-center gap-0.5 rounded border px-0.5 text-navy " +
+                    (c.qtdFixa ? "border-dashed border-navy bg-linha" : "border-solid border-[#c2410c] bg-white")
+                  }
+                >
+                  {c.icone === "cadeado" ? <Cadeado /> : <Martelo />}
+                  <input
+                    inputMode="numeric"
+                    readOnly={c.qtdFixa}
+                    value={c.qtd}
+                    aria-label={`Parcelas do ${c.titulo}`}
+                    onChange={(e) => aoMudarQtd(e.target.value.replace(/\D/g, "").slice(0, 3))}
+                    className="w-7 bg-transparent text-right text-[12px] font-bold tabular-nums outline-none"
+                  />
+                </span>
+                parcelas
+              </label>
+              {!c.qtdFixa && c.teto !== null && <span className="text-[10px] text-tinta">máx. {c.teto}</span>}
+            </div>
           )}
           <div className="text-[10px] font-bold text-tinta">
             <div className="flex justify-between">
@@ -95,7 +117,7 @@ function Cabecalho({ c, aoMudarQtd }: { c: Coluna; aoMudarQtd: (v: string) => vo
             </div>
           </div>
           <div className="mt-auto flex items-center gap-1 text-[10px] font-bold whitespace-nowrap text-tinta">
-            {c.calc ? p1(c.calc.proprioPct) : "—"} {c.icone === "cadeado" ? <Cadeado /> : <Martelo />} próprio
+            {c.calc ? p1(c.calc.proprioPct) : "—"} próprio
           </div>
         </>
       )}
@@ -106,11 +128,14 @@ function Cabecalho({ c, aoMudarQtd }: { c: Coluna; aoMudarQtd: (v: string) => vo
 function Grade({ colunas, aoMudarQtd }: { colunas: Coluna[]; aoMudarQtd: (t: TipoColuna) => (v: string) => void }) {
   const rotulo = "flex items-center px-2 text-[12px] leading-tight font-bold text-tinta";
   const celula = "flex min-h-[2.5rem] flex-col items-center justify-center border-b border-linha px-1 text-center";
-  const valor = "text-[15px] leading-tight font-bold tabular-nums";
+  const valor = "text-[14px] leading-tight font-bold tabular-nums";
   const aviso = (c: Coluna) => c.bloqueio ?? (c.oferecido ? null : "Grupo não oferece");
-  const linhasCima: { r: string; v: (c: Coluna) => string; avisar?: boolean; forte?: boolean }[] = [
-    { r: "Recurso da Carta (embutido)", v: (c) => (c.calc && c.tipo !== "SOR" ? dinheiro(c.calc.recursoCarta) : "—"), avisar: true },
+  const lance: { r: string; v: (c: Coluna) => string; forte?: boolean }[] = [
+    { r: "Recurso da Carta (embutido)", v: (c) => (c.calc && c.tipo !== "SOR" ? dinheiro(c.calc.recursoCarta) : "—") },
     { r: "Recurso Próprio (dinheiro)", v: (c) => (c.calc && c.tipo !== "SOR" ? dinheiro(c.calc.recursoProprio) : "—") },
+    { r: "Lance Total", v: (c) => (c.calc && c.tipo !== "SOR" ? dinheiro(c.calc.lanceTotal) : "—"), forte: true },
+  ];
+  const linhasCima: { r: string; v: (c: Coluna) => string; avisar?: boolean; forte?: boolean }[] = [
     { r: "Crédito Disponível após a Contemplação", v: (c) => dinheiro(c.calc?.creditoDisponivel), forte: true },
     { r: "Valor da Parcela após a Contemplação", v: (c) => dinheiro(c.calc?.parcelaApos), forte: true },
     { r: "Prazo Restante", v: (c) => (c.calc && c.prazoRestante > 0 ? String(c.prazoRestante) : "—") },
@@ -120,7 +145,7 @@ function Grade({ colunas, aoMudarQtd }: { colunas: Coluna[]; aoMudarQtd: (t: Tip
     { r: "Valor Investido", v: (c) => dinheiro(c.calc?.valorInvestido) },
     { r: "Custo Mensal", v: (c) => (c.calc?.custoMensal == null ? "—" : p2(c.calc.custoMensal * 100)) },
     { r: "Custo Anual", v: (c) => (c.calc?.custoAnual == null ? "—" : p2(c.calc.custoAnual * 100)) },
-    { r: "Dinheiro Novo", v: (c) => dinheiro(c.calc?.dinheiroNovo) },
+    { r: "Crédito - Lance com Recurso Próprio", v: (c) => dinheiro(c.calc?.creditoMenosProprio) },
   ];
 
   return (
@@ -130,6 +155,41 @@ function Grade({ colunas, aoMudarQtd }: { colunas: Coluna[]; aoMudarQtd: (t: Tip
         {colunas.map((c) => (
           <Cabecalho key={c.chave} c={c} aoMudarQtd={aoMudarQtd(c.tipo)} />
         ))}
+      </div>
+      {/* bloco LANCE: recurso da carta, recurso próprio e o total */}
+      <div className="flex border-b border-linha">
+        <div className="w-[10.5rem] shrink-0 pr-1.5">
+          <div className="flex h-full overflow-hidden rounded-l-lg border border-borda-campo">
+            <div className="flex w-6 shrink-0 items-center justify-center bg-navy text-white">
+              <span className="text-[10px] font-extrabold tracking-[0.14em] [writing-mode:vertical-rl] rotate-180">LANCE</span>
+            </div>
+            <div className="flex flex-1 flex-col">
+              {lance.map((l) => (
+                <div key={l.r} className={"flex min-h-[2.5rem] flex-1 items-center px-2 text-[12px] leading-tight text-tinta " + (l.forte ? "bg-lavanda font-extrabold" : "font-bold")}>
+                  {l.r}
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+        <div className="grid min-w-0 flex-1 grid-cols-5 gap-x-1.5">
+          {colunas.map((c) => {
+            const msg = aviso(c);
+            return (
+              <div key={c.chave} className="flex flex-col rounded-md border border-linha">
+                {lance.map((l) => (
+                  <div key={l.r} className={"flex min-h-[2.5rem] flex-1 flex-col items-center justify-center px-1 text-center " + (l.forte ? "bg-lavanda" : "")}>
+                    {msg ? (
+                      l === lance[0] && <span className="text-[10px] leading-tight text-tinta">{msg}</span>
+                    ) : (
+                      <span className={`${valor} ${l.forte ? "text-navy" : "text-ouro-texto"}`}>{l.v(c)}</span>
+                    )}
+                  </div>
+                ))}
+              </div>
+            );
+          })}
+        </div>
       </div>
       {linhasCima.map((l) => (
         <div key={l.r} className={GRADE}>
@@ -259,7 +319,11 @@ export function Simulador({ hoje, padroes }: { hoje: string; padroes: PadroesSim
   const taxaMensal = taxaAdm !== null && faltam > 0 ? taxaAdm / faltam : null;
 
   const porTipo = new Map(g.modalidades.map((m) => [m.tipo as string, m]));
-  const tetoQtd = (tipo: string) => porTipo.get(tipo)?.max_parcelas_lance ?? null;
+  // o lance livre também não pode passar dos meses que faltam para o grupo terminar
+  const tetoQtd = (tipo: string) => {
+    const max = porTipo.get(tipo)?.max_parcelas_lance ?? null;
+    return tipo === "LIV" ? (max === null ? faltam : Math.min(max, faltam)) : max;
+  };
   const limitar = (tipo: string, n: number) => {
     const teto = tetoQtd(tipo);
     return teto !== null && n > teto ? teto : n;
@@ -300,6 +364,7 @@ export function Simulador({ hoje, padroes }: { hoje: string; padroes: PadroesSim
       bloqueio,
       qtd,
       qtdFixa: c.tipo === "FIX" || c.tipo === "LIM",
+      teto: c.tipo === "SOR" ? null : tetoQtd(c.tipo),
       calc,
       prazoRestante: base?.prazoRestante ?? 0,
       concorrencia: c.tipo === "SOR" ? null : padroes.concorrencia[c.tipo],
@@ -313,14 +378,14 @@ export function Simulador({ hoje, padroes }: { hoje: string; padroes: PadroesSim
       <aside aria-label="Parâmetros da simulação" className="flex flex-col gap-4 rounded-2xl border border-borda bg-white p-4 lg:sticky lg:top-[7.5rem]">
         {/* crédito, cotas e tipo de parcela são escolhidos no cabeçalho do grupo */}
         <Bloco titulo="Crédito contratado" junto>
-          <div className={GRANDE + " text-right text-ouro-texto"}>{creditoContratado === null ? "—" : reais0(creditoContratado)}</div>
+          <div className={GRANDE + " text-right text-ouro-texto"}>{creditoContratado === null ? "—" : reais2(creditoContratado)}</div>
           <span className="text-right text-[11px] text-tinta">
-            {creditoSel === null ? "Escolha um crédito no cabeçalho" : `${cotas} ${cotas === 1 ? "cota" : "cotas"} × ${reais0(creditoSel)}`}
+            {creditoSel === null ? "Escolha um crédito no cabeçalho" : `${cotas} ${cotas === 1 ? "cota" : "cotas"} × ${reais2(creditoSel)}`}
           </span>
         </Bloco>
 
         <Bloco titulo="Parcela antes da contemplação">
-          <div className={GRANDE + " text-right text-ouro-texto"}>{base ? reais0(base.parcelaAntes) : "—"}</div>
+          <div className={GRANDE + " text-right text-ouro-texto"}>{base ? reais2(base.parcelaAntes) : "—"}</div>
           <span className="text-right text-[11px] text-tinta">
             {tipo ? `Parcela ${tipo.descricao}` : "Escolha o tipo de parcela no cabeçalho"}
             {furo ? " · com furo" : " · sem furo"}
@@ -387,7 +452,7 @@ export function Simulador({ hoje, padroes }: { hoje: string; padroes: PadroesSim
         <Bloco titulo="Informações complementares">
           <Par r="Fidelidade em" v={fidelidadeMeses ? `${fidelidadeMeses} meses` : "—"} />
           <Par r="Taxa de adm. mensal" v={taxaMensal === null ? "—" : p2(taxaMensal)} />
-          <Par r="Parcela para lance" v={base ? reais0(base.parcelaLance) : "—"} />
+          <Par r="Parcela para lance" v={base ? reais2(base.parcelaLance) : "—"} />
         </Bloco>
 
         {/* mesmo desenho de Informações complementares: rótulo à esquerda, valor à direita; campos só com o risco embaixo */}

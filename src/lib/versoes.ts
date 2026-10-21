@@ -2,6 +2,16 @@
 // Regra: a cada mudança entregue, acrescentar uma entrada NO TOPO.
 export const VERSOES: { numero: string; data: string; itens: string[] }[] = [
   {
+    numero: "0101",
+    data: "21/10/2026",
+    itens: [
+      "Simulador: valores com centavos (crédito, parcelas, recursos, saldo devedor e demais linhas da grade). Os créditos disponíveis do cabeçalho do grupo continuam sem casas decimais.",
+      "Simulador: nova linha “Lance Total” e bloco LANCE (recurso da carta, recurso próprio e total) antes do Crédito Disponível após a Contemplação. A linha “Dinheiro Novo” passou a se chamar “Crédito - Lance com Recurso Próprio”.",
+      "Simulador: o cadeado (lance pré-definido: campo travado, borda tracejada) e o martelo (leilão: campo editável) ficam junto do campo de parcelas do lance. O lance livre não passa dos meses que faltam para o grupo terminar e mostra “máx.” abaixo do campo.",
+      "Simulador: Custo Mensal e Custo Anual voltaram a ser calculados: ficaram sem valor na 0100 porque passaram a usar o novo crédito (sem descontar as parcelas já pagas). O custo continua usando o crédito líquido de parcelas pagas.",
+    ],
+  },
+  {
     numero: "0100",
     data: "21/10/2026",
     itens: [

@@ -86,11 +86,13 @@ export type Coluna = {
   saldoDevedor: number | null;
   /** parcelas pagas até a contemplação */
   valorInvestido: number;
+  /** recurso da carta + recurso próprio */
+  lanceTotal: number;
   /** crédito disponível após a contemplação − lance com recurso próprio */
-  dinheiroNovo: number;
+  creditoMenosProprio: number;
   /** lance com recurso próprio ÷ crédito contratado, em pontos (42,3 = 42,3%) */
   proprioPct: number;
-  /** taxa mensal que iguala o dinheiro novo às parcelas após a contemplação (função TAXA); nulo se não houver taxa positiva */
+  /** taxa mensal que iguala o crédito líquido (crédito − lance próprio − parcelas já pagas) às parcelas após a contemplação (função TAXA); nulo se não houver taxa positiva */
   custoMensal: number | null;
   /** (1 + custo mensal)^12 − 1 */
   custoAnual: number | null;
@@ -105,8 +107,9 @@ export function calcularColuna(base: Base, credito: number, lance: { qtdParcelas
   const creditoDisponivel = credito - recursoCarta;
   const saldoAntes = credito + base.taxaAdmValor - base.totalPago;
   const parcelaApos = base.prazoRestante > 0 ? Math.max(0, (saldoAntes - totalLance) / base.prazoRestante) : null;
-  const dinheiroNovo = creditoDisponivel - recursoProprio;
-  const custoMensal = parcelaApos === null ? null : taxaMensal(base.prazoRestante, parcelaApos, dinheiroNovo);
+  const creditoMenosProprio = creditoDisponivel - recursoProprio;
+  // o custo compara o que se recebe de fato (já descontadas as parcelas pagas até a contemplação) com as parcelas que restam
+  const custoMensal = parcelaApos === null ? null : taxaMensal(base.prazoRestante, parcelaApos, creditoMenosProprio - base.totalPago);
   return {
     fracaoCarta,
     recursoCarta,
@@ -115,7 +118,8 @@ export function calcularColuna(base: Base, credito: number, lance: { qtdParcelas
     parcelaApos,
     saldoDevedor: parcelaApos === null ? null : parcelaApos * base.prazoRestante,
     valorInvestido: base.totalPago,
-    dinheiroNovo,
+    lanceTotal: totalLance,
+    creditoMenosProprio,
     proprioPct: credito > 0 ? (recursoProprio / credito) * 100 : 0,
     custoMensal,
     custoAnual: custoMensal === null ? null : (Math.pow(1 + custoMensal, 12) - 1),
