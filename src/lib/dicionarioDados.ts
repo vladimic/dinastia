@@ -232,6 +232,16 @@ export const DICIONARIO: TabelaDic[] = [
     ],
   },
   {
+    tabela: "lista_grupos",
+    grupo: "Grupos e assembleias",
+    descricao: "Lista de grupos de cada família (a do seletor em Grupos e Tabelas), guardada pronta para a tela abrir rápido. Derivada das demais tabelas: é refeita ao aplicar a importação e ao editar um grupo.",
+    colunas: [
+      t("familia", "texto", true, "Família dos grupos (imoveis, veiculos, servicos, outros_bens).", "PK"),
+      t("dados", "JSON", true, "Lista de grupos da família: número, prazo, assembleia, créditos mínimo e máximo, sequência, participantes, furo e parcelas reduzidas."),
+      t("atualizado_em", "data e hora", true, "Quando a lista foi refeita."),
+    ],
+  },
+  {
     tabela: "usuario",
     grupo: "Acesso",
     descricao: "Quem pode entrar no Dinastia e se é administrador. Contém dados pessoais (CPF, telefone): proteja o arquivo exportado. Tela: Cadastros › Usuários.",

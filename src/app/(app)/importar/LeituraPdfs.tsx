@@ -26,7 +26,7 @@ export function LeituraPdfs({ rotulo, caminho, chave }: { rotulo: string; caminh
   const router = useRouter();
   const entrada = useRef<HTMLInputElement>(null);
   const [estado, setEstado] = useState<{ fase: string; feito: number; total: number } | null>(null);
-  const [resumo, setResumo] = useState<{ pdfs: number; variacoes: number; duplicados: number; jaLidos: number; r: ResumoLote; ilegiveis: string[] } | null>(null);
+  const [resumo, setResumo] = useState<{ pdfs: number; variacoes: number; duplicados: number; jaLidos: number; r: ResumoLote; ilegiveis: string[]; desconsiderados: { arquivo: string; motivo: string }[] } | null>(null);
   const [erro, setErro] = useState("");
   const ocupado = estado !== null;
   const [guardada, setGuardada] = useState<PastaHandle | null>(null);
@@ -103,6 +103,7 @@ export function LeituraPdfs({ rotulo, caminho, chave }: { rotulo: string; caminh
       const total: ResumoLote = { ...VAZIO };
       let leituras: Leitura[] = [];
       let falhas: { arquivo: string; hash: string; motivo: string }[] = [];
+      const desconsiderados: { arquivo: string; motivo: string }[] = []; // PDFs que o leitor não conseguiu interpretar
       const enviar = async () => {
         if (!leituras.length && !falhas.length) return;
         const r = await registrarLeituras(leituras, falhas);
@@ -117,9 +118,13 @@ export function LeituraPdfs({ rotulo, caminho, chave }: { rotulo: string; caminh
         const { file, dados } = unicos.get(novos[i])!;
         try {
           const linhas = await extrairLinhas(pdfjs, new Uint8Array(dados.slice(0)));
-          leituras.push(interpretar(linhas, file.name, novos[i]));
+          const lida = interpretar(linhas, file.name, novos[i]);
+          leituras.push(lida);
+          if (lida.erros.length) desconsiderados.push({ arquivo: file.name, motivo: lida.erros[0] });
         } catch (e) {
-          falhas.push({ arquivo: file.name, hash: novos[i], motivo: (e as Error).message || "não foi possível ler o PDF" });
+          const motivo = (e as Error).message || "não foi possível ler o PDF";
+          falhas.push({ arquivo: file.name, hash: novos[i], motivo });
+          desconsiderados.push({ arquivo: file.name, motivo });
         }
         if (leituras.length + falhas.length >= LOTE) {
           setEstado({ fase: "Comparando com a base", feito: i + 1, total: novos.length });
@@ -128,7 +133,7 @@ export function LeituraPdfs({ rotulo, caminho, chave }: { rotulo: string; caminh
       }
       setEstado({ fase: "Comparando com a base", feito: novos.length, total: novos.length });
       await enviar();
-      setResumo({ pdfs: pdfs.length, variacoes, duplicados, jaLidos: unicos.size - novos.length, r: total, ilegiveis });
+      setResumo({ pdfs: pdfs.length, variacoes, duplicados, jaLidos: unicos.size - novos.length, r: total, ilegiveis, desconsiderados });
       router.refresh();
     } catch (e) {
       setErro((e as Error).message || "Não foi possível concluir a leitura.");
@@ -193,6 +198,21 @@ export function LeituraPdfs({ rotulo, caminho, chave }: { rotulo: string; caminh
             </span>
           )}
         </p>
+      )}
+      {resumo && resumo.desconsiderados.length > 0 && (
+        <div role="alert" className="rounded-lg bg-[#fbe4e4] px-3 py-2 text-xs text-[#9b1c1c]">
+          <strong>
+            {resumo.desconsiderados.length} {resumo.desconsiderados.length === 1 ? "PDF foi desconsiderado" : "PDFs foram desconsiderados"} (o leitor não reconheceu o formato):
+          </strong>
+          <ul className="mt-1 list-disc pl-5">
+            {resumo.desconsiderados.slice(0, 10).map((d) => (
+              <li key={d.arquivo}>
+                {d.arquivo} — {d.motivo}
+              </li>
+            ))}
+          </ul>
+          {resumo.desconsiderados.length > 10 && <span>e mais {resumo.desconsiderados.length - 10}. Veja todos em Erros.</span>}
+        </div>
       )}
     </div>
   );

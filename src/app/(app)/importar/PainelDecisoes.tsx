@@ -181,6 +181,15 @@ export function PainelDecisoes({
         </p>
       )}
 
+      {contagens.erros > 0 && filtro !== "erros" && (
+        <p role="alert" className="rounded-lg bg-[#fbe4e4] px-3 py-2 text-sm font-semibold text-[#9b1c1c]">
+          {contagens.erros} {contagens.erros === 1 ? "PDF foi desconsiderado" : "PDFs foram desconsiderados"} porque o leitor não conseguiu interpretar.{" "}
+          <Link href="/importar?v=erros" scroll={false} className="underline">
+            Ver quais (Erros)
+          </Link>
+        </p>
+      )}
+
       {agregados.length > 0 && (
         <div className="flex flex-col gap-2 rounded-2xl border border-borda bg-white p-4">
           <h3 className="text-sm font-bold">Decidir em bloco (todas as pendentes de cada tipo)</h3>

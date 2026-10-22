@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
-import { FAMILIAS, carregarGrupo, carregarPadroesSimulador, contarPorFamilia, listarCoresContemplacao, listarGrupos, listarIndices, nomeFamilia } from "@/lib/grupos";
+import { FAMILIAS, carregarGrupo, carregarPadroesSimulador, contarPorFamilia, listarCoresContemplacao, listarIndices, nomeFamilia } from "@/lib/grupos";
+import { listaDaFamilia } from "@/lib/listaGrupos";
 import { padroesDeLinha } from "@/lib/simulacao";
 import { ehAdministrador } from "@/lib/usuario";
 import { Cabecalho } from "./Cabecalho";
@@ -27,7 +28,7 @@ async function Conteudo({ searchParams }: { searchParams: PageProps<"/grupos">["
   // Os links da tela sempre levam a família na URL; sem ela, a lista precisa esperar o grupo para saber qual é.
   const [detalhe, gruposPedida, cores, contagem, indices, padroes, admin] = await Promise.all([
     numeroGrupo ? carregarGrupo(numeroGrupo) : Promise.resolve(null),
-    pedida ? listarGrupos(pedida.slug) : Promise.resolve(null),
+    pedida ? listaDaFamilia(pedida.slug) : Promise.resolve(null),
     listarCoresContemplacao(),
     contarPorFamilia(),
     numeroGrupo ? listarIndices() : Promise.resolve([]),
@@ -36,7 +37,7 @@ async function Conteudo({ searchParams }: { searchParams: PageProps<"/grupos">["
   ]);
   // sem família na URL, a lista mostra a família do grupo aberto
   const familia = pedida ?? FAMILIAS.find((f) => f.slug === detalhe?.familia) ?? FAMILIAS[0];
-  const grupos = gruposPedida ?? (await listarGrupos(familia.slug));
+  const grupos = gruposPedida ?? (await listaDaFamilia(familia.slug));
   const hoje = new Date().toISOString().slice(0, 10);
 
   const seletor = (

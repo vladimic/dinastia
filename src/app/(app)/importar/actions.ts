@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import { refazerTodasAsListas } from "@/lib/listaGrupos";
 import { ehAdministrador, usuarioAtual } from "@/lib/usuario";
 import { carregarEstados } from "@/lib/pdf/estado";
 import { calcularFaltantes, montarSalto } from "@/lib/pdf/faltantes";
@@ -284,6 +285,7 @@ export async function aplicarSaltos(grupos: number[]): Promise<{ ok: true; aplic
     await supabase.from("importacao_faltante").delete().eq("grupo_numero", g);
     aplicados++;
   }
+  if (aplicados > 0) await refazerTodasAsListas(supabase); // a lista de grupos só muda aqui
   revalidatePath("/importar");
   revalidatePath("/grupos");
   return { ok: true, aplicados, falhas };
@@ -338,6 +340,7 @@ export async function aplicarItens(ids: number[]): Promise<{ ok: true; aplicados
     if ("erro" in r) falhas.push({ arquivo: item.arquivo, motivo: r.erro });
     else if (!r.rejeitado) aplicados++;
   }
+  if (aplicados > 0) await refazerTodasAsListas(supabase); // a lista de grupos só muda aqui
   revalidatePath("/importar");
   revalidatePath("/grupos");
   return { ok: true, aplicados, falhas };

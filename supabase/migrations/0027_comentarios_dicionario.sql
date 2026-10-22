@@ -120,6 +120,10 @@ comment on column public.importacao_faltante.decisao is 'aguardando_pdf: o admin
 comment on column public.importacao_faltante.data_ref is 'Data da assembleia de referência da leitura em que o PDF faltou.';
 comment on column public.importacao_faltante.decidido_por is 'E-mail de quem decidiu.';
 comment on column public.importacao_faltante.decidido_em is 'Quando decidiu.';
+comment on table public.lista_grupos is 'Lista de grupos de cada família (a do seletor em Grupos e Tabelas), guardada pronta para a tela abrir rápido. Derivada das demais tabelas: é refeita ao aplicar a importação e ao editar um grupo.';
+comment on column public.lista_grupos.familia is 'Família dos grupos (imoveis, veiculos, servicos, outros_bens).';
+comment on column public.lista_grupos.dados is 'Lista de grupos da família: número, prazo, assembleia, créditos mínimo e máximo, sequência, participantes, furo e parcelas reduzidas.';
+comment on column public.lista_grupos.atualizado_em is 'Quando a lista foi refeita.';
 comment on table public.usuario is 'Quem pode entrar no Dinastia e se é administrador. Contém dados pessoais (CPF, telefone): proteja o arquivo exportado. Tela: Cadastros › Usuários.';
 comment on column public.usuario.cpf is 'CPF, só dígitos, validado. Chave do cadastro.';
 comment on column public.usuario.email is 'E-mail do login (minúsculo, único).';

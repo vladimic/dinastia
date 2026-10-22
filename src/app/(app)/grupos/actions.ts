@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import { refazerListaDaVersao, refazerListaDoGrupo } from "@/lib/listaGrupos";
 import { ehAdministrador } from "@/lib/usuario";
 import { lerInt, lerPct } from "@/lib/formato";
 import { gerarFaixas, validarEdicao, type Edicao } from "@/lib/sequencia";
@@ -46,6 +47,7 @@ export async function salvarCampoGrupo(numero: number, campo: CampoGrupo, valor:
   const supabase = await createClient();
   const { error } = await supabase.from("grupo").update({ [campo]: novo }).eq("numero", numero);
   if (error) return { ok: false, erro: "Não foi possível salvar. Tente de novo." };
+  await refazerListaDoGrupo(supabase, numero);
   revalidatePath("/grupos");
   return { ok: true };
 }
@@ -60,6 +62,7 @@ export async function alternarTipoParcela(versaoId: number, tipo: string, marcad
         .upsert({ grupo_assembleia_id: versaoId, tipo_parcela: tipo }, { onConflict: "grupo_assembleia_id,tipo_parcela" })
     : await supabase.from("grupo_assembleia_tipo_parcela").delete().eq("grupo_assembleia_id", versaoId).eq("tipo_parcela", tipo);
   if (error) return { ok: false };
+  await refazerListaDaVersao(supabase, versaoId);
   revalidatePath("/grupos");
   return { ok: true };
 }
@@ -70,6 +73,7 @@ export async function definirPagamentoComFuro(versaoId: number, valor: boolean):
   const supabase = await createClient();
   const { error } = await supabase.from("grupo_assembleia").update({ pagamento_com_furo: valor }).eq("id", versaoId);
   if (error) return { ok: false };
+  await refazerListaDaVersao(supabase, versaoId);
   revalidatePath("/grupos");
   return { ok: true };
 }
@@ -119,6 +123,7 @@ export async function salvarSequencia(versaoId: number, entrada: Edicao): Promis
   const r2 = await supabase.from("grupo_assembleia").update({ fidelidade_meses: e.fidelidadeMeses }).eq("id", versaoId);
   if (r2.error) return FALHA;
 
+  await refazerListaDaVersao(supabase, versaoId);
   revalidatePath("/grupos");
   return { ok: true };
 }
@@ -138,6 +143,7 @@ export async function salvarCreditos(versaoId: number, valores: number[]): Promi
     .update({ creditos: [...lista].sort((a, b) => b - a) })
     .eq("id", versaoId);
   if (error) return FALHA;
+  await refazerListaDaVersao(supabase, versaoId);
   revalidatePath("/grupos");
   return { ok: true };
 }

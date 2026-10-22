@@ -25,6 +25,7 @@ export const TABELAS_EXCEL: { tabela: string; ordem: string[] }[] = [
   { tabela: "importacao_item", ordem: ["id"] },
   { tabela: "importacao_diferenca", ordem: ["id"] },
   { tabela: "importacao_faltante", ordem: ["grupo_numero"] },
+  { tabela: "lista_grupos", ordem: ["familia"] },
   { tabela: "usuario", ordem: ["cpf"] },
 ];
 
