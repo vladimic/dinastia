@@ -2,6 +2,15 @@
 // Regra: a cada mudança entregue, acrescentar uma entrada NO TOPO.
 export const VERSOES: { numero: string; data: string; itens: string[] }[] = [
   {
+    numero: "0106",
+    data: "22/10/2026",
+    itens: [
+      "Exportar Tabela Resumo: a coluna da parcela (reduzida) ganha a mesma cor do número do grupo: verde em negrito para 50 e 55, laranja para 70.",
+      "Grupos e Tabelas: ao trocar de grupo (setas, lista ou número digitado) aparece um indicador de espera (“Abrindo grupo…” e círculo girando nas setas) e novos cliques ficam bloqueados até a tela abrir, para não clicar duas vezes sem saber se funcionou.",
+      "Grupos e Tabelas: a busca do grupo, da lista e dos parâmetros agora acontece em paralelo, e não mais em três etapas em fila, o que encurta o tempo de troca de grupo.",
+    ],
+  },
+  {
     numero: "0105",
     data: "21/10/2026",
     itens: [

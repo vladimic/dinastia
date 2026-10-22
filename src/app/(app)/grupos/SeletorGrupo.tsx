@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState, useTransition } from "react";
 import { FiltroCredito } from "./FiltroCredito";
 
 // Seletor de grupo (fica no cabeçalho principal da tela): um botão com o grupo atual que abre a lista (larga) da família, com busca, filtros,
@@ -56,6 +56,14 @@ export function SeletorGrupo({ familias, familia, contagem, grupos, atual, hoje,
   const caixa = useRef<HTMLDivElement>(null);
   const botao = useRef<HTMLDivElement>(null);
   const router = useRouter();
+  // navegar entre grupos leva um tempo: enquanto isso, os controles mostram a espera e não aceitam novos cliques
+  const [navegando, iniciarNavegacao] = useTransition();
+  const [destino, setDestino] = useState<string | null>(null);
+  const navegar = (url: string) => {
+    if (navegando) return;
+    setDestino(url);
+    iniciarNavegacao(() => router.push(url));
+  };
   // número digitado no campo do grupo; volta ao grupo aberto quando a página troca de grupo
   const [codigo, setCodigo] = useState(atual ? String(atual.numero) : "");
   const [grupoDoCampo, setGrupoDoCampo] = useState(atual?.numero);
@@ -136,6 +144,7 @@ export function SeletorGrupo({ familias, familia, contagem, grupos, atual, hoje,
       linkGrupo={linkGrupo}
       linkFamilia={(slug) => href({ familia: slug, grupo: atual?.numero, aba, lista: atual ? 1 : undefined })}
       aoEscolher={() => setAberto(false)}
+      navegar={navegar}
     />
   );
 
@@ -143,6 +152,12 @@ export function SeletorGrupo({ familias, familia, contagem, grupos, atual, hoje,
     return <section className="rounded-2xl border border-borda bg-white p-4">{lista}</section>;
   }
 
+  // clique normal navega com a espera visível; com Ctrl/Cmd/Shift o navegador abre em outra aba, como um link comum
+  const clicarSeta = (e: React.MouseEvent, url: string) => {
+    if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button !== 0) return;
+    e.preventDefault();
+    navegar(url);
+  };
   const seta = "flex h-10 w-10 items-center justify-center rounded-xl border border-borda-campo bg-white text-navy hover:border-navy";
   return (
     <div ref={caixa} className="relative flex items-center gap-2">
@@ -164,7 +179,7 @@ export function SeletorGrupo({ familias, familia, contagem, grupos, atual, hoje,
             if (!n || n === atual.numero) return setCodigo(String(atual.numero));
             setAberto(false);
             // sem a família: a página usa a do grupo digitado
-            router.push(href({ grupo: n, aba }));
+            navegar(href({ grupo: n, aba }));
           }}
           onBlur={() => setCodigo(String(atual.numero))}
           style={{ width: `${Math.max(3, codigo.length) + 0.6}ch` }}
@@ -187,8 +202,15 @@ export function SeletorGrupo({ familias, familia, contagem, grupos, atual, hoje,
         </button>
       </div>
       {anterior ? (
-        <Link href={linkGrupo(anterior.numero)} className={seta} aria-label={`Grupo anterior (${anterior.numero})`} title={`Grupo anterior: ${anterior.numero}`}>
-          ‹
+        <Link
+          href={linkGrupo(anterior.numero)}
+          onClick={(e) => clicarSeta(e, linkGrupo(anterior.numero))}
+          className={seta + (navegando ? " cursor-wait opacity-70" : "")}
+          aria-label={`Grupo anterior (${anterior.numero})`}
+          aria-busy={navegando && destino === linkGrupo(anterior.numero)}
+          title={`Grupo anterior: ${anterior.numero}`}
+        >
+          {navegando && destino === linkGrupo(anterior.numero) ? <Espera /> : "‹"}
         </Link>
       ) : (
         <span className={seta + " opacity-35"} aria-hidden="true">
@@ -196,15 +218,27 @@ export function SeletorGrupo({ familias, familia, contagem, grupos, atual, hoje,
         </span>
       )}
       {proximo ? (
-        <Link href={linkGrupo(proximo.numero)} className={seta} aria-label={`Próximo grupo (${proximo.numero})`} title={`Próximo grupo: ${proximo.numero}`}>
-          ›
+        <Link
+          href={linkGrupo(proximo.numero)}
+          onClick={(e) => clicarSeta(e, linkGrupo(proximo.numero))}
+          className={seta + (navegando ? " cursor-wait opacity-70" : "")}
+          aria-label={`Próximo grupo (${proximo.numero})`}
+          aria-busy={navegando && destino === linkGrupo(proximo.numero)}
+          title={`Próximo grupo: ${proximo.numero}`}
+        >
+          {navegando && destino === linkGrupo(proximo.numero) ? <Espera /> : "›"}
         </Link>
       ) : (
         <span className={seta + " opacity-35"} aria-hidden="true">
           ›
         </span>
       )}
-      {atual.atualizadoEm && (
+      {navegando && (
+        <span role="status" className="flex items-center gap-1.5 text-[11px] font-semibold text-tinta">
+          <Espera /> Abrindo grupo…
+        </span>
+      )}
+      {atual.atualizadoEm && !navegando && (
         <span className="max-w-[5.5rem] text-[11px] leading-tight text-tinta" title={atual.arquivo ? `Tabela: ${atual.arquivo}` : undefined}>
           Atualizado em {atual.atualizadoEm}
         </span>
@@ -233,6 +267,7 @@ function Lista({
   hoje,
   cores,
   linkGrupo,
+  navegar,
   linkFamilia,
   aoEscolher,
 }: {
@@ -244,6 +279,7 @@ function Lista({
   hoje: string;
   cores: Record<string, string>;
   linkGrupo: (n: number) => string;
+  navegar: (url: string) => void;
   linkFamilia: (slug: string) => string;
   aoEscolher: () => void;
 }) {
@@ -407,9 +443,12 @@ function Lista({
               <li key={g.numero}>
                 <Link
                   href={linkGrupo(g.numero)}
-                  onClick={() => {
+                  onClick={(e) => {
                     setPop(null);
                     aoEscolher();
+                    if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button !== 0) return;
+                    e.preventDefault();
+                    navegar(linkGrupo(g.numero));
                   }}
                   aria-current={sel ? "true" : undefined}
                   onMouseEnter={(e) => mostrar(g, e.currentTarget)}
@@ -506,5 +545,15 @@ function Popup({ g, x, y, acima, hoje, cores }: { g: ItemGrupo; x: number; y: nu
         </div>
       )}
     </div>
+  );
+}
+
+/** Indicador de espera (círculo girando) */
+function Espera() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true" className="animate-spin text-laranja">
+      <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="3" opacity="0.25" />
+      <path d="M21 12a9 9 0 00-9-9" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
+    </svg>
   );
 }
