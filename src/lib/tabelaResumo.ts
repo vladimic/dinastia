@@ -184,7 +184,7 @@ export function celulasDaLinha(l: LinhaResumo): CelulaResumo[] {
     c(l.atu, String(l.atu), "right", { ...azul, fmt: "#,##0" }),
     c(l.rod, String(l.rod), "right", { ...azul, fmt: "#,##0" }),
     c(l.fu, l.fu, "center", l.fu === "S" ? { cor: VERDE, negrito: true } : {}),
-    c(l.par, String(l.par), "center", l.par === "?" ? { cor: VERMELHO } : { fmt: "#,##0" }),
+    c(l.par, String(l.par), "center", l.par === "?" ? { cor: VERMELHO } : { ...corGrupo, fmt: "#,##0" }), // mesma cor do número do grupo
     c(new Date(Date.UTC(l.fim.ano, l.fim.mes - 1, 1)), `${mm(l.fim.mes)}/${mm(l.fim.ano % 100)}`, "center", { ...azul, fmt: "mm/yy" }),
   ];
   for (let i = 0; i < POSICOES; i++) {

@@ -23,18 +23,20 @@ async function Conteudo({ searchParams }: { searchParams: PageProps<"/grupos">["
   const pedida = FAMILIAS.find((f) => f.slug === sp.familia);
   const aba = sp.aba === "simulador" ? "simulador" : "dados";
 
-  const detalhe = numeroGrupo ? await carregarGrupo(numeroGrupo) : null;
-  // sem família na URL, a lista mostra a família do grupo aberto
-  const familia = pedida ?? FAMILIAS.find((f) => f.slug === detalhe?.familia) ?? FAMILIAS[0];
-
-  const [grupos, cores, contagem, indices, padroes, admin] = await Promise.all([
-    listarGrupos(familia.slug),
+  // tudo o que não depende do grupo aberto é buscado junto com ele (antes eram três etapas em fila).
+  // Os links da tela sempre levam a família na URL; sem ela, a lista precisa esperar o grupo para saber qual é.
+  const [detalhe, gruposPedida, cores, contagem, indices, padroes, admin] = await Promise.all([
+    numeroGrupo ? carregarGrupo(numeroGrupo) : Promise.resolve(null),
+    pedida ? listarGrupos(pedida.slug) : Promise.resolve(null),
     listarCoresContemplacao(),
     contarPorFamilia(),
-    detalhe ? listarIndices() : Promise.resolve([]),
-    detalhe ? carregarPadroesSimulador() : Promise.resolve(padroesDeLinha(null)),
+    numeroGrupo ? listarIndices() : Promise.resolve([]),
+    numeroGrupo ? carregarPadroesSimulador() : Promise.resolve(padroesDeLinha(null)),
     ehAdministrador(),
   ]);
+  // sem família na URL, a lista mostra a família do grupo aberto
+  const familia = pedida ?? FAMILIAS.find((f) => f.slug === detalhe?.familia) ?? FAMILIAS[0];
+  const grupos = gruposPedida ?? (await listarGrupos(familia.slug));
   const hoje = new Date().toISOString().slice(0, 10);
 
   const seletor = (
