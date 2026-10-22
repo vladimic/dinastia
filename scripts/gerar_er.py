@@ -12,7 +12,7 @@ pos={
  'grupo_modalidade':(730,300),'tipo_contemplacao':(1080,380),
  'grupo_sequencia_faixa':(380,640),'grupo_sequencia':(730,640),
  'importacao_item':(30,900),'importacao_diferenca':(380,900),'importacao_faltante':(730,900),
- 'parametros_gerais':(1080,900),'usuario':(1080,30),
+ 'parametros_gerais':(1080,900),'usuario':(1080,30),'lista_grupos':(30,640),
 }
 def alt(t): return HH+len(tb[t]['colunas'])*LH+10
 def box(t):

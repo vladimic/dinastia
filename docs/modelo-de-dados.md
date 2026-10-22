@@ -161,6 +161,11 @@ erDiagram
     string decidido_por
     datetime decidido_em
   }
+  lista_grupos {
+    string familia PK
+    json dados
+    datetime atualizado_em
+  }
   usuario {
     string cpf PK
     string email UK
@@ -337,6 +342,16 @@ Itens de cada faixa: a ordem em que as modalidades contemplam em cada assembleia
 | `ordem` | inteiro | sim |  | Posição do item dentro da faixa. |
 | `tipo` | texto | sim | FK→tipo_contemplacao.codigo | Modalidade que contempla nesta posição. |
 | `quantidade` | inteiro | sim |  | Quantas contemplações dessa modalidade (ex.: 2 sorteios). |
+
+#### `lista_grupos`
+
+Lista de grupos de cada família (a do seletor em Grupos e Tabelas), guardada pronta para a tela abrir rápido. Derivada das demais tabelas: é refeita ao aplicar a importação e ao editar um grupo.
+
+| Campo | Tipo | Obrig. | Chave | Descrição |
+|---|---|---|---|---|
+| `familia` | texto | sim | PK | Família dos grupos (imoveis, veiculos, servicos, outros_bens). |
+| `dados` | JSON | sim |  | Lista de grupos da família: número, prazo, assembleia, créditos mínimo e máximo, sequência, participantes, furo e parcelas reduzidas. |
+| `atualizado_em` | data e hora | sim |  | Quando a lista foi refeita. |
 
 ### Importação de PDFs
 

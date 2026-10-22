@@ -2,6 +2,14 @@
 // Regra: a cada mudança entregue, acrescentar uma entrada NO TOPO.
 export const VERSOES: { numero: string; data: string; itens: string[] }[] = [
   {
+    numero: "0107",
+    data: "22/10/2026",
+    itens: [
+      "Grupos e Tabelas: a lista de grupos de cada família passa a ficar guardada pronta (tabela lista_grupos) e a tela só a lê, em vez de montá-la a cada troca de grupo. A lista é refeita quando a importação é aplicada (e também quando um grupo é editado na tela ou um backup é restaurado, para não ficar com dado velho). Na primeira abertura ela é montada e guardada.",
+      "Importação: PDFs que o leitor não reconheceu (por exemplo, o formato antigo do grupo 6102) agora aparecem em destaque, com o nome do arquivo e o motivo, ao final da leitura, e um aviso fixo na tela de decisões enquanto houver PDFs com erro.",
+    ],
+  },
+  {
     numero: "0106",
     data: "22/10/2026",
     itens: [

@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { ehAdministrador } from "@/lib/usuario";
+import { refazerTodasAsListas } from "@/lib/listaGrupos";
 import { exportarBackup, restaurarBackup, validarBackup } from "@/lib/backup";
 
 async function usuario() {
@@ -32,6 +33,7 @@ export async function POST(request: NextRequest) {
     const b = await request.json();
     validarBackup(b);
     const r = await restaurarBackup(supabase, b, user.email ?? "");
+    await refazerTodasAsListas(supabase);
     return NextResponse.json(r);
   } catch (e) {
     return NextResponse.json({ erro: (e as Error).message }, { status: 400 });
