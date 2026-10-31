@@ -11,22 +11,15 @@ import type { ItemGrupo } from "./SeletorGrupo";
 // Os filtros valem para o que foi lido ao abrir: a linha não some da tela no meio da edição.
 
 type Estado = { tipo: "carregando" } | { tipo: "erro"; msg: string } | { tipo: "pronto"; dados: DadosLote };
+type Familia = { slug: string; nome: string };
 
-export function EdicaoLote({ familia, nomeFamilia }: { familia: string; nomeFamilia: string }) {
+export function EdicaoLote({ familia, familias }: { familia: string; familias: Familia[] }) {
   const [aberto, setAberto] = useState(false);
-  const [estado, setEstado] = useState<Estado>({ tipo: "carregando" });
-
-  function abrir() {
-    setEstado({ tipo: "carregando" });
-    setAberto(true);
-    carregarLote(familia).then((r) => setEstado(r.ok ? { tipo: "pronto", dados: r.dados } : { tipo: "erro", msg: r.erro }));
-  }
-
   return (
     <>
       <button
         type="button"
-        onClick={abrir}
+        onClick={() => setAberto(true)}
         className="flex min-h-9 items-center gap-2 rounded-[10px] border border-navy bg-white px-3 text-[13px] font-semibold"
       >
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
@@ -35,24 +28,28 @@ export function EdicaoLote({ familia, nomeFamilia }: { familia: string; nomeFami
         </svg>
         Edição em lote
       </button>
-      {aberto &&
-        createPortal(
-          <Tela
-            familia={familia}
-            nomeFamilia={nomeFamilia}
-            estado={estado}
-            aoFechar={() => setAberto(false)}
-          />,
-          document.body,
-        )}
+      {aberto && createPortal(<Tela familiaInicial={familia} familias={familias} aoFechar={() => setAberto(false)} />, document.body)}
     </>
   );
 }
 
-function Tela({ familia, nomeFamilia, estado, aoFechar }: { familia: string; nomeFamilia: string; estado: Estado; aoFechar: () => void }) {
+function Tela({ familiaInicial, familias, aoFechar }: { familiaInicial: string; familias: Familia[]; aoFechar: () => void }) {
+  const [familia, setFamilia] = useState(familiaInicial);
+  const [estado, setEstado] = useState<Estado>({ tipo: "carregando" });
   const [fechando, iniciarFechar] = useTransition();
   const [pendentes, setPendentes] = useState(0);
   const [falha, setFalha] = useState("");
+
+  // lê os grupos da família escolhida (ao abrir e a cada troca de família)
+  useEffect(() => {
+    let vivo = true;
+    carregarLote(familia).then((r) => {
+      if (vivo) setEstado(r.ok ? { tipo: "pronto", dados: r.dados } : { tipo: "erro", msg: r.erro });
+    });
+    return () => {
+      vivo = false;
+    };
+  }, [familia]);
 
   // a tela cobre a página: a rolagem da página fica parada enquanto ela está aberta
   useEffect(() => {
@@ -63,6 +60,13 @@ function Tela({ familia, nomeFamilia, estado, aoFechar }: { familia: string; nom
     };
   }, []);
 
+  const trocar = (slug: string) => {
+    if (slug === familia || pendentes > 0) return;
+    void fecharLote(familia); // refaz a lista guardada da família que está saindo
+    setFalha("");
+    setEstado({ tipo: "carregando" });
+    setFamilia(slug);
+  };
   const fechar = () =>
     iniciarFechar(async () => {
       await fecharLote(familia); // refaz a lista guardada da família
@@ -72,9 +76,31 @@ function Tela({ familia, nomeFamilia, estado, aoFechar }: { familia: string; nom
   return (
     <div role="dialog" aria-modal="true" aria-label="Edição em lote" className="fixed inset-0 z-50 flex flex-col bg-campo">
       <header className="flex flex-wrap items-center justify-between gap-3 border-b border-borda bg-white px-6 py-3">
-        <div className="flex flex-col">
-          <span className="text-[11px] text-tinta">Grupos e Tabelas · {nomeFamilia}</span>
-          <h2 className="text-xl leading-tight font-bold">Edição em lote</h2>
+        <div className="flex flex-wrap items-center gap-x-5 gap-y-2">
+          <div className="flex flex-col">
+            <span className="text-[11px] text-tinta">Grupos e Tabelas</span>
+            <h2 className="text-xl leading-tight font-bold">Edição em lote</h2>
+          </div>
+          <nav aria-label="Família de produto" className="flex shrink-0 flex-wrap gap-1 rounded-xl border border-borda bg-linha p-1">
+            {familias.map((f) => {
+              const on = f.slug === familia;
+              return (
+                <button
+                  key={f.slug}
+                  type="button"
+                  aria-current={on ? "true" : undefined}
+                  disabled={pendentes > 0 && !on}
+                  onClick={() => trocar(f.slug)}
+                  className={
+                    "flex min-h-8 items-center rounded-lg px-3 text-[13px] font-bold disabled:opacity-50 " +
+                    (on ? "bg-white text-navy shadow ring-1 ring-laranja" : "text-tinta hover:text-navy")
+                  }
+                >
+                  {f.nome}
+                </button>
+              );
+            })}
+          </nav>
         </div>
         <div className="flex items-center gap-3">
           <span role="status" aria-live="polite" className={"text-[12px] font-semibold " + (falha ? "text-[#9b1c1c]" : "text-tinta")}>
@@ -96,7 +122,7 @@ function Tela({ familia, nomeFamilia, estado, aoFechar }: { familia: string; nom
           {estado.msg}
         </p>
       )}
-      {estado.tipo === "pronto" && <Tabela familia={familia} dados={estado.dados} mudarPendentes={(n) => setPendentes((p) => p + n)} aviso={setFalha} />}
+      {estado.tipo === "pronto" && <Tabela key={familia} familia={familia} dados={estado.dados} mudarPendentes={(n) => setPendentes((p) => p + n)} aviso={setFalha} />}
     </div>
   );
 }
@@ -157,12 +183,12 @@ function Tabela({ familia, dados, mudarPendentes, aviso }: { familia: string; da
   return (
     <>
       <div className="flex flex-wrap items-center gap-x-2 gap-y-2 border-b border-borda bg-white px-6 py-3">{barra}</div>
-      <div className="min-h-0 flex-1 overflow-auto px-6 py-4">
+      <div className="min-h-0 flex-1 overflow-auto px-6 pb-4">
         <table className="border-separate border-spacing-0 text-[13px]">
           <caption className="sr-only">Grupos, tipos de parcela e furo</caption>
           <thead>
             <tr>
-              <th scope="col" className={CAB + " sticky left-0 z-20 text-left"}>
+              <th scope="col" className={CAB + " left-0 z-30 text-left"}>
                 Grupo
               </th>
               {dados.tipos.map((t) => (
@@ -205,7 +231,7 @@ function Tabela({ familia, dados, mudarPendentes, aviso }: { familia: string; da
   );
 }
 
-const CAB = "sticky top-0 z-10 border-b border-borda bg-linha px-4 py-2 text-[12px] font-bold text-navy first:rounded-tl-lg last:rounded-tr-lg";
+const CAB = "sticky top-0 z-20 border-b border-borda bg-linha px-4 py-2 text-[12px] font-bold text-navy first:rounded-tl-lg last:rounded-tr-lg";
 const CEL = "border-b border-linha px-4 py-1.5";
 
 // verde = ligado (o grupo oferece / tem furo); cinza = desligado
