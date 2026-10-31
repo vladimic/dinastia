@@ -15,6 +15,21 @@ export type Modalidade = {
   emb_pct: number | null;
   a_partir: number;
   req: string | null;
+  /** veículos: lance fixo em % da categoria (F40 = 40, F25 = 25) */
+  lance_pct?: number | null;
+  /** veículos: teto do lance livre/fidelidade em % da categoria */
+  max_lance_pct?: number | null;
+  /** veículos: base do emb_pct (padrão: lance) */
+  emb_base?: "lance" | "categoria";
+};
+
+/** Plano reduzido lido do PDF de veículos (tipo = código de tipo_parcela). Em duas fases: Plano 40/50/75 e Clearance; RED_nn = reduzido até a contemplação. */
+export type PlanoReduzidoLido = {
+  tipo: string;
+  /** % do crédito pago por mês na fase 1, sem taxas (ex.: 0,6 no Plano 50) */
+  fase1_pct: number | null;
+  fase1_parcelas: number | null;
+  fase2_parcelas: number | null;
 };
 
 export type Faixa = { de: number; ate: number; itens: { qtd: number; tipo: string }[]; demais: string | null; demais2?: string | null };
@@ -34,7 +49,7 @@ export type Leitura = {
   prazo_cota: number;
   prazo_grupo: number;
   participantes: number;
-  indice: string;
+  indice: string | null;
   mes_reajuste: number | null;
   primeira_correcao: string | null;
   vencimento: number | null;
@@ -50,6 +65,10 @@ export type Leitura = {
   creditos: LinhaCredito[];
   modalidades: Record<string, Modalidade>;
   faixas: Faixa[];
+  /** veículos: parcela mínima após a contemplação, % do crédito */
+  parcela_minima_pct?: number | null;
+  /** veículos: plano reduzido oferecido (nulo = só o linear) */
+  plano_reduzido?: PlanoReduzidoLido | null;
   erros: string[];
   avisos: string[];
 };

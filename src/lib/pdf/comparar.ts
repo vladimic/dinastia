@@ -55,7 +55,9 @@ export function classificar(l: Leitura, e: EstadoGrupo): Classificacao {
   return { tipo: "anterior", base: null };
 }
 
-export const tiposParcelaDe = (l: Leitura): string[] => l.planos.DILUIDA.map((p) => TIPO_PARCELA[p]).filter(Boolean);
+// veículos: linear (NORMAL) e, quando há, o plano reduzido pelo nome (Plano 50, Clearance…); imóveis: um tipo por % de parcela
+export const tiposParcelaDe = (l: Leitura): string[] =>
+  l.plano_reduzido !== undefined ? ["NORMAL", ...(l.plano_reduzido ? [l.plano_reduzido.tipo] : [])] : l.planos.DILUIDA.map((p) => TIPO_PARCELA[p]).filter(Boolean);
 
 const n = (v: unknown) => (v === null || v === undefined || v === "" ? null : Number(v));
 const mesmo = (a: unknown, b: unknown) => {

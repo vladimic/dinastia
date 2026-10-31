@@ -2,6 +2,16 @@
 // Regra: a cada mudança entregue, acrescentar uma entrada NO TOPO.
 export const VERSOES: { numero: string; data: string; itens: string[] }[] = [
   {
+    numero: "0116",
+    data: "31/10/2026",
+    itens: [
+      "Veículos, etapa 3 (leitor de PDF): leitor próprio para as tabelas de Veículos e Motos (plano linear; reduzido em duas fases: Plano 40, 50, 75 e Clearance; reduzido 50% até a contemplação; Fixo 40% e 25%; teto do Livre; embutido do lance ou da categoria; parcela mínima; sequência nos três formatos de texto). Lê os 130 PDFs sem nenhum erro, e a parcela de cada crédito (linear, fase 1 e fase 2) bate com o valor impresso em todos eles.",
+      "Veículos: leitor da “Estratégia Comercial” (um PDF com todos os grupos). Ele não é fonte de dados: serve para conferir a leitura (créditos, taxa, prazos e plano reduzido de cada grupo). Valem sempre os PDFs individuais. Quando o título do plano no PDF discorda dos números (grupo 1667: título “Plano 50”, mas 0,5% é o Plano 40), valem os números.",
+      "Simulador de Veículos: o plano reduzido que dura mais que a cota (parcelas de furo) passa a ratear o saldo no prazo que resta da cota, como diz o PDF (“diluídas no momento da contemplação”).",
+      "A importação de Veículos ainda não grava na base (etapa 4): por ora esses PDFs são lidos, mas ficam como erro, sem alterar nada.",
+    ],
+  },
+  {
     numero: "0115",
     data: "31/10/2026",
     itens: [

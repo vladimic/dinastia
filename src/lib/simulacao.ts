@@ -62,7 +62,8 @@ export function calcularBase(e: Entrada): Base {
     const prazoPlano = n1 + n2;
     const noPlano = Math.min(m, prazoPlano);
     const totalPago = Math.min(noPlano, n1) * parcela1 + Math.max(0, noPlano - n1) * parcela2;
-    const prazoRestante = prazoPlano - m;
+    // o reduzido pode valer por mais meses que a cota tem (as parcelas a mais são o "furo", diluído na contemplação): o saldo se rateia no prazo que resta da cota
+    const prazoRestante = Math.min(prazoPlano, e.mesesFaltam) - m;
     return {
       taxaAdmValor,
       parcelaLance: 0,
