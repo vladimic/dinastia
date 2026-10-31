@@ -1,20 +1,20 @@
 import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Faixa } from "./sequencia";
-import type { GrupoEntrada, ModalidadeEntrada } from "./tabelaResumo";
+import type { FamiliaResumo, GrupoEntrada, ModalidadeEntrada } from "./tabelaResumo";
 
-// Lê do banco a versão vigente de cada grupo de imóveis, no formato que a Tabela Resumo usa.
+// Lê do banco a versão vigente de cada grupo de uma família (imóveis ou veículos), no formato que a Tabela Resumo usa.
 
 type Linha = Record<string, unknown>;
 const num = (v: unknown) => (v === null || v === undefined ? null : Number(v));
 
-export async function carregarGruposImoveis(supabase: SupabaseClient): Promise<GrupoEntrada[]> {
+export async function carregarGrupos(supabase: SupabaseClient, familia: FamiliaResumo): Promise<GrupoEntrada[]> {
   const atuais: Linha[] = [];
   for (let de = 0; ; de += 1000) {
     const { data, error } = await supabase
       .from("grupo_atual")
       .select("numero, prazo_grupo_meses, participantes, taxa_adm_total, prazo_cota_meses, creditos, grupo_assembleia_id")
-      .eq("familia", "imoveis")
+      .eq("familia", familia)
       .order("numero")
       .range(de, de + 999);
     if (error) throw new Error(`grupo_atual: ${error.message}`);
@@ -30,8 +30,8 @@ export async function carregarGruposImoveis(supabase: SupabaseClient): Promise<G
       .from("grupo_assembleia")
       .select(
         `id, pagamento_com_furo, fidelidade_meses,
-         tipos:grupo_assembleia_tipo_parcela(tipo_parcela(pct)),
-         modalidades:grupo_modalidade(tipo, max_parcelas_lance, embutido_max_parcelas, embutido_pct),
+         tipos:grupo_assembleia_tipo_parcela(fase1_parcelas, tipo_parcela(pct)),
+         modalidades:grupo_modalidade(tipo, max_parcelas_lance, embutido_max_parcelas, embutido_pct, embutido_base, lance_pct, max_lance_pct),
          faixas:grupo_sequencia_faixa(assembleia_de, assembleia_ate, demais_tipo, demais_tipo_2, itens:grupo_sequencia(ordem, tipo, quantidade))`,
       )
       .in("id", ids.slice(i, i + 60));
@@ -41,7 +41,7 @@ export async function carregarGruposImoveis(supabase: SupabaseClient): Promise<G
 
   return atuais.map((g) => {
     const v = versoes.get(Number(g.grupo_assembleia_id)) ?? {};
-    const tipos = (v.tipos ?? []) as { tipo_parcela: { pct: number | string } | null }[];
+    const tipos = (v.tipos ?? []) as { fase1_parcelas: number | null; tipo_parcela: { pct: number | string } | null }[];
     const mods = (v.modalidades ?? []) as Linha[];
     const faixas = (v.faixas ?? []) as { assembleia_de: number; assembleia_ate: number; demais_tipo: string | null; demais_tipo_2: string | null; itens: { ordem: number; tipo: string; quantidade: number }[] }[];
     return {
@@ -54,12 +54,16 @@ export async function carregarGruposImoveis(supabase: SupabaseClient): Promise<G
       furo: v.pagamento_com_furo === true,
       fid_meses: num(v.fidelidade_meses),
       pct_parcelas: tipos.map((t) => Number(t.tipo_parcela?.pct)).filter((n) => Number.isFinite(n)),
+      fase1_parcelas: tipos.find((t) => t.fase1_parcelas !== null)?.fase1_parcelas ?? null,
       modalidades: mods.map(
         (m): ModalidadeEntrada => ({
           tipo: String(m.tipo),
           max: num(m.max_parcelas_lance),
           emb_parc: num(m.embutido_max_parcelas),
           emb_pct: num(m.embutido_pct),
+          lance_pct: num(m.lance_pct),
+          max_lance_pct: num(m.max_lance_pct),
+          emb_base: m.embutido_base === "categoria" ? "categoria" : "lance",
         }),
       ),
       faixas: faixas
@@ -76,3 +80,6 @@ export async function carregarGruposImoveis(supabase: SupabaseClient): Promise<G
     };
   });
 }
+
+/** Compatibilidade: os imóveis. */
+export const carregarGruposImoveis = (supabase: SupabaseClient) => carregarGrupos(supabase, "imoveis");

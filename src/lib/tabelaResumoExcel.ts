@@ -1,13 +1,15 @@
 import ExcelJS from "exceljs";
 import {
-  CABECALHO,
+  cabecalhoDa,
+  NOME_ABA,
+  type FamiliaResumo,
   CINZA_ZEBRA,
   COLUNA_DATA,
   LARGURAS,
   LINHA_DIREITA,
   LINHA_ESQUERDA,
   NCOLUNAS,
-  TITULO,
+  TITULOS,
   VERMELHO,
   celulasDaLinha,
   type LinhaResumo,
@@ -21,11 +23,11 @@ const FINA = { style: "thin" as const };
 const BRANCO = { argb: "FFFFFFFF" };
 const argb = (hex: string) => ({ argb: `FF${hex}` });
 
-export async function tabelaResumoExcel(linhas: LinhaResumo[], base: Mes): Promise<ArrayBuffer> {
+export async function tabelaResumoExcel(linhas: LinhaResumo[], base: Mes, familia: FamiliaResumo = "imoveis"): Promise<ArrayBuffer> {
   const wb = new ExcelJS.Workbook();
   wb.creator = "Dinastia";
   wb.created = new Date();
-  const ws = wb.addWorksheet("Imóvel", {
+  const ws = wb.addWorksheet(NOME_ABA[familia], {
     views: [{ state: "frozen", xSplit: 8, ySplit: 3, showGridLines: false }],
     pageSetup: {
       paperSize: 9,
@@ -46,7 +48,7 @@ export async function tabelaResumoExcel(linhas: LinhaResumo[], base: Mes): Promi
   ws.mergeCells(1, 1, 1, COLUNA_DATA);
   ws.mergeCells(1, COLUNA_DATA + 1, 1, NCOLUNAS);
   const titulo = ws.getCell(1, 1);
-  titulo.value = TITULO;
+  titulo.value = TITULOS[familia];
   titulo.font = { name: "Calibri", size: 24, bold: true, color: BRANCO };
   titulo.alignment = { horizontal: "center", vertical: "middle" };
   const data = ws.getCell(1, COLUNA_DATA + 1);
@@ -67,7 +69,7 @@ export async function tabelaResumoExcel(linhas: LinhaResumo[], base: Mes): Promi
   // sob "Créditos (mil)" a 2ª linha não tem divisórias entre as colunas (como no modelo)
   for (let c = 34; c <= NCOLUNAS; c++)
     ws.getCell(3, c).border = { bottom: FINA, ...(c === 34 ? { left: FINA } : {}), ...(c === NCOLUNAS ? { right: FINA } : {}) };
-  for (const h of CABECALHO) {
+  for (const h of cabecalhoDa(familia)) {
     const r = 2 + h.linha;
     if (h.c1 > h.c0 || h.linhas > 1) ws.mergeCells(r, h.c0 + 1, r + h.linhas - 1, h.c1 + 1);
     const cel = ws.getCell(r, h.c0 + 1);

@@ -1,13 +1,14 @@
 import { PDFDocument, StandardFonts, rgb, type PDFFont, type PDFPage } from "pdf-lib";
 import {
-  CABECALHO,
+  cabecalhoDa,
+  type FamiliaResumo,
   CINZA_ZEBRA,
   COLUNA_DATA,
   LARGURAS,
   LINHA_DIREITA,
   LINHA_ESQUERDA,
   NCOLUNAS,
-  TITULO,
+  TITULOS,
   GRUPOS_POR_PAGINA,
   VERMELHO,
   celulasDaLinha,
@@ -41,9 +42,10 @@ export async function tabelaResumoPdf(
   linhas: LinhaResumo[],
   base: Mes,
   porPagina = GRUPOS_POR_PAGINA,
+  familia: FamiliaResumo = "imoveis",
 ): Promise<{ bytes: Uint8Array; paginas: number }> {
   const doc = await PDFDocument.create();
-  doc.setTitle(`Tabela Resumo · Imóveis · ${rotuloMes(base)}`);
+  doc.setTitle(`Tabela Resumo · ${familia === "veiculos" ? "Veículos" : "Imóveis"} · ${rotuloMes(base)}`);
   doc.setCreator("Dinastia");
   const fontes: Fontes = { normal: await doc.embedFont(StandardFonts.Helvetica), negrito: await doc.embedFont(StandardFonts.HelveticaBold) };
 
@@ -59,14 +61,14 @@ export async function tabelaResumoPdf(
   const x0 = (A4.w - LARGURA_TABELA * escala) / 2;
   let desenhadas = 0; // linhas já desenhadas, para a zebra continuar de uma página para a outra
   paginas.forEach((grupo, p) => {
-    desenharPagina(doc.addPage([A4.w, A4.h]), grupo, p === 0, base, escala, x0, fontes, desenhadas);
+    desenharPagina(doc.addPage([A4.w, A4.h]), grupo, p === 0, base, escala, x0, fontes, desenhadas, familia);
     desenhadas += grupo.length;
   });
 
   return { bytes: await doc.save(), paginas: paginas.length };
 }
 
-function desenharPagina(page: PDFPage, linhas: LinhaResumo[], comTitulo: boolean, base: Mes, s: number, x0: number, f: Fontes, primeira: number) {
+function desenharPagina(page: PDFPage, linhas: LinhaResumo[], comTitulo: boolean, base: Mes, s: number, x0: number, f: Fontes, primeira: number, familia: FamiliaResumo) {
   const topo = A4.h - MARGEM;
   const X = (u: number) => x0 + u * s;
   const Y = (v: number) => topo - v * s; // v = distância do topo da tabela, em pontos de planilha
@@ -97,14 +99,14 @@ function desenharPagina(page: PDFPage, linhas: LinhaResumo[], comTitulo: boolean
   if (comTitulo) {
     retangulo(0, 0, LARGURA_TABELA, ALTURA_TITULO, VERMELHO);
     const larguraTitulo = COL_X[COLUNA_DATA];
-    texto(TITULO, 0, 0, larguraTitulo, ALTURA_TITULO, 24, "center", true, "FFFFFF");
+    texto(TITULOS[familia], 0, 0, larguraTitulo, ALTURA_TITULO, 24, "center", true, "FFFFFF");
     texto(rotuloMes(base), COL_X[COLUNA_DATA], 0, LARGURA_TABELA - COL_X[COLUNA_DATA], ALTURA_TITULO, 18, "center", true, "FFFFFF");
     v = ALTURA_TITULO;
   }
 
   // cabeçalho (2 linhas)
   retangulo(0, v, LARGURA_TABELA, ALTURA_CABECALHO, VERMELHO);
-  for (const c of CABECALHO) {
+  for (const c of cabecalhoDa(familia)) {
     const u = COL_X[c.c0];
     const w = COL_X[c.c1] + COL_W[c.c1] - u;
     const top = v + c.linha * ALTURA_LINHA;

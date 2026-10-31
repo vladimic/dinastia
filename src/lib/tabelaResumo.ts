@@ -1,4 +1,4 @@
-// Tabela Resumo (Imóveis): uma linha por grupo, no formato da planilha "Tabelas Resumo".
+// Tabela Resumo (Imóveis e Veículos): uma linha por grupo, no formato da planilha "Tabelas Resumo".
 // Este módulo só monta os dados e o estilo de cada célula; o Excel e o PDF só desenham o que ele devolve.
 import { linhaDoModelo, modelar, montarOrdem, type Faixa } from "./sequencia";
 
@@ -7,7 +7,13 @@ export type ModalidadeEntrada = {
   max: number | null; // máximo de parcelas do lance; nulo = sem limite
   emb_parc: number | null; // máximo de parcelas do lance que podem ser embutidas
   emb_pct: number | null; // % do lance que pode ser embutido
+  // veículos: lance em % da categoria
+  lance_pct?: number | null; // lance fixo (F25 = 25, F40 = 40)
+  max_lance_pct?: number | null; // teto do lance livre/fidelidade
+  emb_base?: "lance" | "categoria"; // base do emb_pct
 };
+
+export type FamiliaResumo = "imoveis" | "veiculos";
 
 export type GrupoEntrada = {
   numero: number;
@@ -21,6 +27,8 @@ export type GrupoEntrada = {
   pct_parcelas: number[]; // % de cada tipo de parcela oferecido
   modalidades: ModalidadeEntrada[];
   faixas: Faixa[];
+  /** veículos: parcelas da fase 1 do plano reduzido em duas fases (nulo = sem plano em fases) */
+  fase1_parcelas?: number | null;
 };
 
 export type Mes = { ano: number; mes: number };
@@ -63,7 +71,8 @@ const LARANJA = "ED7D31";
 const ROSA = "FF66FF";
 const BORDO = "9C0006";
 // cores das modalidades na ordem de contemplação (as do modelo)
-const COR_SEQ: Record<string, string> = { sor: "70AD47", lim: LARANJA, fix: "4472C4", fid: ROSA, liv: "FF0000" };
+// (veículos: f40 usa a cor do limitado e f25 a do fixo)
+const COR_SEQ: Record<string, string> = { sor: "70AD47", lim: LARANJA, fix: "4472C4", f40: LARANJA, f25: "4472C4", fid: ROSA, liv: "FF0000" };
 
 
 // ---------- regras de cada coluna ----------
@@ -83,6 +92,23 @@ function emb(m: ModalidadeEntrada | undefined, prazo: number): number | null {
   const porPct = m.emb_pct === null ? 100 : Number(m.emb_pct);
   const porParcelas = m.emb_parc === null ? 100 : (100 * m.emb_parc) / (m.max ?? prazo);
   return Math.floor(Math.min(100, porPct, porParcelas)) / 100;
+}
+
+// Veículos, "Qtd": o lance fixo em % da categoria ("25%", "40%"); livre e fidelidade, o teto em % ("55%") ou "*" se não há teto.
+function qtdVeiculo(m: ModalidadeEntrada | undefined, teto: number | null): string {
+  if (!m) return "não";
+  if (m.lance_pct != null) return `${Number(m.lance_pct)}%`;
+  return teto === null ? "*" : `${teto}%`;
+}
+
+// Veículos, "Emb": fração do lance que pode ser embutida, no lance máximo (o fixo, o teto do livre ou, sem teto, 100% da categoria).
+// "% da categoria" (ex.: até 25% da categoria) vira fração do lance; "% do lance" vale como está. Sem regra de embutido, 0.
+function embVeiculo(m: ModalidadeEntrada | undefined, lanceMax: number): number | null {
+  if (!m) return null;
+  if (m.emb_pct === null) return 0;
+  const pct = Number(m.emb_pct);
+  const fracao = m.emb_base === "categoria" ? Math.min(100, (100 * pct) / lanceMax) : Math.min(100, pct);
+  return Math.floor(fracao) / 100;
 }
 
 // Ordem de contemplação: o máximo de sorteios + a ordem do grupo, até POSICOES posições.
@@ -109,7 +135,10 @@ export type LinhaResumo = {
   atu: number;
   rod: number;
   fu: "S" | "N";
+  /** o que a coluna Par mostra: o % da menor parcela (imóveis) ou, em veículos com plano em fases, as parcelas reduzidas */
   par: number | "?";
+  /** o % da menor parcela oferecida, que define a cor (50/55 verde, 70 laranja) */
+  parCor: number | "?";
   fim: Mes;
   ordem: string[];
   fix: { qtd: string; emb: number | string | null };
@@ -119,12 +148,31 @@ export type LinhaResumo = {
   creditos: number[]; // em mil, do menor para o maior
 };
 
-export function montarLinhas(grupos: GrupoEntrada[], base: Mes): LinhaResumo[] {
+// os créditos cabem em COLUNAS_CREDITO colunas: com mais valores, entram os de posições igualmente espaçadas (sempre o menor e o maior)
+function creditosEmMil(creditos: number[]): number[] {
+  const o = [...creditos].sort((a, b) => a - b).map((c) => c / 1000);
+  if (o.length <= COLUNAS_CREDITO) return o;
+  return Array.from({ length: COLUNAS_CREDITO }, (_, i) => o[Math.round((i * (o.length - 1)) / (COLUNAS_CREDITO - 1))]);
+}
+
+export function montarLinhas(grupos: GrupoEntrada[], base: Mes, familia: FamiliaResumo = "imoveis"): LinhaResumo[] {
+  const veic = familia === "veiculos";
   return [...grupos]
     .sort((a, b) => a.numero - b.numero)
     .map((g) => {
       const mods = new Map(g.modalidades.map((m) => [m.tipo, m]));
-      const mod = (t: string) => ({ qtd: qtd(mods.get(t), g.prazo_grupo), emb: emb(mods.get(t), g.prazo_grupo) });
+      // veículos: o fidelidade segue o teto do livre; os dois fixos ocupam as colunas FIXO (25%) e LIMITADO/FIXO 40% (40%)
+      const tetoLivre = mods.get("LIV")?.max_lance_pct ?? null;
+      const teto = (m: ModalidadeEntrada | undefined) => (m?.max_lance_pct != null ? Number(m.max_lance_pct) : tetoLivre !== null ? Number(tetoLivre) : null);
+      const mod = (t: string) =>
+        veic
+          ? (() => {
+              const m = mods.get(t);
+              const tt = t === "LIV" || t === "FID" ? teto(m) : null;
+              const lanceMax = m?.lance_pct != null ? Number(m.lance_pct) : tt ?? 100;
+              return { qtd: qtdVeiculo(m, tt), emb: embVeiculo(m, lanceMax) };
+            })()
+          : { qtd: qtd(mods.get(t), g.prazo_grupo), emb: emb(mods.get(t), g.prazo_grupo) };
       const total = base.ano * 12 + (base.mes - 1) + (g.prazo_cota - 1);
       const f = mods.get("FID");
       return {
@@ -135,11 +183,12 @@ export function montarLinhas(grupos: GrupoEntrada[], base: Mes): LinhaResumo[] {
         atu: g.prazo_cota,
         rod: g.prazo_grupo - g.prazo_cota,
         fu: g.furo ? "S" : "N",
-        par: g.pct_parcelas.length ? Math.min(...g.pct_parcelas) : "?",
+        par: veic && g.fase1_parcelas ? g.fase1_parcelas : g.pct_parcelas.length ? Math.min(...g.pct_parcelas) : "?",
+        parCor: g.pct_parcelas.length ? Math.min(...g.pct_parcelas) : "?",
         fim: { ano: Math.floor(total / 12), mes: (total % 12) + 1 },
         ordem: ordemResumo(g.faixas),
-        fix: mod("FIX"),
-        lim: mod("LIM"),
+        fix: mod(veic ? "F25" : "FIX"),
+        lim: mod(veic ? "F40" : "LIM"),
         fid: {
           // o banco guarda o mês em que o FID entra na sequência (37); aqui vale a parcela em que libera (36)
           meses: !f ? "não" : g.fid_meses ? g.fid_meses - 1 : "?",
@@ -147,7 +196,7 @@ export function montarLinhas(grupos: GrupoEntrada[], base: Mes): LinhaResumo[] {
           emb: emb(f, g.prazo_grupo),
         },
         liv: mod("LIV"),
-        creditos: [...g.creditos].sort((a, b) => a - b).map((c) => c / 1000),
+        creditos: creditosEmMil(g.creditos),
       } satisfies LinhaResumo;
     });
 }
@@ -166,7 +215,7 @@ function celulasEmb(v: number | string | null): Pick<CelulaResumo, "valor" | "te
 
 export function celulasDaLinha(l: LinhaResumo): CelulaResumo[] {
   const azul: Estilo = { cor: AZUL, negrito: true };
-  const corGrupo: Estilo = l.par === 70 ? { cor: LARANJA } : l.par === 50 || l.par === 55 ? { cor: VERDE, negrito: true } : l.par === "?" ? { cor: VERMELHO } : {};
+  const corGrupo: Estilo = l.parCor === 70 ? { cor: LARANJA } : l.parCor === 50 || l.parCor === 55 ? { cor: VERDE, negrito: true } : l.parCor === "?" ? { cor: VERMELHO } : {};
   const corPart: Estilo =
     l.part === 3333 ? { cor: ROSA, negrito: true } : l.part === 5000 ? { cor: LARANJA, negrito: true } : l.part === 9999 ? { cor: BORDO, negrito: true } : {};
   const c = (valor: CelulaResumo["valor"], texto: string, alinh: CelulaResumo["alinh"], extra: Partial<CelulaResumo> = {}): CelulaResumo => ({
@@ -237,6 +286,8 @@ const h = (c0: number, c1: number, linha: 0 | 1, linhas: 1 | 2, texto: string, e
 });
 
 export const TITULO = "GRUPOS E COTAS IMÓVEIS";
+export const TITULOS: Record<FamiliaResumo, string> = { imoveis: TITULO, veiculos: "GRUPOS E COTAS VEÍCULOS" };
+export const NOME_ABA: Record<FamiliaResumo, string> = { imoveis: "Imóvel", veiculos: "Veículo" };
 export const COLUNA_DATA = 40; // a data (mmm/aaaa) ocupa as colunas AO..AR; o título, A..AN
 
 export const CABECALHO: CelulaCabecalho[] = [
@@ -282,4 +333,8 @@ export function lerMes(texto: string | null): Mes | null {
   return { ano: Number(m[1]), mes: Number(m[2]) };
 }
 
-export const nomeArquivo = (m: Mes, ext: "xlsx" | "pdf") => `tabela-resumo-imoveis-${m.ano}-${mm(m.mes)}.${ext}`;
+// em veículos os dois lances fixos ocupam as colunas FIXO e LIMITADO
+export const cabecalhoDa = (familia: FamiliaResumo): CelulaCabecalho[] =>
+  familia === "imoveis" ? CABECALHO : CABECALHO.map((c) => (c.c0 === 24 && c.linha === 0 ? { ...c, texto: "FIXO 25%" } : c.c0 === 26 && c.linha === 0 ? { ...c, texto: "FIXO 40%" } : c));
+
+export const nomeArquivo = (m: Mes, ext: "xlsx" | "pdf", familia: FamiliaResumo = "imoveis") => `tabela-resumo-${familia}-${m.ano}-${mm(m.mes)}.${ext}`;
