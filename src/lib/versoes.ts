@@ -2,6 +2,14 @@
 // Regra: a cada mudança entregue, acrescentar uma entrada NO TOPO.
 export const VERSOES: { numero: string; data: string; itens: string[] }[] = [
   {
+    numero: "0124",
+    data: "31/10/2026",
+    itens: [
+      "Veículos, modalidades de contemplação: tudo em % da categoria. Embutido (ex.: 25%) e Próprio (= lance − embutido: Fixo 25 = 0%, Fixo 40 = 15%, Livre e Fidelidade até 55% = 30%). O rótulo \"Lance (% categ.)\" virou \"Percentual Categoria\". O embutido dos fixos que vinha em % do lance foi convertido para % da categoria no banco e na leitura dos PDFs.",
+      "Seleção de grupos de veículos: o filtro Parcelas reduzidas ficou ao lado de Parcela reduzida, antes do crédito.",
+    ],
+  },
+  {
     numero: "0123",
     data: "31/10/2026",
     itens: [

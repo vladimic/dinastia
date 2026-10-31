@@ -89,9 +89,6 @@ export function useFiltrosGrupos(grupos: ItemGrupo[], familia: string) {
         </>
       )}
     </div>
-    {limites && (
-      <FiltroCredito minimo={limites.minimo} maximo={limites.maximo} de={de} ate={ate} aoMudar={(a, b) => setFaixa({ de: a, ate: b })} />
-    )}
     {veic && valoresFases.length > 0 && (
       <div role="group" aria-labelledby="rotulo-fases" className="flex h-[42px] shrink-0 flex-col justify-center gap-[3px]">
         <div className="flex h-3 items-center">
@@ -119,6 +116,9 @@ export function useFiltrosGrupos(grupos: ItemGrupo[], familia: string) {
           })}
         </div>
       </div>
+    )}
+    {limites && (
+      <FiltroCredito minimo={limites.minimo} maximo={limites.maximo} de={de} ate={ate} aoMudar={(a, b) => setFaixa({ de: a, ate: b })} />
     )}
     {valoresParticipantes.length > 0 && (
       <div role="group" aria-labelledby="rotulo-participantes" className="flex h-[42px] shrink-0 flex-col justify-center gap-[3px]">
