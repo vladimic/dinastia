@@ -84,7 +84,7 @@ function Passo({ sinal, rotulo, desligado, aoClicar }: { sinal: string; rotulo: 
 function Cabecalho({ c, aoMudarQtd }: { c: Coluna; aoMudarQtd: (v: string) => void }) {
   const qtdNum = Number(c.qtd) || 0;
   return (
-    <div className={`flex min-h-[7rem] flex-col gap-1.5 rounded-t-lg border-t-4 px-2.5 py-2 ${BORDA[c.tipo]} ${FUNDO[c.tipo]}`}>
+    <div className={`@container flex min-h-[7rem] flex-col gap-1.5 rounded-t-lg border-t-4 px-2.5 py-2 ${BORDA[c.tipo]} ${FUNDO[c.tipo]}`}>
       <div className="flex items-center gap-1.5">
         {c.numero && (
           <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded border-2 border-navy text-[11px] leading-none font-extrabold">{c.numero}</span>
@@ -130,7 +130,15 @@ function Cabecalho({ c, aoMudarQtd }: { c: Coluna; aoMudarQtd: (v: string) => vo
                     aoClicar={() => aoMudarQtd(String(Math.min(c.teto ?? 999, qtdNum + 1)))}
                   />
                 )}
-                <span>{c.qtdFixa ? "parcelas" : "parc."}</span>
+                {c.qtdFixa ? (
+                  <span>parcelas</span>
+                ) : (
+                  // com a coluna estreita, “parc.”; com espaço, “parcelas” por extenso
+                  <>
+                    <span className="@[8.5rem]:hidden">parc.</span>
+                    <span className="hidden @[8.5rem]:inline">parcelas</span>
+                  </>
+                )}
               </label>
             </div>
           )}
