@@ -2,6 +2,14 @@
 // Regra: a cada mudança entregue, acrescentar uma entrada NO TOPO.
 export const VERSOES: { numero: string; data: string; itens: string[] }[] = [
   {
+    numero: "0125",
+    data: "31/10/2026",
+    itens: [
+      "Seleção de grupos de veículos: ao lado da bolinha verde de parcela reduzida aparece a quantidade de parcelas reduzidas do grupo (6, 12, 18 ou 24).",
+      "Veículos, modalidades: quando o PDF dá o embutido em % do valor ofertado (ex.: grupo 1615), voltou a aparecer como veio: embutido 50% do lance e próprio 50% do lance, sem conversão (nos fixos e no livre). Revertida a conversão da 0124 no banco e na leitura dos PDFs.",
+    ],
+  },
+  {
     numero: "0124",
     data: "31/10/2026",
     itens: [

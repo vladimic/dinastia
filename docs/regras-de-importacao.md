@@ -17,4 +17,4 @@ Regras decididas com o negócio. Valem para qualquer família e prevalecem sobre
 
 ## Embutido nos lances fixos (veículos)
 
-O embutido de Fixo 25% e Fixo 40% é guardado sempre em % da categoria (se o PDF diz "50% do valor ofertado", vira 50% × 25 = 12,5% da categoria). Na tela de modalidades: lance, embutido e próprio (= lance − embutido) são todos em % da categoria.
+Quando o PDF diz "50% do valor ofertado" (ex.: grupo 1615), o embutido do Fixo 25% e do Fixo 40% fica em % do lance (base "lance"), sem conversão. Na tela: lance 40%, embutido "50% do lance", próprio "50% do lance". Quando o PDF dá o embutido em % da categoria, a tela mostra tudo em % da categoria (próprio = lance − embutido).
