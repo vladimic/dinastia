@@ -75,7 +75,7 @@ async function Conteudo({ searchParams }: { searchParams: PageProps<"/grupos">["
   // com um grupo aberto, o seletor fica no cabeçalho principal; sem grupo, a lista aparece aberta no corpo da página
   return (
     <>
-      <Cabecalho seletor={detalhe ? seletor : undefined} />
+      <Cabecalho seletor={detalhe ? seletor : undefined} lote={admin ? { familia: familia.slug, nomeFamilia: familia.nome } : undefined} />
       <div className="flex flex-col gap-4 px-8 pt-4 pb-10 max-sm:px-4">
         {detalhe ? (
           <GrupoDetalhe
