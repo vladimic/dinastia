@@ -37,7 +37,8 @@ function celulaVeiculo(m: Modalidade, teto: number | null) {
   // regra em % do lance (PDF: "50% do valor ofertado"): embutido e próprio são partes do lance, sem conta
   if (m.embutido_base === "lance") return { qtd, emb: `${pct}% do lance`, proprio: `${Math.round((100 - pct) * 100) / 100}% do lance` };
   const emb = max !== null ? Math.min(pct, max) : pct;
-  return { qtd, emb: fmt(emb), proprio: max !== null ? fmt(max - emb) : "—" };
+  // livre/fidelidade sem teto (*): o lance não é conhecido, então o próprio é "Lance − embutido"
+  return { qtd, emb: fmt(emb), proprio: max !== null ? fmt(max - emb) : `Lance − ${fmt(emb)}` };
 }
 
 export function ModalidadesContemplacao({ modalidades, tipos, prazoGrupo, veiculo }: Props) {
