@@ -21,19 +21,21 @@ const arred = (n: number, casas: number) => Math.round(n * 10 ** casas) / 10 ** 
 
 const CODIGOS_RED = new Set([85, 70, 55, 50]);
 
-/** Modalidades citadas num trecho, na ordem em que aparecem (Sorteio Cota Cancelada/Excluído não é guardado). */
-function modalidadesDe(trecho: string): string[] {
-  const rx = /Sorteio Cota Cancelada|Sorteio Excluido|Sorteio Exclu[ií]do|Sorteio Cota Ativa|Sorteio Ativo|Sorteio|Lances? Fixos?(?:\s+em|:|,)?\s*(\d+)%(?:\s*e\s*(\d+)%)?|Lances? Livres?|Lance Fidelidade|Lance Embutido/giu;
-  const out: string[] = [];
+/** Modalidades citadas num trecho, na ordem em que aparecem, com a quantidade ("03 Sorteios Cotas Ativas" = 3 sorteios; sem número, 1).
+ *  O Sorteio Cota Cancelada/Excluído não é guardado. */
+function modalidadesDe(trecho: string): { tipo: string; qtd: number }[] {
+  const rx = /(?:(\d+)\s+)?(Sorteios?\s+Cotas?\s+Canceladas?|Sorteios?\s+Exclu[ií]dos?|Sorteios?\s+Cotas?\s+Ativas?|Sorteios?\s+Ativos?|Sorteios?|Lances?\s+Fixos?(?:\s+em|:|,)?\s*(\d+)%(?:\s*e\s*(\d+)%)?|Lances?\s+Livres?|Lance\s+Fidelidade|Lance\s+Embutido)/giu;
+  const out: { tipo: string; qtd: number }[] = [];
   for (const m of trecho.matchAll(rx)) {
-    const t = m[0].toLowerCase();
+    const t = m[2].toLowerCase();
+    const qtd = m[1] ? Number(m[1]) : 1;
     if (t.startsWith("lance embutido")) break;
     if (t.includes("cancel") || t.includes("exclu")) continue;
-    if (t.startsWith("sorteio")) out.push("SOR");
-    else if (t.includes("livre")) out.push("LIV");
-    else if (t.includes("fidelidade")) out.push("FID");
-    else if (m[1]) {
-      for (const p of [m[1], m[2]].filter(Boolean)) out.push(p === "40" ? "F40" : p === "25" ? "F25" : `?${p}`);
+    if (t.startsWith("sorteio")) out.push({ tipo: "SOR", qtd });
+    else if (t.includes("livre")) out.push({ tipo: "LIV", qtd });
+    else if (t.includes("fidelidade")) out.push({ tipo: "FID", qtd });
+    else if (m[3]) {
+      for (const p of [m[3], m[4]].filter(Boolean)) out.push({ tipo: p === "40" ? "F40" : p === "25" ? "F25" : `?${p}`, qtd });
     }
   }
   return out;
@@ -171,9 +173,10 @@ export function interpretarVeiculo(linhas: Linha[], arquivo: string, hash: strin
     return n.startsWith("livre") ? "LIV" : null;
   };
   const itensDe = (t: string) => {
-    const ordem = modalidadesDe(t);
-    for (const x of ordem) mencionadas.add(x);
-    return ordem.map((tipo) => ({ qtd: 1, tipo }));
+    // "… Demais lances na mesma ordem" / "Demais contemplações seguem com Lance Livre" não são itens da faixa
+    const ordem = modalidadesDe(t.split(/Demais/i)[0]);
+    for (const x of ordem) mencionadas.add(x.tipo);
+    return ordem.map(({ tipo, qtd }) => ({ qtd, tipo }));
   };
   const partes = [...secao.matchAll(/Da (\d+)ª? a (\d+)ª? Assembleia:\s*(.*?)(?=\*?\s*Da \d+ª? (?:a \d+ª? )?Assembleia|\*\*\s*Lance Fidelidade|$)/giu)];
   const emDiante = secao.match(/Da (\d+)ª? Assembleia em diante:\s*(.*?)(?=\*\*\s*Lance Fidelidade|$)/iu);
@@ -198,7 +201,10 @@ export function interpretarVeiculo(linhas: Linha[], arquivo: string, hash: strin
     faixas.push({ de: 1, ate: prazoGrupo, itens: itensDe(texto), demais: null, demais2: null });
   }
   if (!faixas.length || faixas.every((f) => !f.itens.length)) erros.push("sequência de contemplação não encontrada");
-  for (const f of faixas) for (const i of f.itens) if (i.tipo.startsWith("?")) erros.push(`lance fixo desconhecido: ${i.tipo.slice(1)}%`);
+  for (const f of faixas) {
+    for (const i of f.itens) if (i.tipo.startsWith("?")) erros.push(`lance fixo desconhecido: ${i.tipo.slice(1)}%`);
+    if (new Set(f.itens.map((i) => i.tipo)).size !== f.itens.length) erros.push(`sequência da ${f.de}ª à ${f.ate}ª tem a mesma modalidade repetida`);
+  }
   if (faixas.length) {
     const o = [...faixas].sort((a, b) => a.de - b.de);
     const ok = o[0].de === 1 && o[o.length - 1].ate === prazoGrupo && o.every((f, i) => i === 0 || f.de === o[i - 1].ate + 1);

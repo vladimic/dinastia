@@ -3,10 +3,10 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Faixa, Modalidade } from "./tipos";
 import type { EstadoGrupo, GrupoBase, VersaoBase } from "./comparar";
 
-const SELECT = `numero, familia, prazo_grupo_meses, participantes, taxa_adm_total, fundo_reserva, indice, mes_reajuste, primeira_correcao, dia_vencimento,
+const SELECT = `numero, familia, prazo_grupo_meses, participantes, taxa_adm_total, fundo_reserva, indice, mes_reajuste, primeira_correcao, dia_vencimento, parcela_minima_pct,
   grupo_assembleia (assembleia_numero, data_assembleia, prazo_cota_meses, creditos, observacoes, pagamento_com_furo,
-    grupo_assembleia_tipo_parcela (tipo_parcela),
-    grupo_modalidade (tipo, max_parcelas_lance, embutido_max_parcelas, embutido_pct, a_partir_assembleia_cota, requisitos),
+    grupo_assembleia_tipo_parcela (tipo_parcela, fase1_pct, fase1_parcelas, fase2_parcelas),
+    grupo_modalidade (tipo, max_parcelas_lance, embutido_max_parcelas, embutido_pct, embutido_base, lance_pct, max_lance_pct, a_partir_assembleia_cota, requisitos),
     grupo_sequencia_faixa (assembleia_de, assembleia_ate, demais_tipo, demais_tipo_2, grupo_sequencia (ordem, tipo, quantidade)))`;
 
 type Linha = Record<string, any>; // eslint-disable-line @typescript-eslint/no-explicit-any
@@ -22,6 +22,9 @@ function versao(v: Linha): VersaoBase {
       emb_pct: num(m.embutido_pct),
       a_partir: m.a_partir_assembleia_cota,
       req: m.requisitos,
+      lance_pct: num(m.lance_pct),
+      max_lance_pct: num(m.max_lance_pct),
+      emb_base: m.embutido_base === "categoria" ? "categoria" : "lance",
     };
   }
   const faixas: Faixa[] = (v.grupo_sequencia_faixa ?? [])
@@ -41,6 +44,10 @@ function versao(v: Linha): VersaoBase {
     observacoes: v.observacoes,
     pagamento_com_furo: v.pagamento_com_furo,
     tipos_parcela: (v.grupo_assembleia_tipo_parcela ?? []).map((t: Linha) => t.tipo_parcela),
+    planos_fase: (v.grupo_assembleia_tipo_parcela ?? [])
+      .filter((t: Linha) => t.fase1_pct !== null)
+      .map((t: Linha) => ({ tipo: t.tipo_parcela, fase1_pct: Number(t.fase1_pct), fase1_parcelas: t.fase1_parcelas, fase2_parcelas: t.fase2_parcelas }))
+      .sort((a: { tipo: string }, b: { tipo: string }) => a.tipo.localeCompare(b.tipo)),
     modalidades,
     faixas,
   };
@@ -64,6 +71,7 @@ export async function carregarEstados(supabase: SupabaseClient, numeros: number[
         mes_reajuste: g.mes_reajuste,
         primeira_correcao: g.primeira_correcao,
         dia_vencimento: g.dia_vencimento,
+        parcela_minima_pct: num(g.parcela_minima_pct),
       };
       mapa.set(g.numero, { grupo, versoes: (g.grupo_assembleia ?? []).map(versao) });
     }

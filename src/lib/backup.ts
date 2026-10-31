@@ -12,7 +12,8 @@ type Linha = Record<string, unknown>;
 // Regra de uma modalidade a partir de uma linha de backup, nova ou do formato antigo
 // (que tinha base ofertado/categoria, % da categoria, texto e recurso próprio, hoje calculados ou fora do modelo).
 function modalidadeDoBackup(m: Linha) {
-  const antigo = "embutido_base" in m;
+  // formato atual traz lance_pct (veículos); o antigo tinha embutido_base "ofertado"/"categoria" com outro sentido
+  const antigo = "embutido_base" in m && !("lance_pct" in m);
   const parc = antigo ? (m.embutido_base === "categoria" || m.tipo === "FIX" ? m.embutido_max_parcelas : null) : m.embutido_max_parcelas;
   const pct = antigo ? (m.embutido_base === "ofertado" ? num(m.embutido_pct) : null) : num(m.embutido_pct);
   return {
@@ -22,6 +23,7 @@ function modalidadeDoBackup(m: Linha) {
     emb_pct: pct,
     a_partir: m.a_partir_assembleia_cota,
     req: m.requisitos,
+    ...(antigo ? {} : { lance_pct: num(m.lance_pct), max_lance_pct: num(m.max_lance_pct), emb_base: m.embutido_base === "categoria" ? "categoria" : "lance" }),
   };
 }
 
@@ -50,8 +52,8 @@ export async function exportarBackup(supabase: SupabaseClient, email: string) {
       `grupo_numero, assembleia_numero, data_assembleia, prazo_cota_meses, creditos, observacoes,
        aprovado_por, aprovado_em, pagamento_com_furo, fidelidade_meses,
        arquivo:arquivo_importado(nome, hash_sha256, status, recebido_em, dados_extraidos),
-       tipos_parcela:grupo_assembleia_tipo_parcela(tipo_parcela),
-       modalidades:grupo_modalidade(tipo, max_parcelas_lance, embutido_max_parcelas, embutido_pct,
+       tipos_parcela:grupo_assembleia_tipo_parcela(tipo_parcela, fase1_pct, fase1_parcelas, fase2_parcelas),
+       modalidades:grupo_modalidade(tipo, max_parcelas_lance, embutido_max_parcelas, embutido_pct, embutido_base, lance_pct, max_lance_pct,
          a_partir_assembleia_cota, requisitos),
        faixas:grupo_sequencia_faixa(assembleia_de, assembleia_ate, demais_tipo, demais_tipo_2,
          itens:grupo_sequencia(ordem, tipo, quantidade))`,
@@ -170,6 +172,7 @@ export async function restaurarBackup(supabase: SupabaseClient, b: Backup, email
         mes_reajuste: g.mes_reajuste,
         primeira_correcao: g.primeira_correcao,
         dia_vencimento: g.dia_vencimento,
+        parcela_minima_pct: g.parcela_minima_pct ?? null,
       },
       versao: {
         data_assembleia: v.data_assembleia,
@@ -178,6 +181,9 @@ export async function restaurarBackup(supabase: SupabaseClient, b: Backup, email
         pagamento_com_furo: v.pagamento_com_furo === true,
         creditos: ((v.creditos as unknown[]) ?? []).map(num),
         tipos_parcela: ((v.tipos_parcela as Linha[]) ?? []).map((t) => t.tipo_parcela),
+        planos_fase: ((v.tipos_parcela as Linha[]) ?? [])
+          .filter((t) => t.fase1_pct !== null && t.fase1_pct !== undefined)
+          .map((t) => ({ tipo: t.tipo_parcela, fase1_pct: num(t.fase1_pct), fase1_parcelas: t.fase1_parcelas, fase2_parcelas: t.fase2_parcelas })),
         modalidades: ((v.modalidades as Linha[]) ?? []).filter((m) => m.tipo !== "CAN").map(modalidadeDoBackup),
         faixas: ((v.faixas as Linha[]) ?? []).map((f) => ({
           de: f.assembleia_de,

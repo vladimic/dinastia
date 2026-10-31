@@ -1,0 +1,4 @@
+-- Dinastia · 0035: a função aplicar_importacao passa a gravar os campos de veículos (aplicada no Supabase em 31/10/2026).
+-- Grupo: parcela_minima_pct (mantém o valor atual se o PDF não trouxer). Versão: planos reduzidos em fases (planos_fase) em
+-- grupo_assembleia_tipo_parcela. Modalidade: lance_pct, max_lance_pct e embutido_base (emb_base; padrão "lance").
+-- A função foi atualizada por substituição de texto sobre a definição vigente (só esses trechos mudaram).

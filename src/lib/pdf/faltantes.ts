@@ -4,6 +4,7 @@ import type { EstadoGrupo } from "./comparar";
 
 // Grupos que "não vieram" na leitura da pasta: a assembleia de referência é a mais recente entre os PDFs lidos;
 // quem ainda está numa assembleia mais antiga e não tem PDF dessa data entra na lista de faltantes.
+// Cada família tem a sua assembleia de referência (Imóveis em outubro, Veículos em novembro...).
 
 export type Faltante = {
   numero: number;
@@ -14,7 +15,7 @@ export type Faltante = {
   decisao: "pendente" | "aguardando_pdf";
 };
 
-export type ResumoFaltantes = { dataRef: string | null; pdfsNaData: number; faltantes: Faltante[] };
+export type ResumoFaltantes = { familia: string; dataRef: string | null; pdfsNaData: number; faltantes: Faltante[] };
 
 type Linha = Record<string, unknown>;
 
@@ -34,16 +35,16 @@ const meses = (iso: string) => Number(iso.slice(0, 4)) * 12 + Number(iso.slice(5
 /** Quantas assembleias passaram entre a data da versão vigente e a data de referência (no mínimo 1: assembleias mensais). */
 export const saltoDeAssembleias = (dataVigente: string, dataRef: string) => Math.max(1, meses(dataRef) - meses(dataVigente));
 
-export async function calcularFaltantes(supabase: SupabaseClient): Promise<ResumoFaltantes> {
+export async function calcularFaltantes(supabase: SupabaseClient, familia: string): Promise<ResumoFaltantes> {
   const [itens, atuais, esperando] = await Promise.all([
-    todas<Linha>((a, b) => supabase.from("importacao_item").select("id, grupo_numero, situacao, d:leitura->>data_assembleia").in("situacao", ["pendente", "sem_mudanca", "aplicado", "erro"]).order("id").range(a, b)),
-    todas<Linha>((a, b) => supabase.from("grupo_atual").select("numero, familia, assembleia_numero, data_assembleia").eq("familia", "imoveis").order("numero").range(a, b)),
+    todas<Linha>((a, b) => supabase.from("importacao_item").select("id, grupo_numero, situacao, d:leitura->>data_assembleia").eq("familia", familia).in("situacao", ["pendente", "sem_mudanca", "aplicado", "erro"]).order("id").range(a, b)),
+    todas<Linha>((a, b) => supabase.from("grupo_atual").select("numero, familia, assembleia_numero, data_assembleia").eq("familia", familia).order("numero").range(a, b)),
     todas<Linha>((a, b) => supabase.from("importacao_faltante").select("grupo_numero, data_ref").order("grupo_numero").range(a, b)),
   ]);
 
   const datas = itens.map((i) => i.d as string | null).filter((d): d is string => !!d);
   const dataRef = datas.length ? datas.reduce((a, b) => (b > a ? b : a)) : null;
-  if (!dataRef) return { dataRef: null, pdfsNaData: 0, faltantes: [] };
+  if (!dataRef) return { familia, dataRef: null, pdfsNaData: 0, faltantes: [] };
 
   const comPdf = new Set(itens.filter((i) => i.d === dataRef || (i.situacao === "erro" && i.grupo_numero !== null)).map((i) => Number(i.grupo_numero)));
   const aguardando = new Set(esperando.filter((e) => e.data_ref === dataRef).map((e) => Number(e.grupo_numero)));
@@ -57,7 +58,13 @@ export async function calcularFaltantes(supabase: SupabaseClient): Promise<Resum
       proxima: Number(g.assembleia_numero) + saltoDeAssembleias(String(g.data_assembleia), dataRef),
       decisao: aguardando.has(Number(g.numero)) ? ("aguardando_pdf" as const) : ("pendente" as const),
     }));
-  return { dataRef, pdfsNaData: new Set(itens.filter((i) => i.d === dataRef).map((i) => Number(i.grupo_numero))).size, faltantes };
+  return { familia, dataRef, pdfsNaData: new Set(itens.filter((i) => i.d === dataRef).map((i) => Number(i.grupo_numero))).size, faltantes };
+}
+
+/** Faltantes de cada família (só as que têm assembleia de referência na leitura). */
+export async function calcularFaltantesTodas(supabase: SupabaseClient): Promise<ResumoFaltantes[]> {
+  const todas = await Promise.all(["imoveis", "veiculos"].map((f) => calcularFaltantes(supabase, f)));
+  return todas.filter((r) => r.dataRef);
 }
 
 /** Versão nova igual à vigente (créditos, tipos de parcela, modalidades, sequência e dados do grupo), só com assembleia, data e prazo da cota atualizados. */
@@ -83,6 +90,7 @@ export function montarSalto(estado: EstadoGrupo, dataRef: string, email: string)
       mes_reajuste: g.mes_reajuste,
       primeira_correcao: g.primeira_correcao,
       dia_vencimento: g.dia_vencimento,
+      parcela_minima_pct: g.parcela_minima_pct,
     },
     versao: {
       data_assembleia: dataRef,
@@ -91,6 +99,7 @@ export function montarSalto(estado: EstadoGrupo, dataRef: string, email: string)
       pagamento_com_furo: v.pagamento_com_furo ?? false,
       creditos: v.creditos.map(Number),
       tipos_parcela: v.tipos_parcela,
+      planos_fase: v.planos_fase,
       modalidades: Object.entries(v.modalidades).map(([tipo, m]) => Object.fromEntries(Object.entries({ tipo, ...m }).filter(([, x]) => x !== null && x !== undefined))),
       faixas: v.faixas.map((f) => Object.fromEntries(Object.entries({ de: f.de, ate: f.ate, demais: f.demais, demais2: f.demais2, itens: f.itens }).filter(([, x]) => x !== null && x !== undefined))),
     },

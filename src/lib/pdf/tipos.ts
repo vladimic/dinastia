@@ -65,7 +65,7 @@ export type Leitura = {
   creditos: LinhaCredito[];
   modalidades: Record<string, Modalidade>;
   faixas: Faixa[];
-  /** veículos: parcela mínima após a contemplação, % do crédito */
+  /** veículos: parcela mínima após a contemplação, % da categoria (crédito + taxas) */
   parcela_minima_pct?: number | null;
   /** veículos: plano reduzido oferecido (nulo = só o linear) */
   plano_reduzido?: PlanoReduzidoLido | null;

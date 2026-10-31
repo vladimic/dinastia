@@ -7,7 +7,7 @@ comment on column public.parametros_gerais.incc_pct_ano is 'INCC projetado, em %
 comment on column public.parametros_gerais.contemplacao_meses is 'Mês de contemplação com que o simulador abre.';
 comment on column public.parametros_gerais.lance_livre_parcelas is 'Parcelas do lance livre com que o simulador abre.';
 comment on column public.parametros_gerais.lance_fidelidade_parcelas is 'Parcelas do lance fidelidade com que o simulador abre.';
-comment on column public.parametros_gerais.parcela_minima_padrao_pct is 'Veículos: parcela mínima após a contemplação por lance (% do crédito) usada nos grupos cujo PDF não informa a sua (padrão 0,7).';
+comment on column public.parametros_gerais.parcela_minima_padrao_pct is 'Veículos: parcela mínima após a contemplação por lance (% da categoria: crédito + taxas) usada nos grupos cujo PDF não informa a sua (padrão 0,7).';
 comment on column public.parametros_gerais.lance_livre_pct is 'Veículos: % da categoria do lance livre com que o simulador abre (padrão 55).';
 comment on column public.parametros_gerais.lance_fidelidade_pct is 'Veículos: % da categoria do lance fidelidade com que o simulador abre (padrão 45).';
 comment on column public.parametros_gerais.concorrencia_fixo_pct is '% de concorrência do lance fixo, mostrado no cabeçalho da coluna do simulador.';
@@ -44,7 +44,7 @@ comment on column public.grupo.indice is 'Índice de correção do grupo.';
 comment on column public.grupo.mes_reajuste is 'Mês do reajuste anual (1 a 12).';
 comment on column public.grupo.primeira_correcao is 'Data da primeira correção, quando o PDF informa.';
 comment on column public.grupo.dia_vencimento is 'Dia do mês do vencimento das parcelas (1 a 31).';
-comment on column public.grupo.parcela_minima_pct is 'Veículos: parcela mínima mensal após a contemplação por lance, em % do crédito (ex.: 0,70). Vazio em imóveis, que não têm essa regra.';
+comment on column public.grupo.parcela_minima_pct is 'Veículos: parcela mínima mensal após a contemplação por lance, em % da categoria (crédito + taxas; ex.: 0,70). Vazio em imóveis, que não têm essa regra.';
 comment on column public.grupo.criado_em is 'Quando a linha foi criada (automático).';
 comment on column public.grupo.atualizado_em is 'Última alteração da linha (automático).';
 comment on table public.arquivo_importado is 'Registro de cada PDF (ou carga) que originou uma versão de grupo, com o resumo do que foi lido. Serve de auditoria.';

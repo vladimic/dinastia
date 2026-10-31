@@ -10,7 +10,7 @@ const dataBR = (iso: string) => iso.slice(0, 10).split("-").reverse().join("/");
 const BTN = "min-h-8 rounded-[10px] px-3 text-xs font-bold disabled:opacity-50";
 
 // Grupos que não vieram na leitura: ou o PDF será reimportado, ou o sistema faz o salto automático de assembleia.
-export function PainelFaltantes({ dataRef, pdfsNaData, faltantes }: { dataRef: string; pdfsNaData: number; faltantes: FaltanteTela[] }) {
+export function PainelFaltantes({ familiaNome, dataRef, pdfsNaData, faltantes }: { familiaNome: string; dataRef: string; pdfsNaData: number; faltantes: FaltanteTela[] }) {
   const router = useRouter();
   const [ocupado, iniciar] = useTransition();
   const [msg, setMsg] = useState<{ erro: boolean; texto: string } | null>(null);
@@ -52,10 +52,10 @@ export function PainelFaltantes({ dataRef, pdfsNaData, faltantes }: { dataRef: s
   }
 
   return (
-    <section className="flex flex-col gap-3 rounded-2xl border border-alerta-borda bg-alerta-fundo p-4" aria-label="Grupos sem PDF">
+    <section className="flex flex-col gap-3 rounded-2xl border border-alerta-borda bg-alerta-fundo p-4" aria-label={`Grupos sem PDF · ${familiaNome}`}>
       <div className="flex flex-wrap items-center justify-between gap-2">
         <h2 className="text-base font-bold text-alerta">
-          Grupos sem PDF para a assembleia de {dataBR(dataRef)}: {pendentes.length}
+          {familiaNome}: grupos sem PDF para a assembleia de {dataBR(dataRef)}: {pendentes.length}
           {aguardando.length > 0 && <span className="ml-2 text-xs font-semibold text-tinta">({aguardando.length} aguardando PDF)</span>}
         </h2>
         <span className="text-xs text-tinta">Referência: o PDF mais recente lido ({pdfsNaData} {pdfsNaData === 1 ? "grupo" : "grupos"} com PDF dessa data).</span>

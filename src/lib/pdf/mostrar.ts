@@ -11,17 +11,25 @@ function faixa(f: Faixa) {
 
 function modalidade(m: Modalidade) {
   const partes: string[] = [];
+  if (m.lance_pct != null) partes.push(`lance de ${String(m.lance_pct).replace(".", ",")}% da categoria`);
+  if (m.max_lance_pct != null) partes.push(`lance até ${String(m.max_lance_pct).replace(".", ",")}% da categoria`);
   if (m.max !== null) partes.push(`máx. ${m.max} parcelas`);
   if (m.emb_parc === null && m.emb_pct === null) partes.push("sem embutido");
   else {
     if (m.emb_parc !== null) partes.push(`embutir até ${m.emb_parc} parcelas`);
-    if (m.emb_pct !== null) partes.push(`embutir até ${String(m.emb_pct).replace(".", ",")}% do lance`);
+    if (m.emb_pct !== null) partes.push(`embutir até ${String(m.emb_pct).replace(".", ",")}% ${m.emb_base === "categoria" ? "da categoria" : "do lance"}`);
   }
   return partes.join(" · ");
 }
 
+const NOME_PLANO = (t: string) => (t === "CLEARANCE" ? "Clearance" : t.startsWith("PLANO_") ? `Plano ${t.slice(6)}` : t);
+
 export function textoDoValor(escopo: string, campo: string, v: unknown): string {
   if (v === null || v === undefined) return "—";
+  if (escopo === "tipos_parcela" && campo === "planos_fase") {
+    const l = v as { tipo: string; fase1_pct: number; fase1_parcelas: number; fase2_parcelas: number }[];
+    return l.length ? l.map((p) => `${NOME_PLANO(p.tipo)}: ${String(p.fase1_pct).replace(".", ",")}% × ${p.fase1_parcelas} parcelas, depois ${p.fase2_parcelas}`).join("; ") : "sem plano reduzido em fases";
+  }
   if (escopo === "sequencia" && campo === "*") return faixa(v as Faixa);
   if (escopo === "modalidade" && campo === "*") return modalidade(v as Modalidade);
   if (escopo === "grupo" && campo === "*") {

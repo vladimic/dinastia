@@ -2,14 +2,14 @@
 
 export type TipoValor = "numero" | "texto" | "booleano" | "data" | "lista_numeros" | "lista_codigos" | "nenhum";
 
-const CAMPOS_NUMERO = new Set(["prazo_grupo_meses", "participantes", "taxa_adm_total", "fundo_reserva", "mes_reajuste", "dia_vencimento", "prazo_cota", "max", "emb_parc", "emb_pct", "a_partir"]);
+const CAMPOS_NUMERO = new Set(["prazo_grupo_meses", "participantes", "taxa_adm_total", "fundo_reserva", "mes_reajuste", "dia_vencimento", "prazo_cota", "max", "emb_parc", "emb_pct", "a_partir", "lance_pct", "max_lance_pct", "parcela_minima_pct"]);
 const CAMPOS_BOOL = new Set<string>(); // nenhum campo sim/não editável por enquanto
 const CAMPOS_DATA = new Set(["data_assembleia", "primeira_correcao"]);
 
 export function tipoDoCampo(escopo: string, campo: string): TipoValor {
   if (campo === "*") return "nenhum"; // grupo novo, modalidade que aparece/some e sequência: só aceitar ou rejeitar
   if (escopo === "creditos") return "lista_numeros";
-  if (escopo === "tipos_parcela") return "lista_codigos";
+  if (escopo === "tipos_parcela") return campo === "planos_fase" ? "nenhum" : "lista_codigos"; // o plano em duas fases só se aceita ou rejeita
   if (CAMPOS_NUMERO.has(campo)) return "numero";
   if (CAMPOS_BOOL.has(campo)) return "booleano";
   if (CAMPOS_DATA.has(campo)) return "data";

@@ -5,7 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 import { refazerTodasAsListas } from "@/lib/listaGrupos";
 import { ehAdministrador, usuarioAtual } from "@/lib/usuario";
 import { carregarEstados } from "@/lib/pdf/estado";
-import { calcularFaltantes, montarSalto } from "@/lib/pdf/faltantes";
+import { calcularFaltantesTodas, montarSalto } from "@/lib/pdf/faltantes";
 import { classificar, comparar, montarFinal, tiposParcelaDe, type Decidida, type Diferenca } from "@/lib/pdf/comparar";
 import { canon } from "@/lib/pdf/canon";
 import { converterEdicao } from "@/lib/pdf/edicao";
@@ -45,7 +45,7 @@ const assinatura = (l: Leitura) =>
     numero: l.numero, familia: l.familia, assembleia: l.assembleia, data: l.data_assembleia, prazo_cota: l.prazo_cota, prazo_grupo: l.prazo_grupo,
     participantes: l.participantes, taxa_adm: l.taxa_adm, indice: l.indice, mes_reajuste: l.mes_reajuste, primeira_correcao: l.primeira_correcao,
     vencimento: l.vencimento, fundo_reserva: l.fundo_reserva, observacoes: l.observacoes, creditos: l.creditos.map((c) => c.credito).sort((a, b) => b - a),
-    tipos: l.planos.DILUIDA, modalidades: l.modalidades, faixas: l.faixas,
+    tipos: l.planos.DILUIDA, modalidades: l.modalidades, faixas: l.faixas, plano_reduzido: l.plano_reduzido ?? null, parcela_minima_pct: l.parcela_minima_pct ?? null,
   });
 
 /** Guarda as leituras (já feitas no navegador), compara cada uma com a base e registra as diferenças a decidir. */
@@ -53,10 +53,7 @@ export async function registrarLeituras(leiturasLidas: Leitura[], falhas: { arqu
   const email = await quem();
   if (!email) return NEGADO;
   const supabase = await createClient();
-  // Veículos já são lidos, mas a importação deles ainda não grava os campos novos (etapa 4): por ora ficam como erro, sem tocar na base
-  const leituras = (Array.isArray(leiturasLidas) ? leiturasLidas : []).map((l) =>
-    l.familia === "veiculos" ? { ...l, erros: [...l.erros, "importação de Veículos ainda não liberada"] } : l,
-  );
+  const leituras = Array.isArray(leiturasLidas) ? leiturasLidas : [];
   const resumo: ResumoLote = { lidos: leituras.length + falhas.length, novos: 0, novasAssembleias: 0, semMudanca: 0, comDiferencas: 0, ignorados: 0, erros: 0 };
 
   if (!Array.isArray(leituras) || !Array.isArray(falhas) || leituras.length + falhas.length > 100) return { ok: false, erro: "Lote de leituras inválido." };
@@ -115,7 +112,8 @@ export async function registrarLeituras(leiturasLidas: Leitura[], falhas: { arqu
     }
     for (const l of leituras) {
       const base = { hash_sha256: l.hash, arquivo: l.arquivo, familia: l.familia.replace("-", "_"), grupo_numero: Number(l.numero), assembleia_numero: l.assembleia, leitura: l };
-      if (l.erros.length || tiposParcelaDe(l).length !== l.planos.DILUIDA.length) {
+      // imóveis: cada % de parcela precisa ter tipo cadastrado (veículos têm o plano reduzido pelo nome)
+      if (l.erros.length || (l.plano_reduzido === undefined && tiposParcelaDe(l).length !== l.planos.DILUIDA.length)) {
         resumo.erros++;
         await gravar({ ...base, situacao: "erro", motivo: l.erros.length ? l.erros.join("; ") : "parcela com percentual sem tipo de parcela cadastrado" }, []);
         continue;
@@ -238,10 +236,11 @@ export async function aguardarPdf(grupos: number[], aguardar: boolean): Promise<
   const email = await quem();
   if (!email) return NEGADO;
   const supabase = await createClient();
-  const { dataRef } = await calcularFaltantes(supabase);
-  if (!dataRef) return { ok: false, erro: "Não há assembleia de referência na leitura." };
+  // cada grupo vale a assembleia de referência da sua família
+  const refDoGrupo = new Map((await calcularFaltantesTodas(supabase)).flatMap((r) => r.faltantes.map((f) => [f.numero, r.dataRef as string] as const)));
+  if (!refDoGrupo.size) return { ok: false, erro: "Não há assembleia de referência na leitura." };
   if (aguardar) {
-    const { error } = await supabase.from("importacao_faltante").upsert(grupos.map((g) => ({ grupo_numero: g, decisao: "aguardando_pdf", data_ref: dataRef, decidido_por: email, decidido_em: new Date().toISOString() })), { onConflict: "grupo_numero" });
+    const { error } = await supabase.from("importacao_faltante").upsert(grupos.filter((g) => refDoGrupo.has(g)).map((g) => ({ grupo_numero: g, decisao: "aguardando_pdf", data_ref: refDoGrupo.get(g), decidido_por: email, decidido_em: new Date().toISOString() })), { onConflict: "grupo_numero" });
     if (error) return { ok: false, erro: "Não foi possível registrar." };
   } else {
     const { error } = await supabase.from("importacao_faltante").delete().in("grupo_numero", grupos);
@@ -257,9 +256,9 @@ export async function aplicarSaltos(grupos: number[]): Promise<{ ok: true; aplic
   if (!email) return NEGADO;
   const supabase = await createClient();
   // só entra quem realmente ainda falta (a lista é recalculada aqui, não vem da tela)
-  const { dataRef, faltantes } = await calcularFaltantes(supabase);
-  if (!dataRef) return { ok: false, erro: "Não há assembleia de referência na leitura." };
-  const permitidos = new Set(faltantes.map((f) => f.numero));
+  const refDoGrupo = new Map((await calcularFaltantesTodas(supabase)).flatMap((r) => r.faltantes.map((f) => [f.numero, r.dataRef as string] as const)));
+  if (!refDoGrupo.size) return { ok: false, erro: "Não há assembleia de referência na leitura." };
+  const permitidos = new Set(refDoGrupo.keys());
   const estados = await carregarEstados(supabase, grupos.filter((g) => permitidos.has(g)));
   let aplicados = 0;
   const falhas: { grupo: number; motivo: string }[] = [];
@@ -269,7 +268,7 @@ export async function aplicarSaltos(grupos: number[]): Promise<{ ok: true; aplic
       falhas.push({ grupo: g, motivo: "o grupo não está mais na lista de faltantes" });
       continue;
     }
-    const { _nova, _de, _prazoCota, ...payload } = montarSalto(estado, dataRef, email);
+    const { _nova, _de, _prazoCota, ...payload } = montarSalto(estado, refDoGrupo.get(g) as string, email);
     const { error } = await supabase.rpc("aplicar_importacao", { p: payload });
     if (error) {
       falhas.push({ grupo: g, motivo: error.message });

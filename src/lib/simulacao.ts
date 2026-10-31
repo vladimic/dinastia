@@ -18,7 +18,7 @@ export type Entrada = {
   mesesContemplacao: number;
   /** veículos: plano reduzido em duas fases (nulo = plano linear ou reduzido até a contemplação, como nos imóveis) */
   plano?: PlanoFases | null;
-  /** veículos: parcela mínima após a contemplação por lance, % do crédito */
+  /** veículos: parcela mínima após a contemplação por lance, % da categoria (crédito + taxas) */
   parcelaMinimaPct?: number | null;
 };
 
@@ -49,7 +49,7 @@ export type Base = {
 export function calcularBase(e: Entrada): Base {
   const taxaAdmValor = e.credito * (e.taxaAdmPct / 100);
   const categoria = e.credito + taxaAdmValor;
-  const parcelaMinima = e.parcelaMinimaPct ? (e.credito * e.parcelaMinimaPct) / 100 : null;
+  const parcelaMinima = e.parcelaMinimaPct ? (categoria * e.parcelaMinimaPct) / 100 : null;
   const m = e.mesesContemplacao;
 
   if (e.plano) {
@@ -244,7 +244,7 @@ export type PadroesSimulador = {
   /** veículos: % da categoria com que o simulador abre os lances livre e fidelidade */
   lanceLivrePct: number;
   lanceFidelidadePct: number;
-  /** veículos: parcela mínima (% do crédito) para os grupos cujo PDF não a informa */
+  /** veículos: parcela mínima (% da categoria) para os grupos cujo PDF não a informa */
   parcelaMinimaPadraoPct: number;
   /** concorrência de cada lance, % (só se altera em Parâmetros globais) */
   concorrencia: Record<"FIX" | "LIM" | "LIV" | "FID", number>;

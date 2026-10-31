@@ -5,7 +5,8 @@ import { createClient } from "@/lib/supabase/server";
 import { FILTROS, type Filtro } from "@/lib/pdf/filtros";
 import { PASTAS_PDF } from "@/lib/pastasPdf";
 import { ehAdministrador } from "@/lib/usuario";
-import { calcularFaltantes } from "@/lib/pdf/faltantes";
+import { calcularFaltantesTodas } from "@/lib/pdf/faltantes";
+import { nomeFamilia } from "@/lib/grupos";
 import { ImportarTela } from "./ImportarTela";
 import { PainelFaltantes } from "./PainelFaltantes";
 import { PainelDecisoes, type Contagens, type ItemTela, type Agregado } from "./PainelDecisoes";
@@ -93,12 +94,14 @@ async function Conteudo({ searchParams }: { searchParams: PageProps<"/importar">
     lista = (data ?? []) as unknown as ItemTela[];
   }
 
-  const faltantes = await calcularFaltantes(supabase);
+  const faltantes = await calcularFaltantesTodas(supabase);
   const pastas = PASTAS_PDF.map((p) => ({ ...p, caminho: ((parametros as Record<string, string | null> | null)?.[p.campo] ?? "") as string }));
   return (
     <div className="flex max-w-[72rem] flex-col gap-6">
       <ImportarTela pastas={pastas} />
-      {faltantes.dataRef && <PainelFaltantes dataRef={faltantes.dataRef} pdfsNaData={faltantes.pdfsNaData} faltantes={faltantes.faltantes} />}
+      {faltantes.map((f) => (
+        <PainelFaltantes key={f.familia} familiaNome={nomeFamilia(f.familia)} dataRef={f.dataRef as string} pdfsNaData={f.pdfsNaData} faltantes={f.faltantes} />
+      ))}
       <PainelDecisoes contagens={contagens} agregados={agregados} itens={lista} filtro={filtro} pagina={Math.min(pagina, totalPaginas)} totalPaginas={totalPaginas} idsProntos={prontos.map((i) => i.id)} />
     </div>
   );
