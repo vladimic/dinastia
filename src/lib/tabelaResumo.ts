@@ -101,14 +101,14 @@ function qtdVeiculo(m: ModalidadeEntrada | undefined, teto: number | null): stri
   return teto === null ? "*" : `${teto}%`;
 }
 
-// Veículos, "Emb": fração do lance que pode ser embutida, no lance máximo (o fixo, o teto do livre ou, sem teto, 100% da categoria).
-// "% da categoria" (ex.: até 25% da categoria) vira fração do lance; "% do lance" vale como está. Sem regra de embutido, 0.
-function embVeiculo(m: ModalidadeEntrada | undefined, lanceMax: number): number | null {
+// Veículos, "Emb": mesmo conceito da tela de modalidades. Embutido em % da categoria aparece como está (ex.: 25%, no máximo o
+// lance da modalidade); em % do valor ofertado aparece como "50% lance". Sem regra de embutido, 0.
+function embVeiculo(m: ModalidadeEntrada | undefined, lanceMax: number): number | string | null {
   if (!m) return null;
   if (m.emb_pct === null) return 0;
   const pct = Number(m.emb_pct);
-  const fracao = m.emb_base === "categoria" ? Math.min(100, (100 * pct) / lanceMax) : Math.min(100, pct);
-  return Math.floor(fracao) / 100;
+  if (m.emb_base === "categoria") return Math.min(pct, lanceMax) / 100;
+  return `${String(pct).replace(".", ",")}% lance`;
 }
 
 // Ordem de contemplação: o máximo de sorteios + a ordem do grupo, até POSICOES posições.
@@ -136,7 +136,7 @@ export type LinhaResumo = {
   rod: number;
   fu: "S" | "N";
   /** o que a coluna Par mostra: o % da menor parcela (imóveis) ou, em veículos com plano em fases, as parcelas reduzidas */
-  par: number | "?";
+  par: number | "?" | "";
   /** o % da menor parcela oferecida, que define a cor (50/55 verde, 70 laranja) */
   parCor: number | "?";
   fim: Mes;
@@ -183,7 +183,11 @@ export function montarLinhas(grupos: GrupoEntrada[], base: Mes, familia: Familia
         atu: g.prazo_cota,
         rod: g.prazo_grupo - g.prazo_cota,
         fu: g.furo ? "S" : "N",
-        par: veic && g.fase1_parcelas ? g.fase1_parcelas : g.pct_parcelas.length ? Math.min(...g.pct_parcelas) : "?",
+        par: veic
+          ? g.fase1_parcelas ?? (g.pct_parcelas.some((p) => p < 100) ? Math.min(...g.pct_parcelas) : "") // veículos sem parcela reduzida: em branco
+          : g.pct_parcelas.length
+            ? Math.min(...g.pct_parcelas)
+            : "?",
         parCor: g.pct_parcelas.length ? Math.min(...g.pct_parcelas) : "?",
         fim: { ano: Math.floor(total / 12), mes: (total % 12) + 1 },
         ordem: ordemResumo(g.faixas),
@@ -233,7 +237,7 @@ export function celulasDaLinha(l: LinhaResumo): CelulaResumo[] {
     c(l.atu, String(l.atu), "right", { ...azul, fmt: "#,##0" }),
     c(l.rod, String(l.rod), "right", { ...azul, fmt: "#,##0" }),
     c(l.fu, l.fu, "center", l.fu === "S" ? { cor: VERDE, negrito: true } : {}),
-    c(l.par, String(l.par), "center", l.par === "?" ? { cor: VERMELHO } : { ...corGrupo, fmt: "#,##0" }), // mesma cor do número do grupo
+    c(l.par === "" ? null : l.par, String(l.par), "center", l.par === "?" ? { cor: VERMELHO } : { ...corGrupo, fmt: "#,##0" }), // mesma cor do número do grupo
     c(new Date(Date.UTC(l.fim.ano, l.fim.mes - 1, 1)), `${mm(l.fim.mes)}/${mm(l.fim.ano % 100)}`, "center", { ...azul, fmt: "mm/yy" }),
   ];
   for (let i = 0; i < POSICOES; i++) {

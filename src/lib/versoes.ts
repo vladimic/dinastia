@@ -2,6 +2,14 @@
 // Regra: a cada mudança entregue, acrescentar uma entrada NO TOPO.
 export const VERSOES: { numero: string; data: string; itens: string[] }[] = [
   {
+    numero: "0128",
+    data: "31/10/2026",
+    itens: [
+      "Tabela Resumo de veículos: o Emb segue o conceito das modalidades. Embutido em % da categoria aparece como está (grupo 1614: 25% no Fixo 25, no Fixo 40, no Livre e no Fidelidade, em vez de 100% e 62%); em % do valor ofertado aparece como \"50% lance\".",
+      "Tabela Resumo de veículos: a coluna Par fica em branco quando o grupo não tem parcela reduzida (nem 6, 12, 18 ou 24).",
+    ],
+  },
+  {
     numero: "0127",
     data: "31/10/2026",
     itens: [
