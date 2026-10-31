@@ -79,7 +79,7 @@ async function Conteudo({ searchParams }: { searchParams: PageProps<"/importar">
   const idsFiltro: number[] =
     filtro === "pendentes" ? pendentes.map((i) => i.id)
     : filtro === "prontos" ? prontos.map((i) => i.id)
-    : itens.filter((i) => (filtro === "aplicados" ? i.situacao === "aplicado" : filtro === "sem_mudanca" ? i.situacao === "sem_mudanca" : filtro === "erros" ? i.situacao === "erro" : i.situacao === "ignorado" || i.situacao === "rejeitado")).map((i) => i.id);
+    : itens.filter((i) => i.situacao === "erro").map((i) => i.id);
   const totalPaginas = Math.max(1, Math.ceil(idsFiltro.length / POR_PAGINA));
   const idsPagina = idsFiltro.slice((Math.min(pagina, totalPaginas) - 1) * POR_PAGINA, Math.min(pagina, totalPaginas) * POR_PAGINA);
 

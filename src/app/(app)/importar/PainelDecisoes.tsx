@@ -213,7 +213,7 @@ export function PainelDecisoes({
 
       <div className="flex flex-wrap items-center gap-2">
         {FILTROS.map((f) => {
-          const n = f === "aplicados" ? contagens.aplicados : f === "sem_mudanca" ? contagens.sem_mudanca : f === "erros" ? contagens.erros : f === "ignorados" ? contagens.ignorados : f === "prontos" ? prontos.size : contagens.pendentes;
+          const n = f === "erros" ? contagens.erros : f === "prontos" ? prontos.size : contagens.pendentes;
           return (
             <Link
               key={f}

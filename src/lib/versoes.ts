@@ -2,6 +2,14 @@
 // Regra: a cada mudança entregue, acrescentar uma entrada NO TOPO.
 export const VERSOES: { numero: string; data: string; itens: string[] }[] = [
   {
+    numero: "0120",
+    data: "31/10/2026",
+    itens: [
+      "Importar tabelas: some a mensagem de resumo depois da leitura (“N PDFs na pasta: … lidos agora …”) e o aviso da Estratégia Comercial. Continuam os avisos que pedem atenção: PDFs desconsiderados (com o motivo) e arquivos que o navegador não conseguiu abrir.",
+      "Importar tabelas: o histórico sai da tela. Ficam só “A decidir”, “Prontos para aplicar” e “Com erro de leitura”; Aplicados, Sem mudança e Ignorados não aparecem mais. Os registros continuam no banco por trás: é com eles que a próxima leitura pula os PDFs iguais e que a lista de grupos sem PDF sabe a data de referência.",
+    ],
+  },
+  {
     numero: "0119",
     data: "31/10/2026",
     itens: [
