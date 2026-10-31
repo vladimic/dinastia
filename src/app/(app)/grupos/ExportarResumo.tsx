@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { ArquivoBaixavel, Modal, botao } from "@/components/ExportarArquivo";
-import { GRUPOS_POR_PAGINA, lerMes, lerPorPagina, nomeArquivo, rotuloMes } from "@/lib/tabelaResumo";
+import { GRUPOS_POR_PAGINA, lerMes, lerPorPagina, nomeArquivo, rotuloMes, type FamiliaResumo } from "@/lib/tabelaResumo";
 
 const XLSX = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
 const CHAVE = "dinastia-resumo-mes";
@@ -37,8 +37,9 @@ function porPaginaInicial() {
 }
 
 // Botão do cabeçalho de Grupos e Tabelas: pergunta o mês de referência e gera a Tabela Resumo dos imóveis
-// em Excel (aba Imóvel) e em PDF
-export function ExportarResumo() {
+// em Excel e em PDF (da família que está aberta: Imóveis ou Veículos)
+export function ExportarResumo({ familia = "imoveis" }: { familia?: FamiliaResumo }) {
+  const nomeFam = familia === "veiculos" ? "Veículos" : "Imóveis";
   const [aberto, setAberto] = useState(false);
   const [mes, setMes] = useState("");
   const [porPagina, setPorPagina] = useState("");
@@ -78,9 +79,9 @@ export function ExportarResumo() {
       </button>
 
       {aberto && (
-        <Modal titulo="Exportar Tabela Resumo" onFechar={() => setAberto(false)}>
+        <Modal titulo={`Exportar Tabela Resumo · ${nomeFam}`} onFechar={() => setAberto(false)}>
           <p className="text-sm leading-relaxed text-tinta">
-            Imóveis, com a versão vigente de cada grupo. O mês de referência vai no título e é a base do mês final (Fim). No PDF, cada página leva a quantidade de grupos escolhida e repete o cabeçalho; a configuração fica salva para a próxima exportação.
+            {nomeFam}, com a versão vigente de cada grupo. O mês de referência vai no título e é a base do mês final (Fim). No PDF, cada página leva a quantidade de grupos escolhida e repete o cabeçalho; a configuração fica salva para a próxima exportação.
           </p>
           <div className="flex flex-wrap items-end gap-3">
             <label className="rotulo text-[13px]">
@@ -112,14 +113,14 @@ export function ExportarResumo() {
             <div key={`${gerado.mes}-${gerado.porPagina}`} className="flex flex-col gap-4">
               <p className="text-[13px] font-semibold">Referência: {rotuloMes(ref)}</p>
               <section className="flex flex-col gap-2">
-                <h3 className="text-sm font-bold">Excel (só a aba Imóvel)</h3>
+                <h3 className="text-sm font-bold">Excel (só a aba {familia === "veiculos" ? "Veículo" : "Imóvel"})</h3>
                 <ArquivoBaixavel
-                  url={`/api/tabela-resumo?formato=xlsx&mes=${gerado.mes}`}
+                  url={`/api/tabela-resumo?formato=xlsx&mes=${gerado.mes}&familia=${familia}`}
                   tipo={XLSX}
                   extensao=".xlsx"
                   descricao="Tabela Resumo (Excel)"
                   gerar={(r) => ({
-                    nome: nomeArquivo(ref, "xlsx"),
+                    nome: nomeArquivo(ref, "xlsx", familia),
                     resumo: (
                       <>
                         Planilha pronta: <strong>{r.headers.get("X-Grupos")}</strong> grupos.
@@ -131,12 +132,12 @@ export function ExportarResumo() {
               <section className="flex flex-col gap-2 border-t border-linha pt-4">
                 <h3 className="text-sm font-bold">PDF (igual ao modelo)</h3>
                 <ArquivoBaixavel
-                  url={`/api/tabela-resumo?formato=pdf&mes=${gerado.mes}&porPagina=${gerado.porPagina}`}
+                  url={`/api/tabela-resumo?formato=pdf&mes=${gerado.mes}&porPagina=${gerado.porPagina}&familia=${familia}`}
                   tipo="application/pdf"
                   extensao=".pdf"
                   descricao="Tabela Resumo (PDF)"
                   gerar={(r) => ({
-                    nome: nomeArquivo(ref, "pdf"),
+                    nome: nomeArquivo(ref, "pdf", familia),
                     resumo: (
                       <>
                         PDF pronto: <strong>{r.headers.get("X-Grupos")}</strong> grupos em <strong>{r.headers.get("X-Paginas")}</strong>{" "}

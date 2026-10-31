@@ -2,6 +2,15 @@
 // Regra: a cada mudança entregue, acrescentar uma entrada NO TOPO.
 export const VERSOES: { numero: string; data: string; itens: string[] }[] = [
   {
+    numero: "0119",
+    data: "31/10/2026",
+    itens: [
+      "Importar tabelas: a família Veículos ganhou o botão de ler os PDFs (antes só Imóveis tinha). Vale também para Motos, que estão em Veículos.",
+      "Veículos, etapa 5 (Tabela Resumo): o botão Exportar Tabela Resumo exporta a família que está aberta (Imóveis ou Veículos), em Excel e PDF, no mesmo modelo. Em Veículos: título “Grupos e cotas veículos”, colunas FIXO 25% e FIXO 40% (Qtd em % da categoria e Emb em % do lance, calculado no lance máximo), Fidelidade e Livre com o teto em % (ou * sem teto), ordem de contemplação com f25 e f40 nas cores do Fixo e do Limitado, e a coluna Par com a quantidade de parcelas reduzidas do plano em duas fases (sem plano, o % da menor parcela, como em Imóveis).",
+      "Tabela Resumo: com mais de 11 créditos no grupo (o 1504 tem 22), a coluna Créditos (mil) mostra 11 valores igualmente espaçados, sempre com o menor e o maior.",
+    ],
+  },
+  {
     numero: "0118",
     data: "31/10/2026",
     itens: [

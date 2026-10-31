@@ -101,10 +101,10 @@ function Familia({
         aria-label={`Pasta dos PDFs de ${pasta.rotulo}`}
       />
       {ligada &&
-        (pasta.campo === "pasta_pdf_imoveis" ? (
+        (pasta.campo === "pasta_pdf_imoveis" || pasta.campo === "pasta_pdf_veiculos" ? (
           <LeituraPdfs rotulo={pasta.rotulo} caminho={caminho} chave={pasta.campo} />
         ) : (
-          <p className="pl-[3.5rem] text-[11px] text-tinta">Leitura desta família ainda não disponível (por enquanto só Imóveis).</p>
+          <p className="pl-[3.5rem] text-[11px] text-tinta">Leitura desta família ainda não disponível (por enquanto só Imóveis e Veículos).</p>
         ))}
     </li>
   );
