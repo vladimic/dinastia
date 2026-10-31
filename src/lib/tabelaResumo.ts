@@ -102,13 +102,13 @@ function qtdVeiculo(m: ModalidadeEntrada | undefined, teto: number | null): stri
 }
 
 // Veículos, "Emb": mesmo conceito da tela de modalidades. Embutido em % da categoria aparece como está (ex.: 25%, no máximo o
-// lance da modalidade); em % do valor ofertado aparece como "50% lance". Sem regra de embutido, 0.
+// lance da modalidade); em % do valor ofertado aparece como "50%L". Sem regra de embutido, 0.
 function embVeiculo(m: ModalidadeEntrada | undefined, lanceMax: number): number | string | null {
   if (!m) return null;
   if (m.emb_pct === null) return 0;
   const pct = Number(m.emb_pct);
   if (m.emb_base === "categoria") return Math.min(pct, lanceMax) / 100;
-  return `${String(pct).replace(".", ",")}% lance`;
+  return `${String(pct).replace(".", ",")}%L`;
 }
 
 // Ordem de contemplação: o máximo de sorteios + a ordem do grupo, até POSICOES posições.
