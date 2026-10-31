@@ -4,17 +4,18 @@ import { AcessoRestrito } from "@/components/AcessoRestrito";
 import { createClient } from "@/lib/supabase/server";
 import { ehAdministrador } from "@/lib/usuario";
 import { pct } from "@/lib/formato";
+import { FAMILIAS } from "@/lib/grupos";
 import { excluirTipoParcela, incluirTipoParcela, salvarTipoParcela } from "./actions";
 
 export const metadata: Metadata = { title: "Tipos de Parcela · Dinastia" };
 
 const ERROS: Record<string, string> = {
   dados: "Dados inválidos. Código: até 20 letras/números (A-Z, 0-9, _ ou -). Descrição obrigatória. Percentual maior que 0 e até 100, ex.: 85,00.",
-  duplicado: "Já existe um tipo de parcela com esse código.",
+  duplicado: "Já existe um tipo de parcela com esse código nessa família.",
   emuso: "Esse tipo está em uso por versões de grupos e não pode ser excluído.",
 };
 
-const COLUNAS = "grid-cols-[8rem_1fr_6rem_5rem_auto]";
+const COLUNAS = "grid-cols-[7rem_7rem_1fr_6rem_4rem_auto]";
 
 export default function TiposParcelaPage({ searchParams }: PageProps<"/tipos-parcela">) {
   return (
@@ -37,18 +38,18 @@ async function Lista({ searchParams }: { searchParams: PageProps<"/tipos-parcela
   const sp = await searchParams;
   const supabase = await createClient();
   const [tipos, usos] = await Promise.all([
-    supabase.from("tipo_parcela").select("codigo, descricao, pct").order("pct", { ascending: false }),
-    supabase.from("grupo_assembleia_tipo_parcela").select("tipo_parcela").range(0, 99999),
+    supabase.from("tipo_parcela").select("familia, codigo, descricao, pct").order("familia").order("pct", { ascending: false }),
+    supabase.from("grupo_assembleia_tipo_parcela").select("familia, tipo_parcela").range(0, 99999),
   ]);
   if (tipos.error) throw tipos.error;
   if (usos.error) throw usos.error;
 
   const emUso = new Map<string, number>();
-  for (const u of usos.data ?? []) emUso.set(u.tipo_parcela, (emUso.get(u.tipo_parcela) ?? 0) + 1);
+  for (const u of usos.data ?? []) emUso.set(`${u.familia}|${u.tipo_parcela}`, (emUso.get(`${u.familia}|${u.tipo_parcela}`) ?? 0) + 1);
   const erro = typeof sp.erro === "string" ? (ERROS[sp.erro] ?? ERROS.dados) : null;
 
   return (
-    <div className="flex w-[46rem] max-w-full flex-col gap-4">
+    <div className="flex w-[52rem] max-w-full flex-col gap-4">
       {sp.salvo === "1" && (
         <p role="status" className="rounded-lg bg-ok-fundo px-3 py-2 text-sm font-semibold text-ok">
           Tipos de parcela salvos.
@@ -62,6 +63,7 @@ async function Lista({ searchParams }: { searchParams: PageProps<"/tipos-parcela
 
       <div className="rounded-2xl border border-borda bg-white p-5">
         <div className={`mb-2 grid ${COLUNAS} gap-3 text-[11px] font-semibold uppercase tracking-wide text-tinta`}>
+          <span>Família</span>
           <span>Código</span>
           <span>Descrição</span>
           <span>% da parcela</span>
@@ -70,11 +72,14 @@ async function Lista({ searchParams }: { searchParams: PageProps<"/tipos-parcela
         </div>
         <ul className="flex flex-col gap-2">
           {(tipos.data ?? []).map((t) => {
-            const n = emUso.get(t.codigo) ?? 0;
+            const n = emUso.get(`${t.familia}|${t.codigo}`) ?? 0;
+            const nomeFam = FAMILIAS.find((f) => f.slug === t.familia)?.nome ?? t.familia;
             return (
-              <li key={t.codigo} className="flex items-center gap-2">
+              <li key={`${t.familia}|${t.codigo}`} className="flex items-center gap-2">
                 <form action={salvarTipoParcela} className={`grid flex-1 ${COLUNAS} items-center gap-3`}>
                   <input type="hidden" name="codigo" value={t.codigo} />
+                  <input type="hidden" name="familia" value={t.familia} />
+                  <span className="text-xs text-tinta">{nomeFam}</span>
                   <span className="font-mono text-sm font-bold">{t.codigo}</span>
                   <input className="campo-sm" name="descricao" defaultValue={t.descricao} maxLength={80} required aria-label={`Descrição de ${t.codigo}`} />
                   <input className="campo-sm text-right" name="pct" inputMode="decimal" defaultValue={pct(t.pct)} required aria-label={`Percentual de ${t.codigo}`} />
@@ -87,6 +92,7 @@ async function Lista({ searchParams }: { searchParams: PageProps<"/tipos-parcela
                 </form>
                 <form action={excluirTipoParcela}>
                   <input type="hidden" name="codigo" value={t.codigo} />
+                  <input type="hidden" name="familia" value={t.familia} />
                   <button
                     type="submit"
                     disabled={n > 0}
@@ -103,6 +109,14 @@ async function Lista({ searchParams }: { searchParams: PageProps<"/tipos-parcela
       </div>
 
       <form action={incluirTipoParcela} className={`grid ${COLUNAS} items-end gap-3 rounded-2xl border border-borda bg-white p-5`}>
+        <label className="flex flex-col gap-1 text-[11px] font-semibold text-tinta">
+          Família
+          <select className="campo-sm" name="familia" required>
+            {FAMILIAS.map((f) => (
+              <option key={f.slug} value={f.slug}>{f.nome}</option>
+            ))}
+          </select>
+        </label>
         <label className="flex flex-col gap-1 text-[11px] font-semibold text-tinta">
           Código
           <input className="campo-sm font-mono uppercase" name="codigo" maxLength={20} required />

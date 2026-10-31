@@ -126,10 +126,12 @@ export async function restaurarBackup(supabase: SupabaseClient, b: Backup, email
   for (const [tabela, linhas, chave] of [
     ["parametros_gerais", d.parametros, "id"],
     ["indice_correcao", d.indices, "sigla"],
-    ["tipo_contemplacao", d.tiposContemplacao, "codigo"],
-    ["tipo_parcela", d.tiposParcela, "codigo"],
+    ["tipo_contemplacao", d.tiposContemplacao, "familia,codigo"],
+    ["tipo_parcela", d.tiposParcela, "familia,codigo"],
   ] as const) {
-    const lista = tabela === "tipo_contemplacao" ? (linhas ?? []).filter((l) => l.codigo !== "CAN") : linhas; // o Sorteio Cancelada não existe mais
+    const semCan = tabela === "tipo_contemplacao" ? (linhas ?? []).filter((l) => l.codigo !== "CAN") : linhas; // o Sorteio Cancelada não existe mais
+    // backups antigos não têm família: eram todos de imóveis
+    const lista = tabela === "tipo_contemplacao" || tabela === "tipo_parcela" ? semCan?.map((l) => ({ familia: "imoveis", ...l })) : semCan;
     if (!lista?.length) continue;
     const { error } = await supabase.from(tabela).upsert(lista, { onConflict: chave });
     if (error) r.erros.push(`${tabela}: ${error.message}`);

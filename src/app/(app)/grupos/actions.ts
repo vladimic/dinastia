@@ -95,18 +95,20 @@ export async function salvarSequencia(versaoId: number, entrada: Edicao): Promis
   };
 
   const supabase = await createClient();
-  const [atual, tipos] = await Promise.all([
+  const [atual] = await Promise.all([
     supabase
       .from("grupo_assembleia")
-      .select("id, grupo(prazo_grupo_meses)")
+      .select("id, grupo(prazo_grupo_meses, familia)")
       .eq("id", versaoId)
       .single(),
-    supabase.from("tipo_contemplacao").select("codigo"),
   ]);
-  if (atual.error || tipos.error) return FALHA;
+  if (atual.error) return FALHA;
 
-  const prazo = (atual.data.grupo as unknown as { prazo_grupo_meses: number } | null)?.prazo_grupo_meses;
-  if (!prazo) return FALHA;
+  const gr = atual.data.grupo as unknown as { prazo_grupo_meses: number; familia: string } | null;
+  const prazo = gr?.prazo_grupo_meses;
+  if (!prazo || !gr) return FALHA;
+  const tipos = await supabase.from("tipo_contemplacao").select("codigo").eq("familia", gr.familia);
+  if (tipos.error) return FALHA;
 
   const erro = validarEdicao(e, new Set((tipos.data ?? []).map((t) => t.codigo as string)));
   if (erro) return { ok: false, erro };
@@ -160,6 +162,8 @@ export type LinhaLote = {
   max: number | null;
   participantes: number | null;
   furo: boolean;
+  /** quantidade de parcelas reduzidas (fase 1) dos planos em duas fases */
+  fases: number[];
   /** códigos dos tipos de parcela oferecidos */
   tipos: string[];
 };
@@ -175,16 +179,16 @@ export async function carregarLote(familia: string): Promise<{ ok: true; dados: 
       .select("numero, prazo_grupo_meses, assembleia_numero, data_assembleia, creditos, grupo_assembleia_id, participantes")
       .eq("familia", familia)
       .order("numero"),
-    supabase.from("tipo_parcela").select("codigo, descricao, pct").is("rotulo", null).order("pct", { ascending: false }), // os planos em duas fases vêm só da importação
+    supabase.from("tipo_parcela").select("codigo, descricao, pct").eq("familia", familia).is("rotulo", null).order("pct", { ascending: false }), // os planos em duas fases vêm só da importação
   ]);
   if (atuais.error || tipos.error) return { ok: false, erro: "Não foi possível carregar os grupos." };
   const ids = (atuais.data ?? []).map((g) => g.grupo_assembleia_id as number);
   const versoes = ids.length
-    ? await supabase.from("grupo_assembleia").select("id, pagamento_com_furo, grupo_assembleia_tipo_parcela(tipo_parcela)").in("id", ids)
+    ? await supabase.from("grupo_assembleia").select("id, pagamento_com_furo, grupo_assembleia_tipo_parcela(tipo_parcela, fase1_parcelas)").in("id", ids)
     : { data: [], error: null };
   if (versoes.error) return { ok: false, erro: "Não foi possível carregar os grupos." };
   const porId = new Map(
-    ((versoes.data ?? []) as unknown as { id: number; pagamento_com_furo: boolean; grupo_assembleia_tipo_parcela: { tipo_parcela: string }[] }[]).map((v) => [v.id, v]),
+    ((versoes.data ?? []) as unknown as { id: number; pagamento_com_furo: boolean; grupo_assembleia_tipo_parcela: { tipo_parcela: string; fase1_parcelas: number | null }[] }[]).map((v) => [v.id, v]),
   );
   const linhas: LinhaLote[] = (atuais.data ?? []).map((g) => {
     const v = porId.get(g.grupo_assembleia_id as number);
@@ -200,6 +204,7 @@ export async function carregarLote(familia: string): Promise<{ ok: true; dados: 
       participantes: (g.participantes as number | null) ?? null,
       furo: v?.pagamento_com_furo === true,
       tipos: (v?.grupo_assembleia_tipo_parcela ?? []).map((t) => t.tipo_parcela),
+      fases: [...new Set((v?.grupo_assembleia_tipo_parcela ?? []).flatMap((t) => (t.fase1_parcelas ? [t.fase1_parcelas] : [])))],
     };
   });
   return { ok: true, dados: { tipos: (tipos.data ?? []).map((t) => ({ codigo: t.codigo as string, descricao: t.descricao as string, pct: Number(t.pct) })), linhas } };

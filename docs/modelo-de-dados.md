@@ -59,11 +59,13 @@ erDiagram
     string fonte
   }
   tipo_contemplacao {
+    string familia PK
     string codigo PK
     string nome
     string cor
   }
   tipo_parcela {
+    string familia PK
     string codigo PK
     string descricao
     decimal pct
@@ -108,6 +110,7 @@ erDiagram
   }
   grupo_assembleia_tipo_parcela {
     int grupo_assembleia_id PK
+    string familia FK
     string tipo_parcela PK
     decimal fase1_pct
     int fase1_parcelas
@@ -116,6 +119,7 @@ erDiagram
   grupo_modalidade {
     int id PK
     int grupo_assembleia_id FK
+    string familia FK
     string tipo FK
     int max_parcelas_lance
     int embutido_max_parcelas
@@ -131,6 +135,7 @@ erDiagram
     int grupo_assembleia_id FK
     int assembleia_de
     int assembleia_ate
+    string familia FK
     string demais_tipo FK
     string demais_tipo_2 FK
   }
@@ -138,6 +143,7 @@ erDiagram
     int id PK
     int faixa_id FK
     int ordem
+    string familia FK
     string tipo FK
     int quantidade
   }
@@ -264,6 +270,7 @@ Modalidades de contemplação: SOR (sorteio ativo), LIV (lance livre), LIM (limi
 
 | Campo | Tipo | Obrig. | Chave | Descrição |
 |---|---|---|---|---|
+| `familia` | texto | sim | PK | Família do produto (imoveis, veiculos, servicos, outros_bens). A mesma modalidade em duas famílias existe duas vezes, uma por família. |
 | `codigo` | texto | sim | PK | Código curto da modalidade (SOR, LIV, LIM, FIX, FID, F40, F25). |
 | `nome` | texto | sim |  | Nome exibido nas telas. |
 | `cor` | texto | sim |  | Cor da modalidade (#RRGGBB) usada nos quadros e na sequência. |
@@ -274,6 +281,7 @@ Tipos de parcela (forma de pagamento): normal e reduzidas. Tela: Cadastros › T
 
 | Campo | Tipo | Obrig. | Chave | Descrição |
 |---|---|---|---|---|
+| `familia` | texto | sim | PK | Família do produto (imoveis, veiculos, servicos, outros_bens). O mesmo tipo em duas famílias existe duas vezes, uma por família. |
 | `codigo` | texto | sim | PK | Código do tipo (NORMAL, RED_85, RED_70, RED_55, RED_50 e, em veículos, PLANO_40, PLANO_50, PLANO_75, CLEARANCE). |
 | `descricao` | texto | sim |  | Descrição exibida nas telas. |
 | `pct` | número decimal | sim |  | Percentual da parcela cheia que o tipo representa (100 = normal; 50 = reduzida a 50%). Nos planos de veículos em duas fases é só o número do nome (Plano 50 = 50; Clearance = 99). |
@@ -291,7 +299,7 @@ Dados estáveis de cada grupo de consórcio (uma linha por grupo). O que muda a 
 | `familia` | texto | sim |  | Família do bem: imoveis, veiculos, servicos ou outros_bens. |
 | `prazo_grupo_meses` | inteiro | sim |  | Prazo total do grupo, em meses. |
 | `participantes` | inteiro | não |  | Número de participantes (cotas) do grupo. |
-| `taxa_adm_total` | número decimal | não |  | Taxa de administração total, em % (ex.: 24,00). |
+| `taxa_adm_total` | número decimal | não |  | Taxa de administração, em % (ex.: 24,00). |
 | `fundo_reserva` | número decimal | não |  | Fundo de reserva, em %. Nos imóveis é 0, salvo se o PDF disser outro valor; vazio = não informado. |
 | `indice` | texto | não | FK→indice_correcao.sigla | Índice de correção do grupo. |
 | `mes_reajuste` | inteiro | não |  | Mês do reajuste anual (1 a 12). |
@@ -327,7 +335,8 @@ Quais tipos de parcela (formas de pagamento) cada versão do grupo oferece. Rela
 | Campo | Tipo | Obrig. | Chave | Descrição |
 |---|---|---|---|---|
 | `grupo_assembleia_id` | número | sim | PK · FK→grupo_assembleia.id | Versão do grupo. |
-| `tipo_parcela` | texto | sim | PK · FK→tipo_parcela.codigo | Tipo de parcela oferecido. |
+| `familia` | texto | sim | FK→tipo_parcela (familia, codigo) | Família do grupo, preenchida sozinha a partir do grupo (liga à família do cadastro). |
+| `tipo_parcela` | texto | sim | PK · FK→tipo_parcela (familia, codigo) | Tipo de parcela oferecido. |
 | `fase1_pct` | número decimal | não |  | Plano reduzido em duas fases (veículos): % do crédito pago por mês na fase 1, sem taxa e fundo (ex.: 0,60 no Plano 50). A fase 2 é o que falta para fechar 100%. |
 | `fase1_parcelas` | inteiro | não |  | Plano em duas fases: quantidade de parcelas da fase 1 (ex.: 24). |
 | `fase2_parcelas` | inteiro | não |  | Plano em duas fases: quantidade de parcelas da fase 2 (ex.: 66). Fase 1 + fase 2 = prazo do plano. |
@@ -340,7 +349,8 @@ Regras de cada modalidade de lance em cada versão do grupo. O % do lance em rel
 |---|---|---|---|---|
 | `id` | número | sim | PK | Identificador da regra. |
 | `grupo_assembleia_id` | número | sim | UK (com tipo) · FK→grupo_assembleia.id | Versão do grupo. |
-| `tipo` | texto | sim | FK→tipo_contemplacao.codigo | Modalidade. |
+| `familia` | texto | sim | FK→tipo_contemplacao (familia, codigo) | Família do grupo, preenchida sozinha a partir do grupo (liga à família do cadastro). |
+| `tipo` | texto | sim | FK→tipo_contemplacao (familia, codigo) | Modalidade. |
 | `max_parcelas_lance` | inteiro | não |  | Máximo de parcelas do lance. Vazio ou igual ao prazo do grupo = qualquer quantidade (aparece como *). |
 | `embutido_max_parcelas` | inteiro | não |  | Máximo de parcelas do lance que podem ser embutidas (pagas com a carta de crédito). Vazio = sem limite em parcelas. |
 | `embutido_pct` | número decimal | não |  | % que pode ser embutido, sobre a base de embutido_base. Vazio = sem limite em %. Os dois campos de embutido vazios = a modalidade não permite embutido (100% recurso próprio). |
@@ -360,8 +370,9 @@ Faixas de assembleias da sequência de contemplação (ex.: da 1ª à 36ª; da 3
 | `grupo_assembleia_id` | número | sim | UK (com assembleia_de) · FK→grupo_assembleia.id | Versão do grupo. |
 | `assembleia_de` | inteiro | sim |  | Primeira assembleia da cota da faixa. |
 | `assembleia_ate` | inteiro | sim |  | Última assembleia da cota da faixa. |
-| `demais_tipo` | texto | não | FK→tipo_contemplacao.codigo | Modalidade das demais contemplações depois da sequência. Vazio = repete a sequência (sem o sorteio). |
-| `demais_tipo_2` | texto | não | FK→tipo_contemplacao.codigo | Segunda modalidade das demais contemplações (“seguem com Livre e Fidelidade”). Preenchida, as demais alternam demais_tipo, demais_tipo_2, demais_tipo… Vazio = só demais_tipo. |
+| `familia` | texto | sim | FK→tipo_contemplacao (familia, codigo) | Família do grupo, preenchida sozinha a partir do grupo (liga à família do cadastro). |
+| `demais_tipo` | texto | não | FK→tipo_contemplacao (familia, codigo) | Modalidade das demais contemplações depois da sequência. Vazio = repete a sequência (sem o sorteio). |
+| `demais_tipo_2` | texto | não | FK→tipo_contemplacao (familia, codigo) | Segunda modalidade das demais contemplações (“seguem com Livre e Fidelidade”). Preenchida, as demais alternam demais_tipo, demais_tipo_2, demais_tipo… Vazio = só demais_tipo. |
 
 #### `grupo_sequencia`
 
@@ -372,7 +383,8 @@ Itens de cada faixa: a ordem em que as modalidades contemplam em cada assembleia
 | `id` | número | sim | PK | Identificador do item. |
 | `faixa_id` | número | sim | UK (com ordem) · FK→grupo_sequencia_faixa.id | Faixa a que o item pertence. |
 | `ordem` | inteiro | sim |  | Posição do item dentro da faixa. |
-| `tipo` | texto | sim | FK→tipo_contemplacao.codigo | Modalidade que contempla nesta posição. |
+| `familia` | texto | sim | FK→tipo_contemplacao (familia, codigo) | Família do grupo, preenchida sozinha a partir do grupo (liga à família do cadastro). |
+| `tipo` | texto | sim | FK→tipo_contemplacao (familia, codigo) | Modalidade que contempla nesta posição. |
 | `quantidade` | inteiro | sim |  | Quantas contemplações dessa modalidade (ex.: 2 sorteios). |
 
 #### `lista_grupos`

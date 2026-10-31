@@ -67,6 +67,7 @@ async function Conteudo({ searchParams }: { searchParams: PageProps<"/grupos">["
         participantes: g.participantes,
         furo: g.furo,
         reduzidas: g.reduzidas,
+        fases: g.fases ?? [],
         seq: g.seq,
       }))}
     />
