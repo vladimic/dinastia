@@ -59,6 +59,7 @@ erDiagram
     string codigo PK
     string descricao
     decimal pct
+    string rotulo
   }
   grupo {
     int numero PK
@@ -71,6 +72,7 @@ erDiagram
     int mes_reajuste
     datetime primeira_correcao
     int dia_vencimento
+    decimal parcela_minima_pct
     datetime criado_em
     datetime atualizado_em
   }
@@ -99,6 +101,9 @@ erDiagram
   grupo_assembleia_tipo_parcela {
     int grupo_assembleia_id PK
     string tipo_parcela PK
+    decimal fase1_pct
+    int fase1_parcelas
+    int fase2_parcelas
   }
   grupo_modalidade {
     int id PK
@@ -107,6 +112,9 @@ erDiagram
     int max_parcelas_lance
     int embutido_max_parcelas
     decimal embutido_pct
+    string embutido_base
+    decimal lance_pct
+    decimal max_lance_pct
     int a_partir_assembleia_cota
     string requisitos
   }
@@ -236,11 +244,11 @@ Parâmetros globais do sistema. Tem sempre uma única linha (id = 1). Tela: Cada
 
 #### `tipo_contemplacao`
 
-Modalidades de contemplação: SOR (sorteio ativo), LIV (lance livre), LIM (limitado), FIX (fixo) e FID (fidelidade). Tela: Cadastros › Modalidades de Contemplação.
+Modalidades de contemplação: SOR (sorteio ativo), LIV (lance livre), LIM (limitado), FIX (fixo) e FID (fidelidade); em veículos, também F40 (lance fixo de 40% da categoria) e F25 (lance fixo de 25%). Tela: Cadastros › Modalidades de Contemplação.
 
 | Campo | Tipo | Obrig. | Chave | Descrição |
 |---|---|---|---|---|
-| `codigo` | texto | sim | PK | Código curto da modalidade (SOR, LIV, LIM, FIX, FID). |
+| `codigo` | texto | sim | PK | Código curto da modalidade (SOR, LIV, LIM, FIX, FID, F40, F25). |
 | `nome` | texto | sim |  | Nome exibido nas telas. |
 | `cor` | texto | sim |  | Cor da modalidade (#RRGGBB) usada nos quadros e na sequência. |
 
@@ -250,9 +258,10 @@ Tipos de parcela (forma de pagamento): normal e reduzidas. Tela: Cadastros › T
 
 | Campo | Tipo | Obrig. | Chave | Descrição |
 |---|---|---|---|---|
-| `codigo` | texto | sim | PK | Código do tipo (NORMAL, RED_85, RED_70, RED_55, RED_50). |
+| `codigo` | texto | sim | PK | Código do tipo (NORMAL, RED_85, RED_70, RED_55, RED_50 e, em veículos, PLANO_40, PLANO_50, PLANO_75, CLEARANCE). |
 | `descricao` | texto | sim |  | Descrição exibida nas telas. |
-| `pct` | número decimal | sim |  | Percentual da parcela cheia que o tipo representa (100 = normal; 50 = reduzida a 50%). |
+| `pct` | número decimal | sim |  | Percentual da parcela cheia que o tipo representa (100 = normal; 50 = reduzida a 50%). Nos planos de veículos em duas fases é só o número do nome (Plano 50 = 50; Clearance = 99). |
+| `rotulo` | texto | não |  | Texto curto exibido no lugar de “N%” (ex.: Plano 50, Clearance). Vazio = mostra o percentual. |
 
 ### Grupos e assembleias
 
@@ -272,6 +281,7 @@ Dados estáveis de cada grupo de consórcio (uma linha por grupo). O que muda a 
 | `mes_reajuste` | inteiro | não |  | Mês do reajuste anual (1 a 12). |
 | `primeira_correcao` | data | não |  | Data da primeira correção, quando o PDF informa. |
 | `dia_vencimento` | inteiro | não |  | Dia do mês do vencimento das parcelas (1 a 31). |
+| `parcela_minima_pct` | número decimal | não |  | Veículos: parcela mínima mensal após a contemplação por lance, em % do crédito (ex.: 0,70). Vazio em imóveis, que não têm essa regra. |
 | `criado_em` | data e hora | sim |  | Quando a linha foi criada (automático). |
 | `atualizado_em` | data e hora | sim |  | Última alteração da linha (automático). |
 
@@ -302,6 +312,9 @@ Quais tipos de parcela (formas de pagamento) cada versão do grupo oferece. Rela
 |---|---|---|---|---|
 | `grupo_assembleia_id` | número | sim | PK · FK→grupo_assembleia.id | Versão do grupo. |
 | `tipo_parcela` | texto | sim | PK · FK→tipo_parcela.codigo | Tipo de parcela oferecido. |
+| `fase1_pct` | número decimal | não |  | Plano reduzido em duas fases (veículos): % do crédito pago por mês na fase 1, sem taxa e fundo (ex.: 0,60 no Plano 50). A fase 2 é o que falta para fechar 100%. |
+| `fase1_parcelas` | inteiro | não |  | Plano em duas fases: quantidade de parcelas da fase 1 (ex.: 24). |
+| `fase2_parcelas` | inteiro | não |  | Plano em duas fases: quantidade de parcelas da fase 2 (ex.: 66). Fase 1 + fase 2 = prazo do plano. |
 
 #### `grupo_modalidade`
 
@@ -314,7 +327,10 @@ Regras de cada modalidade de lance em cada versão do grupo. O % do lance em rel
 | `tipo` | texto | sim | FK→tipo_contemplacao.codigo | Modalidade. |
 | `max_parcelas_lance` | inteiro | não |  | Máximo de parcelas do lance. Vazio ou igual ao prazo do grupo = qualquer quantidade (aparece como *). |
 | `embutido_max_parcelas` | inteiro | não |  | Máximo de parcelas do lance que podem ser embutidas (pagas com a carta de crédito). Vazio = sem limite em parcelas. |
-| `embutido_pct` | número decimal | não |  | % do lance ofertado que pode ser embutido. Vazio = sem limite em %. Os dois campos de embutido vazios = a modalidade não permite embutido (100% recurso próprio). |
+| `embutido_pct` | número decimal | não |  | % que pode ser embutido, sobre a base de embutido_base. Vazio = sem limite em %. Os dois campos de embutido vazios = a modalidade não permite embutido (100% recurso próprio). |
+| `embutido_base` | texto | sim |  | Base do embutido_pct: lance (% do lance ofertado; padrão) ou categoria (% do crédito + taxas, em veículos). |
+| `lance_pct` | número decimal | não |  | Veículos: lance fixo, em % da categoria (F40 = 40; F25 = 25). Vazio nas demais modalidades. |
+| `max_lance_pct` | número decimal | não |  | Veículos: teto do lance livre e do fidelidade, em % da categoria (ex.: 55). Vazio = sem teto (até 100%). |
 | `a_partir_assembleia_cota` | inteiro | sim |  | A partir de qual assembleia da cota a modalidade vale (1 = desde o início; fidelidade costuma ser 37). |
 | `requisitos` | texto | não |  | Requisitos para usar a modalidade (ex.: 36 parcelas pagas e participação em 36 assembleias, na fidelidade). |
 
