@@ -26,19 +26,18 @@ function pctEmbutido(m: Modalidade, prazo: number): number {
   return Math.floor(Math.min(100, porPct, porParcelas));
 }
 
-// veículos: o lance fixo é 25% ou 40% da categoria; livre e fidelidade vão "até" o teto. O embutido pode ser % do lance ou % da categoria.
+// veículos: tudo em % da categoria. Lance = fixo (25/40) ou "até" o teto; embutido = % da categoria; próprio = lance − embutido.
 function celulaVeiculo(m: Modalidade, teto: number | null) {
   const lance = m.lance_pct !== null ? Number(m.lance_pct) : null;
+  const max = lance ?? teto;
   const qtd = lance !== null ? `${lance}%` : teto !== null ? `até ${teto}%` : "*";
-  if (m.embutido_pct === null) return { qtd, emb: "0%", proprio: lance !== null ? "100%" : "—" };
+  const fmt = (v: number) => `${String(Math.round(v * 100) / 100).replace(".", ",")}%`;
+  if (m.embutido_pct === null) return { qtd, emb: "0%", proprio: max !== null ? fmt(max) : "—" };
   const pct = Number(m.embutido_pct);
-  if (m.embutido_base === "lance") return { qtd, emb: `${pct}%`, proprio: `${100 - pct}%` };
-  // % da categoria: com o lance fixo dá para dizer quanto do lance é embutido; no livre depende do valor ofertado
-  if (lance !== null) {
-    const emb = Math.floor(Math.min(100, (pct / lance) * 100));
-    return { qtd, emb: `${emb}%`, proprio: `${100 - emb}%` };
-  }
-  return { qtd, emb: `${pct}% da cat.`, proprio: "—" };
+  // regra antiga em % do lance (só no livre/fidelidade): mostra como veio
+  if (m.embutido_base === "lance") return { qtd, emb: `${pct}% do lance`, proprio: "—" };
+  const emb = max !== null ? Math.min(pct, max) : pct;
+  return { qtd, emb: fmt(emb), proprio: max !== null ? fmt(max - emb) : "—" };
 }
 
 export function ModalidadesContemplacao({ modalidades, tipos, prazoGrupo, veiculo }: Props) {
@@ -87,7 +86,7 @@ export function ModalidadesContemplacao({ modalidades, tipos, prazoGrupo, veicul
         </thead>
         <tbody>
           <tr>
-            <td className="font-semibold text-tinta">{veiculo ? "Lance (% categ.)" : "Qtd Parcelas"}</td>
+            <td className="font-semibold text-tinta">{veiculo ? "Percentual Categoria" : "Qtd Parcelas"}</td>
             {celulas.map((c) => (
               <td key={c.codigo} className="!px-1 text-center tabular-nums" title={c.asterisco ? DICA_ASTERISCO : undefined}>
                 {c.qtd}

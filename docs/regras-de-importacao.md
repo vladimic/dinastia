@@ -14,3 +14,7 @@ Regras decididas com o negócio. Valem para qualquer família e prevalecem sobre
 - **Plano reduzido em duas fases:** fase 1 = X% do crédito por mês (sem taxas) por N1 parcelas; fase 2 fecha os 100%. Parcela = crédito × % × (1 + taxa + fundo). Se o plano dura mais que a cota, as parcelas a mais (furo) são diluídas na contemplação, no prazo que resta da cota. Veículos não trabalham com furo.
 - Lance Fixo 25% e Fixo 40% são modalidades próprias (F25 e F40), com as cores do Fixo e do Limitado.
 - Sequência: um lance de cada tipo por assembleia; Fidelidade a partir da 13ª, com o mesmo teto do Livre.
+
+## Embutido nos lances fixos (veículos)
+
+O embutido de Fixo 25% e Fixo 40% é guardado sempre em % da categoria (se o PDF diz "50% do valor ofertado", vira 50% × 25 = 12,5% da categoria). Na tela de modalidades: lance, embutido e próprio (= lance − embutido) são todos em % da categoria.
