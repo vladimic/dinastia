@@ -2,6 +2,14 @@
 // Regra: a cada mudança entregue, acrescentar uma entrada NO TOPO.
 export const VERSOES: { numero: string; data: string; itens: string[] }[] = [
   {
+    numero: "0122",
+    data: "31/10/2026",
+    itens: [
+      "Parâmetros globais reorganizados em blocos, sem misturar famílias. 1ª coluna (vale para todos): Seguro prestamista, Simulador (INCC projetado dos imóveis, novo INPC projetado dos veículos com 5%, contemplação em meses e os 7 prazos) e os textos sob o prazo restante. 2ª coluna: Imóveis (parcelas dos lances livre e fidelidade e a concorrência dos imóveis). 3ª coluna: Veículos (% do lance livre e fidelidade, parcela mínima padrão e a nova concorrência dos lances de veículos: Fixo 25%, Fixo 40%, Livre e Fidelidade).",
+      "Simulador de veículos: o campo de índice passa a ser o INPC (abre com o INPC projetado) e o cabeçalho de cada coluna mostra a concorrência de veículos.",
+    ],
+  },
+  {
     numero: "0121",
     data: "31/10/2026",
     itens: [

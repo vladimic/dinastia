@@ -234,6 +234,8 @@ export type Rodape = { titulo: string; texto: string };
 export type PadroesSimulador = {
   /** INCC projetado, % ao ano */
   incc: number;
+  /** INPC projetado, % ao ano (veículos) */
+  inpc: number;
   contemplacaoMeses: number;
   /** os 7 prazos (meses) que aparecem como atalhos em "Contemplação em" */
   contemplacaoPrazos: number[];
@@ -248,6 +250,8 @@ export type PadroesSimulador = {
   parcelaMinimaPadraoPct: number;
   /** concorrência de cada lance, % (só se altera em Parâmetros globais) */
   concorrencia: Record<"FIX" | "LIM" | "LIV" | "FID", number>;
+  /** concorrência dos lances de veículos, % */
+  concorrenciaVeic: Record<"F25" | "F40" | "LIV" | "FID", number>;
   /** textos do rodapé de cada coluna */
   rodape: Record<TipoColuna, Rodape>;
 };
@@ -274,6 +278,7 @@ export function padroesDeLinha(l: Record<string, unknown> | null | undefined): P
   const prazos = bruto.length === 7 && bruto.every((v) => Number.isInteger(v) && v >= 1 && v <= 999) ? bruto : PRAZOS_CONTEMPLACAO_PADRAO;
   return {
     incc: n(l?.incc_pct_ano, 6),
+    inpc: n(l?.inpc_pct_ano, 5),
     contemplacaoMeses: n(l?.contemplacao_meses, 1),
     contemplacaoPrazos: prazos,
     seguroPct: n(l?.seguro_padrao_pct, 0),
@@ -287,6 +292,12 @@ export function padroesDeLinha(l: Record<string, unknown> | null | undefined): P
       LIM: n(l?.concorrencia_limitado_pct, 10),
       LIV: n(l?.concorrencia_livre_pct, 3),
       FID: n(l?.concorrencia_fidelidade_pct, 2),
+    },
+    concorrenciaVeic: {
+      F25: n(l?.concorrencia_veic_fixo25_pct, 25),
+      F40: n(l?.concorrencia_veic_fixo40_pct, 10),
+      LIV: n(l?.concorrencia_veic_livre_pct, 3),
+      FID: n(l?.concorrencia_veic_fidelidade_pct, 2),
     },
     rodape,
   };

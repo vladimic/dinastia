@@ -18,6 +18,8 @@ export async function salvarParametros(formData: FormData) {
   if (seguro === null || seguro < 0 || seguro > 1) redirect("/parametros?erro=1");
   const incc = lerPct(formData.get("incc_pct_ano"));
   if (incc === null || incc < 0 || incc > 100) redirect("/parametros?erro=2");
+  const inpc = lerPct(formData.get("inpc_pct_ano"));
+  if (inpc === null || inpc < 0 || inpc > 100) redirect("/parametros?erro=2");
   const contemplacao = inteiro(formData.get("contemplacao_meses"));
   if (!(contemplacao >= 1 && contemplacao <= 999)) redirect("/parametros?erro=3");
   // 7 prazos de atalho de "Contemplação em": inteiros de 1 a 999, sem repetir; gravados em ordem crescente
@@ -41,6 +43,14 @@ export async function salvarParametros(formData: FormData) {
     conc[`concorrencia_${k}_pct`] = v;
   }
 
+  // concorrência dos lances de veículos
+  const concVeic: Record<string, number> = {};
+  for (const k of ["fixo25", "fixo40", "livre", "fidelidade"]) {
+    const v = lerPct(formData.get(`concorrencia_veic_${k}_pct`));
+    if (v === null || v < 0 || v > 100) redirect("/parametros?erro=5");
+    concVeic[`concorrencia_veic_${k}_pct`] = v;
+  }
+
   const rodape = {} as Record<TipoColuna, { titulo: string; texto: string }>;
   for (const k of Object.keys(RODAPE_PADRAO) as TipoColuna[]) {
     const titulo = String(formData.get(`rodape_${k}_titulo`) ?? "").trim();
@@ -62,6 +72,7 @@ export async function salvarParametros(formData: FormData) {
     .update({
       seguro_padrao_pct: seguro,
       incc_pct_ano: incc,
+      inpc_pct_ano: inpc,
       contemplacao_meses: contemplacao,
       contemplacao_prazos: prazos,
       lance_livre_parcelas: livre,
@@ -70,6 +81,7 @@ export async function salvarParametros(formData: FormData) {
       lance_livre_pct: livrePct,
       lance_fidelidade_pct: fidelidadePct,
       ...conc,
+      ...concVeic,
       rodape_textos: rodape,
       ...pastas,
     })

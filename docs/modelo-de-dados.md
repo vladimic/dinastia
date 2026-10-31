@@ -31,6 +31,7 @@ erDiagram
     decimal seguro_padrao_pct
     datetime atualizado_em
     decimal incc_pct_ano
+    decimal inpc_pct_ano
     int contemplacao_meses
     int lance_livre_parcelas
     int lance_fidelidade_parcelas
@@ -41,6 +42,10 @@ erDiagram
     decimal concorrencia_limitado_pct
     decimal concorrencia_livre_pct
     decimal concorrencia_fidelidade_pct
+    decimal concorrencia_veic_fixo25_pct
+    decimal concorrencia_veic_fixo40_pct
+    decimal concorrencia_veic_livre_pct
+    decimal concorrencia_veic_fidelidade_pct
     json rodape_textos
     array contemplacao_prazos
     string pasta_pdf_imoveis
@@ -220,17 +225,22 @@ Parâmetros globais do sistema. Tem sempre uma única linha (id = 1). Tela: Cada
 | `id` | inteiro | sim | PK | Sempre 1: a tabela guarda uma linha só. |
 | `seguro_padrao_pct` | número decimal | não |  | Seguro prestamista, em % do crédito ao mês, usado no cálculo de todos os grupos. |
 | `atualizado_em` | data e hora | sim |  | Última alteração da linha (automático). |
-| `incc_pct_ano` | número decimal | sim |  | INCC projetado, em % ao ano, com que o simulador abre (o simulador pode alterar na tela, sem mudar o parâmetro). |
-| `contemplacao_meses` | inteiro | sim |  | Mês de contemplação com que o simulador abre. |
-| `lance_livre_parcelas` | inteiro | sim |  | Parcelas do lance livre com que o simulador abre. |
-| `lance_fidelidade_parcelas` | inteiro | sim |  | Parcelas do lance fidelidade com que o simulador abre. |
+| `incc_pct_ano` | número decimal | sim |  | INCC projetado (imóveis), em % ao ano, com que o simulador abre (o simulador pode alterar na tela, sem mudar o parâmetro). |
+| `inpc_pct_ano` | número decimal | sim |  | INPC projetado (veículos), em % ao ano, com que o simulador abre (padrão 5). |
+| `contemplacao_meses` | inteiro | sim |  | Mês de contemplação com que o simulador abre (imóveis e veículos). |
+| `lance_livre_parcelas` | inteiro | sim |  | Imóveis: parcelas do lance livre com que o simulador abre. |
+| `lance_fidelidade_parcelas` | inteiro | sim |  | Imóveis: parcelas do lance fidelidade com que o simulador abre. |
 | `parcela_minima_padrao_pct` | número decimal | sim |  | Veículos: parcela mínima após a contemplação por lance (% da categoria: crédito + taxas) usada nos grupos cujo PDF não informa a sua (padrão 0,7). |
 | `lance_livre_pct` | número decimal | sim |  | Veículos: % da categoria do lance livre com que o simulador abre (padrão 55). |
 | `lance_fidelidade_pct` | número decimal | sim |  | Veículos: % da categoria do lance fidelidade com que o simulador abre (padrão 45). |
-| `concorrencia_fixo_pct` | número decimal | sim |  | % de concorrência do lance fixo, mostrado no cabeçalho da coluna do simulador. |
-| `concorrencia_limitado_pct` | número decimal | sim |  | % de concorrência do lance limitado. |
-| `concorrencia_livre_pct` | número decimal | sim |  | % de concorrência do lance livre. |
-| `concorrencia_fidelidade_pct` | número decimal | sim |  | % de concorrência do lance fidelidade. |
+| `concorrencia_fixo_pct` | número decimal | sim |  | Imóveis: % de concorrência do lance fixo, mostrado no cabeçalho da coluna do simulador. |
+| `concorrencia_limitado_pct` | número decimal | sim |  | Imóveis: % de concorrência do lance limitado. |
+| `concorrencia_livre_pct` | número decimal | sim |  | Imóveis: % de concorrência do lance livre. |
+| `concorrencia_fidelidade_pct` | número decimal | sim |  | Imóveis: % de concorrência do lance fidelidade. |
+| `concorrencia_veic_fixo25_pct` | número decimal | sim |  | Veículos: % de concorrência do Lance Fixo 25%. |
+| `concorrencia_veic_fixo40_pct` | número decimal | sim |  | Veículos: % de concorrência do Lance Fixo 40%. |
+| `concorrencia_veic_livre_pct` | número decimal | sim |  | Veículos: % de concorrência do Lance Livre. |
+| `concorrencia_veic_fidelidade_pct` | número decimal | sim |  | Veículos: % de concorrência do Lance Fidelidade. |
 | `rodape_textos` | JSON | sim |  | Título e texto sob o prazo restante de cada coluna do simulador, por tipo (SOR, FIX, LIM, LIV, FID). |
 | `contemplacao_prazos` | lista de números | sim |  | Os 7 prazos (em meses) que aparecem como atalhos no campo “Contemplação em” do simulador. |
 | `pasta_pdf_imoveis` | texto | não |  | Pasta padrão dos PDFs das tabelas de Imóveis (referência para a importação). |
