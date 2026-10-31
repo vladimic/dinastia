@@ -49,10 +49,14 @@ const assinatura = (l: Leitura) =>
   });
 
 /** Guarda as leituras (já feitas no navegador), compara cada uma com a base e registra as diferenças a decidir. */
-export async function registrarLeituras(leituras: Leitura[], falhas: { arquivo: string; hash: string; motivo: string }[]): Promise<{ ok: true; resumo: ResumoLote } | Falha> {
+export async function registrarLeituras(leiturasLidas: Leitura[], falhas: { arquivo: string; hash: string; motivo: string }[]): Promise<{ ok: true; resumo: ResumoLote } | Falha> {
   const email = await quem();
   if (!email) return NEGADO;
   const supabase = await createClient();
+  // Veículos já são lidos, mas a importação deles ainda não grava os campos novos (etapa 4): por ora ficam como erro, sem tocar na base
+  const leituras = (Array.isArray(leiturasLidas) ? leiturasLidas : []).map((l) =>
+    l.familia === "veiculos" ? { ...l, erros: [...l.erros, "importação de Veículos ainda não liberada"] } : l,
+  );
   const resumo: ResumoLote = { lidos: leituras.length + falhas.length, novos: 0, novasAssembleias: 0, semMudanca: 0, comDiferencas: 0, ignorados: 0, erros: 0 };
 
   if (!Array.isArray(leituras) || !Array.isArray(falhas) || leituras.length + falhas.length > 100) return { ok: false, erro: "Lote de leituras inválido." };

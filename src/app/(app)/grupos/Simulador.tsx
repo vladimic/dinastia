@@ -420,7 +420,7 @@ export function Simulador({ hoje, padroes }: { hoje: string; padroes: PadroesSim
   // veículos não têm furo: o linear usa o prazo da cota e o plano reduzido, as duas fases
   const mesesContemplacao = Number(meses) || 0;
   const creditoContratado = creditoSel === null ? null : creditoSel * cotas;
-  const prazoTotal = plano ? plano.fase1Parcelas + plano.fase2Parcelas : faltam;
+  const prazoTotal = plano ? Math.min(plano.fase1Parcelas + plano.fase2Parcelas, faltam) : faltam;
   const maxMeses = Math.max(1, prazoTotal);
 
   const base =

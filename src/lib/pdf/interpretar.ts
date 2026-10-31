@@ -4,7 +4,10 @@ import { LEITOR, type Faixa, type Leitura, type Linha, type LinhaCredito, type M
 // Porta do antigo scripts/importar_tabelas.py; o que muda é o texto de entrada (pdf.js em vez de pdftotext)
 // e a leitura do cabeçalho do plano antecipado ("1% ANTECIPADO", "2% ANTECIPADO EM 4 PARCELAS").
 
-export class ErroLeitura extends Error {}
+import { ErroLeitura } from "./erro";
+import { interpretarVeiculo } from "./interpretarVeiculo";
+
+export { ErroLeitura };
 
 const MESES: Record<string, number> = Object.fromEntries(
   ["janeiro", "fevereiro", "março", "abril", "maio", "junho", "julho", "agosto", "setembro", "outubro", "novembro", "dezembro"].map((m, i) => [m, i + 1]),
@@ -40,6 +43,9 @@ export function interpretar(linhas: Linha[], arquivo: string, hash: string): Lei
   const erros: string[] = [];
   const avisos: string[] = [];
   const plano = linhas.map((l) => l.texto).join(" ").replace(/\s+/g, " ");
+
+  // veículos e motos têm outro layout de tabela: leitor próprio
+  if (/Cons[óo]rcio de (?:Ve[íi]culos|Motos)/i.test(plano)) return interpretarVeiculo(linhas, arquivo, hash);
 
   const mc = plano.match(new RegExp(`Grupo (\\d+) - Consórcio de ((?:${L}| )+?)(?= \\d+ª Assembleia| Cod\\.| Grupo |$)`, "u"));
   if (!mc) throw new ErroLeitura("cabeçalho 'Grupo N - Consórcio de ...' não encontrado");
