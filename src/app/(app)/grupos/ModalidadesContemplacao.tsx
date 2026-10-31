@@ -26,7 +26,7 @@ function pctEmbutido(m: Modalidade, prazo: number): number {
   return Math.floor(Math.min(100, porPct, porParcelas));
 }
 
-// veículos: tudo em % da categoria. Lance = fixo (25/40) ou "até" o teto; embutido = % da categoria; próprio = lance − embutido.
+// veículos: lance em % da categoria. Lance = fixo (25/40) ou "até" o teto; embutido = % da categoria; próprio = lance − embutido.
 function celulaVeiculo(m: Modalidade, teto: number | null) {
   const lance = m.lance_pct !== null ? Number(m.lance_pct) : null;
   const max = lance ?? teto;
@@ -34,8 +34,8 @@ function celulaVeiculo(m: Modalidade, teto: number | null) {
   const fmt = (v: number) => `${String(Math.round(v * 100) / 100).replace(".", ",")}%`;
   if (m.embutido_pct === null) return { qtd, emb: "0%", proprio: max !== null ? fmt(max) : "—" };
   const pct = Number(m.embutido_pct);
-  // regra antiga em % do lance (só no livre/fidelidade): mostra como veio
-  if (m.embutido_base === "lance") return { qtd, emb: `${pct}% do lance`, proprio: "—" };
+  // regra em % do lance (PDF: "50% do valor ofertado"): embutido e próprio são partes do lance, sem conta
+  if (m.embutido_base === "lance") return { qtd, emb: `${pct}% do lance`, proprio: `${Math.round((100 - pct) * 100) / 100}% do lance` };
   const emb = max !== null ? Math.min(pct, max) : pct;
   return { qtd, emb: fmt(emb), proprio: max !== null ? fmt(max - emb) : "—" };
 }

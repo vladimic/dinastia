@@ -269,14 +269,6 @@ export function interpretarVeiculo(linhas: Linha[], arquivo: string, hash: strin
     }
   }
   for (const t of lances) if (!lido.has(t)) erros.push(`regra de embutido de ${t} não encontrada`);
-  // nos lances fixos o embutido é sempre guardado em % da categoria (50% de um lance de 25% = 12,5% da categoria)
-  for (const t of ["F40", "F25"]) {
-    const d = modal[t];
-    if (d && d.emb_pct !== null && d.emb_base === "lance" && d.lance_pct) {
-      d.emb_pct = Math.round(((d.emb_pct * d.lance_pct) / 100) * 10000) / 10000;
-      d.emb_base = "categoria";
-    }
-  }
 
   // ---------------- validações ----------------
   if (prazoCota !== prazoGrupo - (assembleia - 1)) erros.push(`prazo da cota ${prazoCota} ≠ ${prazoGrupo} - (${assembleia} - 1)`);

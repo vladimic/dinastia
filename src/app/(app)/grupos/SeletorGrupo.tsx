@@ -358,7 +358,12 @@ function Lista({
                     <span className="text-[14px] leading-tight font-extrabold tabular-nums">{g.numero}</span>
                     <span aria-hidden="true" className="flex shrink-0 gap-[2px]">
                       {veic ? (
-                        g.reduzidas.length > 0 && <i className="h-[7px] w-[7px] rounded-full bg-reduzida" />
+                        g.reduzidas.length > 0 && (
+                          <span className="flex items-center gap-[3px]">
+                            <i className="h-[7px] w-[7px] rounded-full bg-reduzida" />
+                            {(g.fases ?? []).length > 0 && <span className="text-[10px] leading-none font-bold text-tinta tabular-nums">{(g.fases ?? []).join("/")}</span>}
+                          </span>
+                        )
                       ) : (
                         <>
                           {g.furo && <i className="h-[7px] w-[7px] rounded-full bg-furo" />}
