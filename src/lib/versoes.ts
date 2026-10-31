@@ -2,6 +2,13 @@
 // Regra: a cada mudança entregue, acrescentar uma entrada NO TOPO.
 export const VERSOES: { numero: string; data: string; itens: string[] }[] = [
   {
+    numero: "0129",
+    data: "31/10/2026",
+    itens: [
+      "Tabela Resumo de veículos: o embutido em % do valor ofertado passou de \"50% lance\" para \"50%L\" (L colado ao %), para caber na coluna.",
+    ],
+  },
+  {
     numero: "0128",
     data: "31/10/2026",
     itens: [
