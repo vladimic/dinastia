@@ -2,7 +2,7 @@ import { EdicaoLote } from "./EdicaoLote";
 import { ExportarResumo } from "./ExportarResumo";
 
 // Cabeçalho principal de Grupos e Tabelas: título, o seletor de grupo (quando há um grupo aberto) e as ações.
-export function Cabecalho({ seletor, lote }: { seletor?: React.ReactNode; lote?: { familia: string; nomeFamilia: string } }) {
+export function Cabecalho({ seletor, lote }: { seletor?: React.ReactNode; lote?: { familia: string; familias: { slug: string; nome: string }[] } }) {
   return (
     <header className="flex flex-wrap items-center justify-between gap-x-4 gap-y-3 border-b border-borda bg-white px-8 py-3">
       <div className="flex flex-wrap items-center gap-x-5 gap-y-2">
@@ -13,7 +13,7 @@ export function Cabecalho({ seletor, lote }: { seletor?: React.ReactNode; lote?:
         {seletor}
       </div>
       <div className="flex flex-wrap items-center gap-2">
-        {lote && <EdicaoLote familia={lote.familia} nomeFamilia={lote.nomeFamilia} />}
+        {lote && <EdicaoLote familia={lote.familia} familias={lote.familias} />}
         <ExportarResumo />
         <button
           type="button"
