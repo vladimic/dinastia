@@ -2,6 +2,13 @@
 // Regra: a cada mudança entregue, acrescentar uma entrada NO TOPO.
 export const VERSOES: { numero: string; data: string; itens: string[] }[] = [
   {
+    numero: "0110",
+    data: "31/10/2026",
+    itens: [
+      "Next.js atualizado da 16.4.0 para a 16.4.3, que corrige falhas de segurança (execução remota de código em otimização de imagem e em funções com cache, e negação de serviço em ações de servidor). Nenhuma mudança na tela.",
+    ],
+  },
+  {
     numero: "0109",
     data: "31/10/2026",
     itens: [
