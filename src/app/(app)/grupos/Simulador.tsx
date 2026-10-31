@@ -375,7 +375,10 @@ export function Simulador({ hoje, padroes }: { hoje: string; padroes: PadroesSim
   const [inccLigado, setInccLigado] = useState(false); // padrão: desligado
   const [seguroLigado, setSeguroLigado] = useState(false); // padrão: desligado
   const [seguro, setSeguro] = useState(() => nf4.format(padroes.seguroPct)); // % do crédito ao mês, do parâmetro global
-  const [incc, setIncc] = useState(() => nf2.format(padroes.incc));
+  // índice projetado: INCC nos imóveis, INPC nos veículos (o texto só fica guardado depois que a pessoa edita)
+  const indice = g.familia === "veiculos" ? { nome: "INPC", base: padroes.inpc } : { nome: "INCC", base: padroes.incc };
+  const [inccEditado, setIncc] = useState<string | null>(null);
+  const incc = inccEditado ?? nf2.format(indice.base);
 
   const veiculo = g.familia === "veiculos";
   // parcela em que a fidelidade libera (36), e não o mês em que entra na sequência (37)
@@ -468,7 +471,7 @@ export function Simulador({ hoje, padroes }: { hoje: string; padroes: PadroesSim
       unidade: veiculo ? ("%" as const) : ("parcelas" as const),
       calc,
       prazoRestante: base?.prazoRestante ?? 0,
-      concorrencia: c.tipo === "SOR" ? null : padroes.concorrencia[CHAVE_VISUAL[c.tipo] as "FIX" | "LIM" | "LIV" | "FID"],
+      concorrencia: c.tipo === "SOR" ? null : veiculo ? padroes.concorrenciaVeic[c.tipo as "F25" | "F40" | "LIV" | "FID"] : padroes.concorrencia[CHAVE_VISUAL[c.tipo] as "FIX" | "LIM" | "LIV" | "FID"],
       rodape: padroes.rodape[CHAVE_VISUAL[c.tipo]],
     };
   });
@@ -663,13 +666,13 @@ export function Simulador({ hoje, padroes }: { hoje: string; padroes: PadroesSim
             ) : null}
           </div>
           <Linha
-            r="INCC"
-            interruptor={<Interruptor ligado={inccLigado} rotulo="Considerar o INCC (desligado = 0%)" aoAlternar={() => setInccLigado((v) => !v)} />}
+            r={indice.nome}
+            interruptor={<Interruptor ligado={inccLigado} rotulo={`Considerar o ${indice.nome} (desligado = 0%)`} aoAlternar={() => setInccLigado((v) => !v)} />}
           >
             <span className="flex items-baseline gap-1">
               <input
                 id="incc-grupo"
-                aria-label="INCC (% ao ano)"
+                aria-label={`${indice.nome} (% ao ano)`}
                 className={RISCO + " w-16" + (inccLigado ? "" : " text-tinta/60")}
                 inputMode="decimal"
                 readOnly={!inccLigado}
@@ -678,7 +681,7 @@ export function Simulador({ hoje, padroes }: { hoje: string; padroes: PadroesSim
                 onChange={(e) => setIncc(e.target.value.replace(/[^\d,]/g, "").slice(0, 6))}
                 onBlur={() => {
                   const n = Number(incc.replace(",", "."));
-                  setIncc(nf2.format(Number.isFinite(n) && incc !== "" ? n : padroes.incc));
+                  setIncc(nf2.format(Number.isFinite(n) && incc !== "" ? n : indice.base));
                 }}
               />
               <span className="font-bold">%</span>
