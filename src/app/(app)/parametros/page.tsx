@@ -85,6 +85,7 @@ async function Formulario({ searchParams }: { searchParams: PageProps<"/parametr
       <Campo rotulo="Parcelas do lance fidelidade" nome="lance_fidelidade_parcelas" valor={String(pad.lanceFidelidadeParcelas)} />
       <Campo rotulo="Veículos: % do lance livre" nome="lance_livre_pct" valor={pct(pad.lanceLivrePct)} />
       <Campo rotulo="Veículos: % do lance fidelidade" nome="lance_fidelidade_pct" valor={pct(pad.lanceFidelidadePct)} />
+      <Campo rotulo="Veículos: parcela mínima padrão (%)" nome="parcela_minima_padrao_pct" valor={pct(pad.parcelaMinimaPadraoPct)} />
       <p className="text-[11px] leading-snug text-tinta">
         Valores com que o simulador de cada grupo abre. Na tela do simulador, INCC, seguro, contemplação e parcelas dos lances livre e fidelidade podem ser alterados para aquela simulação, sem mudar estes parâmetros. O percentual do seguro é o da seção Seguro prestamista, acima.
       </p>

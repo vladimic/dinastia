@@ -244,6 +244,8 @@ export type PadroesSimulador = {
   /** veículos: % da categoria com que o simulador abre os lances livre e fidelidade */
   lanceLivrePct: number;
   lanceFidelidadePct: number;
+  /** veículos: parcela mínima (% do crédito) para os grupos cujo PDF não a informa */
+  parcelaMinimaPadraoPct: number;
   /** concorrência de cada lance, % (só se altera em Parâmetros globais) */
   concorrencia: Record<"FIX" | "LIM" | "LIV" | "FID", number>;
   /** textos do rodapé de cada coluna */
@@ -279,6 +281,7 @@ export function padroesDeLinha(l: Record<string, unknown> | null | undefined): P
     lanceFidelidadeParcelas: n(l?.lance_fidelidade_parcelas, 130),
     lanceLivrePct: n(l?.lance_livre_pct, 55),
     lanceFidelidadePct: n(l?.lance_fidelidade_pct, 45),
+    parcelaMinimaPadraoPct: n(l?.parcela_minima_padrao_pct, 0.7),
     concorrencia: {
       FIX: n(l?.concorrencia_fixo_pct, 25),
       LIM: n(l?.concorrencia_limitado_pct, 10),

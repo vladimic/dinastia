@@ -37,6 +37,7 @@ export const DICIONARIO: TabelaDic[] = [
       t("contemplacao_meses", "inteiro", true, "Mês de contemplação com que o simulador abre."),
       t("lance_livre_parcelas", "inteiro", true, "Parcelas do lance livre com que o simulador abre."),
       t("lance_fidelidade_parcelas", "inteiro", true, "Parcelas do lance fidelidade com que o simulador abre."),
+      t("parcela_minima_padrao_pct", "número decimal", true, "Veículos: parcela mínima após a contemplação por lance (% do crédito) usada nos grupos cujo PDF não informa a sua (padrão 0,7)."),
       t("lance_livre_pct", "número decimal", true, "Veículos: % da categoria do lance livre com que o simulador abre (padrão 55)."),
       t("lance_fidelidade_pct", "número decimal", true, "Veículos: % da categoria do lance fidelidade com que o simulador abre (padrão 45)."),
       t("concorrencia_fixo_pct", "número decimal", true, "% de concorrência do lance fixo, mostrado no cabeçalho da coluna do simulador."),

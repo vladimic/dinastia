@@ -113,15 +113,12 @@ export function interpretarVeiculo(linhas: Linha[], arquivo: string, hash: strin
       else {
         const [a, n1, b, n2] = [num(frase[1]), Number(frase[2]), num(frase[3]), Number(frase[4])];
         const f1 = arred(a / fator, 4);
-        // o nome do plano vem da % da fase 1 (Plano 40 = 0,5%, Plano 50 = 0,6%, Plano 75 = 0,85%): se o título do PDF discordar, valem os números
+        // REGRA: o tipo do plano é o do título do PDF. Se os números parecem de outro plano, só avisa.
         const pelaPct: Record<string, string> = { "0.5": "PLANO_40", "0.6": "PLANO_50", "0.85": "PLANO_75" };
-        const esperado = pelaPct[String(f1)];
-        let tipo = tipoPlano;
-        if (esperado && tipoPlano.startsWith("PLANO_") && esperado !== tipoPlano) {
-          avisos.push(`o título do PDF diz “Plano ${tipoPlano.slice(6)}”, mas a fase 1 (${f1}%) é a do Plano ${esperado.slice(6)}: gravado Plano ${esperado.slice(6)}`);
-          tipo = esperado;
-        }
-        reduzido = { tipo, fase1_pct: f1, fase1_parcelas: n1, fase2_parcelas: n2 };
+        const parecido = pelaPct[String(f1)];
+        if (parecido && tipoPlano.startsWith("PLANO_") && parecido !== tipoPlano)
+          avisos.push(`o título do PDF diz “Plano ${tipoPlano.slice(6)}” (valendo o título), mas a fase 1 (${f1}%) é a do Plano ${parecido.slice(6)}`);
+        reduzido = { tipo: tipoPlano, fase1_pct: f1, fase1_parcelas: n1, fase2_parcelas: n2 };
         // a fase 2 fecha os 100%: (100 − f1×N1) ÷ N2, vezes (1 + taxa + fundo)
         const f2 = ((100 - f1 * n1) / n2) * fator;
         if (Math.abs(f2 - b) > 0.0006) erros.push(`plano reduzido: fase 2 ${b}% ≠ ${arred(f2, 4)}% esperado`);
@@ -243,10 +240,10 @@ export function interpretarVeiculo(linhas: Linha[], arquivo: string, hash: strin
     lances.forEach((t) => lido.add(t));
   } else if (/Para o Lance Livre permitido at[ée] \*?(\d+)%\*?.*?integral/.test(textoEmb)) {
     const m = textoEmb.match(/Para o Lance Livre permitido at[ée] \*?(\d+)%\*?/)!;
-    aplica(["LIV", "FID"], Number(m[1]), "lance"); // o fidelidade segue o livre
+    // "Livre permitido até 60%": embute o lance inteiro até 60% da categoria; o que passar disso é recurso próprio (lance de 70% = 60% embutido + 10% próprio)
+    aplica(["LIV", "FID"], Number(m[1]), "categoria"); // o fidelidade segue o livre
     aplica(["F40", "F25"], 100, "lance"); // "permitido embutir o lance integral"
     lances.forEach((t) => lido.add(t));
-    avisos.push(`embutido do livre: ${m[1]}% do lance (leitura do texto “Livre permitido até ${m[1]}%”)`);
   } else if (/(\d+)% do valor ofertado fixos, (\d+)% limite m[áa]ximo embutido no livre/.test(textoEmb)) {
     const m = textoEmb.match(/(\d+)% do valor ofertado fixos, (\d+)% limite m[áa]ximo embutido no livre/)!;
     aplica(["F40", "F25"], Number(m[1]), "lance");
