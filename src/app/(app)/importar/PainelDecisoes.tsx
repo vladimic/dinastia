@@ -6,7 +6,7 @@ import { useCallback, useEffect, useRef, useState, useTransition } from "react";
 import { FILTROS, NOME_FILTRO, type Filtro } from "@/lib/pdf/filtros";
 import { paraEdicao, tipoDoCampo } from "@/lib/pdf/edicao";
 import { textoDoValor } from "@/lib/pdf/mostrar";
-import { aplicarItens, decidirLote, decidirPorCampo, descartarItem, editarDiferenca, reativarItem } from "./actions";
+import { aplicarItens, decidirLote, decidirPorCampo, descartarItem, editarDiferenca, reativarItem, removerErros } from "./actions";
 
 export type Contagens = { pendentes: number; prontos: number; aplicados: number; sem_mudanca: number; erros: number; ignorados: number; diferencasPendentes: number };
 export type Agregado = { escopo: string; campo: string; total: number };
@@ -225,6 +225,19 @@ export function PainelDecisoes({
             </Link>
           );
         })}
+        {filtro === "erros" && contagens.erros > 0 && (
+          <button
+            type="button"
+            disabled={ocupado}
+            title="Tira todos da lista; a leitura da pasta não os lê mais"
+            onClick={() => {
+              if (window.confirm(`Remover os ${contagens.erros} PDFs com erro de leitura? Eles saem da lista e não são lidos de novo.`)) rodar(() => removerErros(), "PDFs com erro removidos da lista.");
+            }}
+            className={BTN + " ml-auto min-h-9 border border-borda-campo px-4 text-sm text-tinta hover:bg-linha"}
+          >
+            Remover todos os erros
+          </button>
+        )}
         {prontos.size > 0 && (
           <button type="button" disabled={ocupado} onClick={aplicarTodosProntos} className={BTN + " ml-auto min-h-9 bg-laranja px-4 text-sm text-navy hover:brightness-95"}>
             {ocupado ? "Aplicando…" : `Aplicar os ${prontos.size} prontos na base`}
@@ -276,6 +289,17 @@ function Item({ item, ocupado, rodar, ctx }: { item: ItemTela; ocupado: boolean;
           {editavel && (
             <button type="button" disabled={ocupado} className={BTN + " border border-borda-campo text-tinta hover:bg-linha"} onClick={() => rodar(() => descartarItem(item.id), "PDF descartado.")}>
               Descartar PDF
+            </button>
+          )}
+          {item.situacao === "erro" && (
+            <button
+              type="button"
+              disabled={ocupado}
+              title="Tira da lista; este PDF não é lido de novo"
+              className={BTN + " border border-borda-campo text-tinta hover:bg-linha"}
+              onClick={() => rodar(() => removerErros([item.id]), "PDF removido da lista.")}
+            >
+              Remover
             </button>
           )}
           {["rejeitado", "ignorado", "erro"].includes(item.situacao) && (

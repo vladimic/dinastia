@@ -2,6 +2,13 @@
 // Regra: a cada mudança entregue, acrescentar uma entrada NO TOPO.
 export const VERSOES: { numero: string; data: string; itens: string[] }[] = [
   {
+    numero: "0121",
+    data: "31/10/2026",
+    itens: [
+      "Importar tabelas, Com erro de leitura: cada PDF ganhou o botão Remover (tira da lista e o PDF não é lido de novo) e a lista ganhou Remover todos os erros. O Ler de novo continua: ele tira da lista e o PDF é lido na próxima leitura da pasta.",
+    ],
+  },
+  {
     numero: "0120",
     data: "31/10/2026",
     itens: [
