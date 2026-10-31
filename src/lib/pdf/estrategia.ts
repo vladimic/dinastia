@@ -1,7 +1,8 @@
 import type { Leitura, Linha } from "./tipos";
 
 // "Estratégia Comercial" de Veículos: um PDF só, com uma linha por grupo (créditos, taxa, prazos e o plano reduzido do mês).
-// Não é fonte de dados: o PDF individual de cada grupo manda. Serve para conferir a leitura (conferirComEstrategia).
+// REGRA: a Estratégia NÃO é parâmetro de valores (créditos, taxa, prazos, plano): vale só o PDF individual de cada grupo, inclusive para o
+// tipo de plano. Da Estratégia usa-se apenas a quantidade de parcelas reduzidas (parcelasReduzidasDa), e só se o PDF individual não a trouxer.
 
 export type EstrategiaGrupo = {
   numero: string;
@@ -56,27 +57,17 @@ export function lerEstrategia(linhas: Linha[]): EstrategiaGrupo[] {
   return out;
 }
 
-const nomeDoTipo = (tipo: string) => (tipo === "CLEARANCE" ? "CLEARANCE" : tipo.startsWith("PLANO_") ? `PLANO ${tipo.slice(6)}` : `PLANO REDUZIDO ${tipo.slice(4)}%`);
+/** Parcelas reduzidas (fase 1) e demais (fase 2) do grupo na Estratégia; nulo = grupo sem plano reduzido por fases. */
+export function parcelasReduzidasDa(e: EstrategiaGrupo | undefined): { fase1: number; fase2: number } | null {
+  return e && e.reduzidas !== null && e.demais !== null ? { fase1: e.reduzidas, fase2: e.demais } : null;
+}
 
-/** Diferenças entre o PDF individual e a linha do grupo na Estratégia (avisos: o PDF individual vale). */
-export function conferirComEstrategia(l: Leitura, e: EstrategiaGrupo): string[] {
-  const av: string[] = [];
-  const cr = l.creditos.map((c) => c.credito);
-  const min = Math.min(...cr);
-  const max = Math.max(...cr);
-  if (Math.abs(min - e.creditoMin) > 0.01 || Math.abs(max - e.creditoMax) > 0.01)
-    av.push(`Estratégia: créditos ${e.creditoMin.toLocaleString("pt-BR")} a ${e.creditoMax.toLocaleString("pt-BR")}, PDF ${min.toLocaleString("pt-BR")} a ${max.toLocaleString("pt-BR")}`);
-  if (Math.abs(l.taxa_adm - e.taxa) > 0.001) av.push(`Estratégia: taxa ${e.taxa}%, PDF ${l.taxa_adm}%`);
-  if (l.fundo_reserva !== null && Math.abs(l.fundo_reserva - e.fundo) > 0.001) av.push(`Estratégia: fundo ${e.fundo}%, PDF ${l.fundo_reserva}%`);
-  if (l.prazo_grupo !== e.prazoGrupo) av.push(`Estratégia: prazo do grupo ${e.prazoGrupo}, PDF ${l.prazo_grupo}`);
-  if (l.prazo_cota !== e.prazoRestante) av.push(`Estratégia: prazo restante ${e.prazoRestante}, PDF ${l.prazo_cota}`);
+/** Avisa se a quantidade de parcelas do PDF individual difere da Estratégia (o PDF individual vale). */
+export function conferirParcelasComEstrategia(l: Leitura, e: EstrategiaGrupo | undefined): string[] {
   const p = l.plano_reduzido;
-  if (!p && e.plano) av.push(`Estratégia: plano ${e.plano}, o PDF não traz plano reduzido`);
-  else if (p && !e.plano) av.push(`PDF: plano reduzido ${nomeDoTipo(p.tipo)}, a Estratégia não o lista`);
-  else if (p && e.plano) {
-    if (nomeDoTipo(p.tipo) !== e.plano.toUpperCase()) av.push(`Estratégia: plano ${e.plano}, PDF ${nomeDoTipo(p.tipo)}`);
-    if (p.fase1_parcelas !== null && (p.fase1_parcelas !== e.reduzidas || p.fase2_parcelas !== e.demais || p.fase1_parcelas + (p.fase2_parcelas ?? 0) !== e.prazoComl))
-      av.push(`Estratégia: ${e.reduzidas}+${e.demais} parcelas (prazo ${e.prazoComl}), PDF ${p.fase1_parcelas}+${p.fase2_parcelas}`);
-  }
-  return av;
+  const ref = parcelasReduzidasDa(e);
+  if (!p || p.fase1_parcelas === null || !ref) return [];
+  return p.fase1_parcelas !== ref.fase1 || p.fase2_parcelas !== ref.fase2
+    ? [`parcelas reduzidas: PDF ${p.fase1_parcelas}+${p.fase2_parcelas}, Estratégia ${ref.fase1}+${ref.fase2} (vale o PDF)`]
+    : [];
 }

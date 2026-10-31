@@ -2,6 +2,15 @@
 // Regra: a cada mudança entregue, acrescentar uma entrada NO TOPO.
 export const VERSOES: { numero: string; data: string; itens: string[] }[] = [
   {
+    numero: "0117",
+    data: "31/10/2026",
+    itens: [
+      "Veículos, regras da importação anotadas (docs/regras-de-importacao.md): só vale o PDF individual de cada grupo, inclusive para o tipo do plano (o título do PDF); a Estratégia só serve para a quantidade de parcelas reduzidas, e apenas se o PDF individual não a trouxer.",
+      "Veículos, embutido do Livre: “permitido até 60%” passa a ser lido como até 60% da categoria (lance de 70% = 60% embutido + 10% próprio), e não 60% do lance. O “20% limite máximo no livre” continua sendo 20% da categoria.",
+      "Parâmetros globais: nova “parcela mínima padrão” de Veículos (0,7%), usada no simulador dos grupos cujo PDF não informa a parcela mínima.",
+    ],
+  },
+  {
     numero: "0116",
     data: "31/10/2026",
     itens: [

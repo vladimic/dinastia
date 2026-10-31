@@ -434,7 +434,7 @@ export function Simulador({ hoje, padroes }: { hoje: string; padroes: PadroesSim
           furo: veiculo ? false : furo,
           mesesContemplacao,
           plano,
-          parcelaMinimaPct: veiculo ? g.parcela_minima_pct : null,
+          parcelaMinimaPct: veiculo ? (g.parcela_minima_pct ?? padroes.parcelaMinimaPadraoPct) : null,
         })
       : null;
 

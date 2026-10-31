@@ -30,6 +30,8 @@ export async function salvarParametros(formData: FormData) {
   // veículos: lances livre e fidelidade em % da categoria
   const livrePct = lerPct(formData.get("lance_livre_pct"));
   const fidelidadePct = lerPct(formData.get("lance_fidelidade_pct"));
+  const minimaPct = lerPct(formData.get("parcela_minima_padrao_pct"));
+  if (minimaPct === null || !(minimaPct > 0 && minimaPct <= 100)) redirect("/parametros?erro=4");
   if (livrePct === null || fidelidadePct === null || !(livrePct > 0 && livrePct <= 100) || !(fidelidadePct > 0 && fidelidadePct <= 100)) redirect("/parametros?erro=4");
 
   const conc: Record<string, number> = {};
@@ -64,6 +66,7 @@ export async function salvarParametros(formData: FormData) {
       contemplacao_prazos: prazos,
       lance_livre_parcelas: livre,
       lance_fidelidade_parcelas: fidelidade,
+      parcela_minima_padrao_pct: minimaPct,
       lance_livre_pct: livrePct,
       lance_fidelidade_pct: fidelidadePct,
       ...conc,
