@@ -198,6 +198,12 @@ function Tabela({ familia, dados, mudarPendentes, aviso }: { familia: string; da
                   {t.pct}%
                 </th>
               ))}
+              {semFuro &&
+                QTD_REDUZIDAS.map((q) => (
+                  <th key={q} scope="col" className={CAB + " text-center"} title={`Plano reduzido com ${q} parcelas reduzidas (vem do PDF)`}>
+                    {q}
+                  </th>
+                ))}
               {!semFuro && (
                 <th scope="col" className={CAB + " text-center"}>
                   Furo
@@ -216,6 +222,12 @@ function Tabela({ familia, dados, mudarPendentes, aviso }: { familia: string; da
                     <Chave ligada={l.tipos.includes(t.codigo)} rotulo={`Grupo ${l.numero}: parcela ${t.pct}%`} aoAlternar={() => alternarTipo(l, t.codigo)} />
                   </td>
                 ))}
+                {semFuro &&
+                  QTD_REDUZIDAS.map((q) => (
+                    <td key={q} className={CEL + " bg-white text-center group-hover:bg-lavanda"} aria-label={`Grupo ${l.numero}: ${q} parcelas reduzidas ${(l.fases ?? []).includes(q) ? "sim" : "não"}`}>
+                      <i aria-hidden="true" className={"inline-block h-2.5 w-2.5 rounded-full " + ((l.fases ?? []).includes(q) ? "bg-ok" : "bg-[#cfcbe0]")} />
+                    </td>
+                  ))}
                 {!semFuro && <td className={CEL + " bg-white text-center group-hover:bg-lavanda"}>
                   <Chave ligada={l.furo} rotulo={`Grupo ${l.numero}: pagamento com furo`} aoAlternar={() => alternarFuro(l)} />
                 </td>}
@@ -223,7 +235,7 @@ function Tabela({ familia, dados, mudarPendentes, aviso }: { familia: string; da
             ))}
             {!lista.length && (
               <tr>
-                <td colSpan={dados.tipos.length + (semFuro ? 1 : 2)} className="px-3 py-4 text-sm text-tinta">
+                <td colSpan={dados.tipos.length + (semFuro ? 1 + QTD_REDUZIDAS.length : 2)} className="px-3 py-4 text-sm text-tinta">
                   Nenhum grupo com esses filtros.
                 </td>
               </tr>
@@ -235,6 +247,8 @@ function Tabela({ familia, dados, mudarPendentes, aviso }: { familia: string; da
   );
 }
 
+// veículos: quantidades de parcelas reduzidas dos planos em duas fases (só consulta: vêm do PDF)
+const QTD_REDUZIDAS = [6, 12, 18, 24];
 const CAB = "sticky top-0 z-20 border-b border-borda bg-linha px-4 py-2 text-[12px] font-bold text-navy first:rounded-tl-lg last:rounded-tr-lg";
 const CEL = "border-b border-linha px-4 py-1.5";
 
