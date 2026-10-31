@@ -2,6 +2,13 @@
 // Regra: a cada mudança entregue, acrescentar uma entrada NO TOPO.
 export const VERSOES: { numero: string; data: string; itens: string[] }[] = [
   {
+    numero: "0127",
+    data: "31/10/2026",
+    itens: [
+      "Edição em lote de veículos: novas colunas 6, 12, 18 e 24 mostram (bolinha verde) se o grupo tem plano reduzido com essa quantidade de parcelas reduzidas. Só consulta: o valor vem do PDF.",
+    ],
+  },
+  {
     numero: "0126",
     data: "31/10/2026",
     itens: [
