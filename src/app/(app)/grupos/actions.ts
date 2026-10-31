@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
-import { refazerListaDaVersao, refazerListaDoGrupo } from "@/lib/listaGrupos";
+import { refazerLista, refazerListaDaVersao, refazerListaDoGrupo } from "@/lib/listaGrupos";
 import { ehAdministrador } from "@/lib/usuario";
 import { lerInt, lerPct } from "@/lib/formato";
 import { gerarFaixas, validarEdicao, type Edicao } from "@/lib/sequencia";
@@ -53,7 +53,7 @@ export async function salvarCampoGrupo(numero: number, campo: CampoGrupo, valor:
 }
 
 // Marca ou desmarca um tipo de parcela oferecido pelo grupo na versão (assembleia) vigente.
-export async function alternarTipoParcela(versaoId: number, tipo: string, marcado: boolean): Promise<{ ok: boolean }> {
+export async function alternarTipoParcela(versaoId: number, tipo: string, marcado: boolean, atualizarLista = true): Promise<{ ok: boolean }> {
   if (!(await ehAdministrador()) || !Number.isInteger(versaoId) || !tipo) return { ok: false };
   const supabase = await createClient();
   const { error } = marcado
@@ -62,18 +62,18 @@ export async function alternarTipoParcela(versaoId: number, tipo: string, marcad
         .upsert({ grupo_assembleia_id: versaoId, tipo_parcela: tipo }, { onConflict: "grupo_assembleia_id,tipo_parcela" })
     : await supabase.from("grupo_assembleia_tipo_parcela").delete().eq("grupo_assembleia_id", versaoId).eq("tipo_parcela", tipo);
   if (error) return { ok: false };
-  await refazerListaDaVersao(supabase, versaoId);
+  if (atualizarLista) await refazerListaDaVersao(supabase, versaoId);
   revalidatePath("/grupos");
   return { ok: true };
 }
 
 // Pagamento com furo na versão vigente: true = sim, false = não.
-export async function definirPagamentoComFuro(versaoId: number, valor: boolean): Promise<{ ok: boolean }> {
+export async function definirPagamentoComFuro(versaoId: number, valor: boolean, atualizarLista = true): Promise<{ ok: boolean }> {
   if (!(await ehAdministrador()) || !Number.isInteger(versaoId)) return { ok: false };
   const supabase = await createClient();
   const { error } = await supabase.from("grupo_assembleia").update({ pagamento_com_furo: valor }).eq("id", versaoId);
   if (error) return { ok: false };
-  await refazerListaDaVersao(supabase, versaoId);
+  if (atualizarLista) await refazerListaDaVersao(supabase, versaoId);
   revalidatePath("/grupos");
   return { ok: true };
 }
@@ -144,6 +144,72 @@ export async function salvarCreditos(versaoId: number, valores: number[]): Promi
     .eq("id", versaoId);
   if (error) return FALHA;
   await refazerListaDaVersao(supabase, versaoId);
+  revalidatePath("/grupos");
+  return { ok: true };
+}
+
+// ---------------------------------------------------------------- edição em lote
+
+export type LinhaLote = {
+  numero: number;
+  versaoId: number;
+  prazo: number;
+  assembleia: number;
+  data: string | null;
+  min: number | null;
+  max: number | null;
+  participantes: number | null;
+  furo: boolean;
+  /** códigos dos tipos de parcela oferecidos */
+  tipos: string[];
+};
+export type DadosLote = { tipos: { codigo: string; descricao: string; pct: number }[]; linhas: LinhaLote[] };
+
+// Todos os grupos da família, com os tipos de parcela e o furo da versão vigente, para a tela de edição em lote.
+export async function carregarLote(familia: string): Promise<{ ok: true; dados: DadosLote } | { ok: false; erro: string }> {
+  if (!(await ehAdministrador())) return NEGADO;
+  const supabase = await createClient();
+  const [atuais, tipos] = await Promise.all([
+    supabase
+      .from("grupo_atual")
+      .select("numero, prazo_grupo_meses, assembleia_numero, data_assembleia, creditos, grupo_assembleia_id, participantes")
+      .eq("familia", familia)
+      .order("numero"),
+    supabase.from("tipo_parcela").select("codigo, descricao, pct").order("pct", { ascending: false }),
+  ]);
+  if (atuais.error || tipos.error) return { ok: false, erro: "Não foi possível carregar os grupos." };
+  const ids = (atuais.data ?? []).map((g) => g.grupo_assembleia_id as number);
+  const versoes = ids.length
+    ? await supabase.from("grupo_assembleia").select("id, pagamento_com_furo, grupo_assembleia_tipo_parcela(tipo_parcela)").in("id", ids)
+    : { data: [], error: null };
+  if (versoes.error) return { ok: false, erro: "Não foi possível carregar os grupos." };
+  const porId = new Map(
+    ((versoes.data ?? []) as unknown as { id: number; pagamento_com_furo: boolean; grupo_assembleia_tipo_parcela: { tipo_parcela: string }[] }[]).map((v) => [v.id, v]),
+  );
+  const linhas: LinhaLote[] = (atuais.data ?? []).map((g) => {
+    const v = porId.get(g.grupo_assembleia_id as number);
+    const cr = ((g.creditos ?? []) as (number | string)[]).map(Number);
+    return {
+      numero: g.numero,
+      versaoId: g.grupo_assembleia_id as number,
+      prazo: g.prazo_grupo_meses,
+      assembleia: g.assembleia_numero,
+      data: g.data_assembleia,
+      min: cr.length ? Math.min(...cr) : null,
+      max: cr.length ? Math.max(...cr) : null,
+      participantes: (g.participantes as number | null) ?? null,
+      furo: v?.pagamento_com_furo === true,
+      tipos: (v?.grupo_assembleia_tipo_parcela ?? []).map((t) => t.tipo_parcela),
+    };
+  });
+  return { ok: true, dados: { tipos: (tipos.data ?? []).map((t) => ({ codigo: t.codigo as string, descricao: t.descricao as string, pct: Number(t.pct) })), linhas } };
+}
+
+// Ao fechar a edição em lote, a lista guardada da família é refeita uma vez só (e não a cada alteração).
+export async function fecharLote(familia: string): Promise<{ ok: boolean }> {
+  if (!(await ehAdministrador())) return { ok: false };
+  const supabase = await createClient();
+  await refazerLista(supabase, familia);
   revalidatePath("/grupos");
   return { ok: true };
 }

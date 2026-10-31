@@ -2,6 +2,14 @@
 // Regra: a cada mudança entregue, acrescentar uma entrada NO TOPO.
 export const VERSOES: { numero: string; data: string; itens: string[] }[] = [
   {
+    numero: "0108",
+    data: "31/10/2026",
+    itens: [
+      "Grupos e Tabelas: novo botão “Edição em lote” (só para administradores), à esquerda de Exportar Tabela Resumo. Abre uma tabela com todos os grupos da família: uma coluna por tipo de parcela e uma para o furo, cada uma com uma chave de ligar/desligar. Cada clique já grava na base (se falhar, a chave volta ao que era).",
+      "Edição em lote: os mesmos filtros da lista de grupos (Furo, Parcela 70, Parcela 50/55, faixa de crédito e participantes). Eles valem para o que foi lido ao abrir: a linha não some no meio da edição. O botão “Fechar edição em lote” refaz a lista guardada da família uma vez só.",
+    ],
+  },
+  {
     numero: "0107",
     data: "22/10/2026",
     itens: [
