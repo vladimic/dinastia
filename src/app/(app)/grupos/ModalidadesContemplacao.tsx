@@ -6,10 +6,13 @@ type Props = {
   modalidades: Modalidade[];
   tipos: Tipo[];
   prazoGrupo: number;
+  /** veículos: lances em % da categoria */
+  veiculo?: boolean;
 };
 
 // colunas fixas, nesta ordem
 const COLUNAS = ["FIX", "LIM", "FID", "LIV"];
+const COLUNAS_VEICULO = ["F25", "F40", "FID", "LIV"];
 
 const DICA_ASTERISCO = "Qualquer quantidade de parcelas até o limite do plano";
 const DICA_EMBUTIDO =
@@ -23,13 +26,33 @@ function pctEmbutido(m: Modalidade, prazo: number): number {
   return Math.floor(Math.min(100, porPct, porParcelas));
 }
 
-export function ModalidadesContemplacao({ modalidades, tipos, prazoGrupo }: Props) {
+// veículos: o lance fixo é 25% ou 40% da categoria; livre e fidelidade vão "até" o teto. O embutido pode ser % do lance ou % da categoria.
+function celulaVeiculo(m: Modalidade, teto: number | null) {
+  const lance = m.lance_pct !== null ? Number(m.lance_pct) : null;
+  const qtd = lance !== null ? `${lance}%` : teto !== null ? `até ${teto}%` : "*";
+  if (m.embutido_pct === null) return { qtd, emb: "0%", proprio: lance !== null ? "100%" : "—" };
+  const pct = Number(m.embutido_pct);
+  if (m.embutido_base === "lance") return { qtd, emb: `${pct}%`, proprio: `${100 - pct}%` };
+  // % da categoria: com o lance fixo dá para dizer quanto do lance é embutido; no livre depende do valor ofertado
+  if (lance !== null) {
+    const emb = Math.floor(Math.min(100, (pct / lance) * 100));
+    return { qtd, emb: `${emb}%`, proprio: `${100 - emb}%` };
+  }
+  return { qtd, emb: `${pct}% da cat.`, proprio: "—" };
+}
+
+export function ModalidadesContemplacao({ modalidades, tipos, prazoGrupo, veiculo }: Props) {
   const porTipo = new Map(modalidades.map((m) => [m.tipo, m]));
   const cadastro = new Map(tipos.map((t) => [t.codigo, t]));
 
-  const celulas = COLUNAS.map((codigo) => {
+  const celulas = (veiculo ? COLUNAS_VEICULO : COLUNAS).map((codigo) => {
     const m = porTipo.get(codigo);
     if (!m) return { codigo, m: null, qtd: "—", emb: "—", proprio: "—", asterisco: false };
+    if (veiculo) {
+      // o fidelidade segue o teto do livre
+      const teto = m.max_lance_pct !== null ? Number(m.max_lance_pct) : codigo === "FID" && porTipo.get("LIV")?.max_lance_pct != null ? Number(porTipo.get("LIV")!.max_lance_pct) : null;
+      return { codigo, m, ...celulaVeiculo(m, teto), asterisco: false };
+    }
     const asterisco = m.max_parcelas_lance === null || m.max_parcelas_lance >= prazoGrupo;
     const emb = pctEmbutido(m, prazoGrupo);
     return {
@@ -64,7 +87,7 @@ export function ModalidadesContemplacao({ modalidades, tipos, prazoGrupo }: Prop
         </thead>
         <tbody>
           <tr>
-            <td className="font-semibold text-tinta">Qtd Parcelas</td>
+            <td className="font-semibold text-tinta">{veiculo ? "Lance (% categ.)" : "Qtd Parcelas"}</td>
             {celulas.map((c) => (
               <td key={c.codigo} className="!px-1 text-center tabular-nums" title={c.asterisco ? DICA_ASTERISCO : undefined}>
                 {c.qtd}

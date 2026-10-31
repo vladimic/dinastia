@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import type { Modalidade } from "@/lib/grupos";
-import { calcularBase, calcularColuna, type Coluna as Calc, type PadroesSimulador, type TipoColuna } from "@/lib/simulacao";
+import { CHAVE_VISUAL, calcularBase, calcularColuna, calcularColunaPct, type Coluna as Calc, type PadroesSimulador, type PlanoFases, type TipoLance } from "@/lib/simulacao";
 import { useSimulacao } from "./SimulacaoContext";
 import { useDados } from "./GrupoDetalhe";
 
@@ -17,7 +17,16 @@ const dinheiro = (v: number | null | undefined) => (v === null || v === undefine
 const nf2 = new Intl.NumberFormat("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 const nf4 = new Intl.NumberFormat("pt-BR", { minimumFractionDigits: 4, maximumFractionDigits: 4 });
 
-type Meta = { chave: string; tipo: TipoColuna; titulo: string; numero?: number };
+type Meta = { chave: string; tipo: TipoLance; titulo: string; numero?: number };
+
+// em veículos, os dois lances fixos (25% e 40% da categoria) ocupam o lugar do Fixo e do Limitado
+const COLUNAS_VEICULO: Meta[] = [
+  { chave: "sorteio", tipo: "SOR", titulo: "Sorteio" },
+  { chave: "fixo25", tipo: "F25", titulo: "Lance Fixo 25%", numero: 1 },
+  { chave: "fixo40", tipo: "F40", titulo: "Lance Fixo 40%", numero: 2 },
+  { chave: "livre", tipo: "LIV", titulo: "Lance Livre", numero: 3 },
+  { chave: "fidelidade", tipo: "FID", titulo: "Lance Fidelidade", numero: 4 },
+];
 
 const COLUNAS: Meta[] = [
   { chave: "sorteio", tipo: "SOR", titulo: "Sorteio" },
@@ -29,9 +38,9 @@ const COLUNAS: Meta[] = [
 
 // cor de cada coluna só na borda de cima e em fundos claros: o corpo da página fica claro, distinto do menu azul
 // cores de cada lance (as da Tabela Resumo, em pastel): faixa de cima, fundo e barra de concorrência
-const BORDA: Record<TipoColuna, string> = { SOR: "border-t-[#8cc063]", FIX: "border-t-[#6f93d6]", LIM: "border-t-[#f0a06b]", LIV: "border-t-[#ee7a7a]", FID: "border-t-[#ee8fee]" };
-const FUNDO: Record<TipoColuna, string> = { SOR: "bg-[#e6f2dc]", FIX: "bg-[#dde6f6]", LIM: "bg-[#fde6d6]", LIV: "bg-[#fbe0e0]", FID: "bg-[#fbe3fb]" };
-const BARRA: Record<TipoColuna, string> = { SOR: "bg-[#8cc063]", FIX: "bg-[#6f93d6]", LIM: "bg-[#f0a06b]", LIV: "bg-[#ee7a7a]", FID: "bg-[#ee8fee]" };
+const BORDA: Record<TipoLance, string> = { SOR: "border-t-[#8cc063]", FIX: "border-t-[#6f93d6]", LIM: "border-t-[#f0a06b]", LIV: "border-t-[#ee7a7a]", FID: "border-t-[#ee8fee]", F25: "border-t-[#6f93d6]", F40: "border-t-[#f0a06b]" };
+const FUNDO: Record<TipoLance, string> = { SOR: "bg-[#e6f2dc]", FIX: "bg-[#dde6f6]", LIM: "bg-[#fde6d6]", LIV: "bg-[#fbe0e0]", FID: "bg-[#fbe3fb]", F25: "bg-[#dde6f6]", F40: "bg-[#fde6d6]" };
+const BARRA: Record<TipoLance, string> = { SOR: "bg-[#8cc063]", FIX: "bg-[#6f93d6]", LIM: "bg-[#f0a06b]", LIV: "bg-[#ee7a7a]", FID: "bg-[#ee8fee]", F25: "bg-[#6f93d6]", F40: "bg-[#f0a06b]" };
 
 type Coluna = Meta & {
   oferecido: boolean;
@@ -39,8 +48,10 @@ type Coluna = Meta & {
   qtd: string | null;
   qtdFixa: boolean;
   icone: "cadeado" | "martelo";
-  /** máximo de parcelas do lance nesta simulação (nulo = sem teto) */
+  /** máximo de parcelas (imóveis) ou de % da categoria (veículos) do lance nesta simulação; nulo = sem teto */
   teto: number | null;
+  /** o que o campo do lance mede */
+  unidade: "parcelas" | "%";
   calc: Calc | null;
   prazoRestante: number;
   concorrencia: number | null;
@@ -101,11 +112,13 @@ function Cabecalho({ c, aoMudarQtd }: { c: Coluna; aoMudarQtd: (v: string) => vo
                 className={"flex items-center text-[11px] font-semibold text-tinta " + (c.qtdFixa ? "gap-1" : "gap-0.5 whitespace-nowrap")}
                 title={
                   c.icone === "cadeado"
-                    ? `Lance com máximo pré-definido pelo grupo${c.teto !== null ? ` (${c.teto} parcelas)` : ""}`
-                    : "Lance em leilão: você define as parcelas nesta simulação"
+                    ? `Lance com máximo pré-definido pelo grupo${c.teto !== null ? ` (${c.teto}${c.unidade === "%" ? "% da categoria" : " parcelas"})` : ""}`
+                    : c.unidade === "%"
+                      ? "Lance em leilão: você define o % da categoria nesta simulação"
+                      : "Lance em leilão: você define as parcelas nesta simulação"
                 }
               >
-                {!c.qtdFixa && <Passo sinal="−" rotulo={`Diminuir as parcelas do ${c.titulo}`} desligado={qtdNum <= 1} aoClicar={() => aoMudarQtd(String(Math.max(1, qtdNum - 1)))} />}
+                {!c.qtdFixa && <Passo sinal="−" rotulo={`Diminuir ${c.unidade === "%" ? "o %" : "as parcelas"} do ${c.titulo}`} desligado={qtdNum <= 1} aoClicar={() => aoMudarQtd(String(Math.max(1, qtdNum - 1)))} />}
                 <span
                   className={
                     "flex h-6 items-center gap-px rounded border px-0.5 text-navy " +
@@ -117,7 +130,7 @@ function Cabecalho({ c, aoMudarQtd }: { c: Coluna; aoMudarQtd: (v: string) => vo
                     inputMode="numeric"
                     readOnly={c.qtdFixa}
                     value={c.qtd}
-                    aria-label={`Parcelas do ${c.titulo}`}
+                    aria-label={`${c.unidade === "%" ? "% da categoria" : "Parcelas"} do ${c.titulo}`}
                     onChange={(e) => aoMudarQtd(e.target.value.replace(/\D/g, "").slice(0, 3))}
                     className={(c.qtdFixa ? "w-7" : "w-6") + " bg-transparent text-right text-[12px] font-bold tabular-nums outline-none"}
                   />
@@ -125,12 +138,14 @@ function Cabecalho({ c, aoMudarQtd }: { c: Coluna; aoMudarQtd: (v: string) => vo
                 {!c.qtdFixa && (
                   <Passo
                     sinal="+"
-                    rotulo={`Aumentar as parcelas do ${c.titulo}`}
+                    rotulo={`Aumentar ${c.unidade === "%" ? "o %" : "as parcelas"} do ${c.titulo}`}
                     desligado={c.teto !== null && qtdNum >= c.teto}
                     aoClicar={() => aoMudarQtd(String(Math.min(c.teto ?? 999, qtdNum + 1)))}
                   />
                 )}
-                {c.qtdFixa ? (
+                {c.unidade === "%" ? (
+                  <span>%</span>
+                ) : c.qtdFixa ? (
                   <span>parcelas</span>
                 ) : (
                   // com a coluna estreita, “parc.”; com espaço, “parcelas” por extenso
@@ -160,7 +175,7 @@ function Cabecalho({ c, aoMudarQtd }: { c: Coluna; aoMudarQtd: (v: string) => vo
   );
 }
 
-function Grade({ colunas, aoMudarQtd }: { colunas: Coluna[]; aoMudarQtd: (t: TipoColuna) => (v: string) => void }) {
+function Grade({ colunas, aoMudarQtd }: { colunas: Coluna[]; aoMudarQtd: (t: TipoLance) => (v: string) => void }) {
   const rotulo = "flex items-center px-2 text-[12px] leading-tight font-bold text-tinta";
   const celula = "flex min-h-[2.5rem] flex-col items-center justify-center border-b border-linha px-1 text-center";
   const valor = "text-[14px] leading-tight font-bold tabular-nums";
@@ -175,7 +190,7 @@ function Grade({ colunas, aoMudarQtd }: { colunas: Coluna[]; aoMudarQtd: (t: Tip
   const linhasCima: { r: string; v: (c: Coluna) => string; avisar?: boolean; forte?: boolean }[] = [
     { r: "Crédito Disponível após a Contemplação", v: (c) => dinheiro(c.calc?.creditoDisponivel), forte: true },
     { r: "Valor da Parcela após a Contemplação", v: (c) => dinheiro(c.calc?.parcelaApos), forte: true },
-    { r: "Prazo Restante", v: (c) => (c.calc && c.prazoRestante > 0 ? String(c.prazoRestante) : "—") },
+    { r: "Prazo Restante", v: (c) => (c.calc && c.calc.prazoRestante > 0 ? String(c.calc.prazoRestante) : "—") },
   ];
   const linhasBaixo: { r: string; v: (c: Coluna) => string }[] = [
     { r: "Saldo Devedor", v: (c) => dinheiro(c.calc?.saldoDevedor) },
@@ -362,14 +377,22 @@ export function Simulador({ hoje, padroes }: { hoje: string; padroes: PadroesSim
   const [seguro, setSeguro] = useState(() => nf4.format(padroes.seguroPct)); // % do crédito ao mês, do parâmetro global
   const [incc, setIncc] = useState(() => nf2.format(padroes.incc));
 
+  const veiculo = g.familia === "veiculos";
   // parcela em que a fidelidade libera (36), e não o mês em que entra na sequência (37)
   const fidelidadeMeses = g.fidelidade_meses ? g.fidelidade_meses - 1 : null;
   const prazoGrupo = g.prazo_grupo_meses;
-  const taxaMensal = taxaAdm !== null && faltam > 0 ? taxaAdm / faltam : null;
+  // veículos: o fundo de reserva soma-se à taxa de administração; imóveis seguem só com a taxa
+  const taxaCalc = taxaAdm === null ? null : taxaAdm + (veiculo ? (g.fundo_reserva ?? 0) : 0);
+  const taxaMensal = taxaCalc !== null && faltam > 0 ? taxaCalc / faltam : null;
 
   const porTipo = new Map(g.modalidades.map((m) => [m.tipo as string, m]));
-  // o lance livre também não pode passar dos meses que faltam para o grupo terminar
-  const tetoQtd = (tipo: string) => {
+  // tetos: imóveis em parcelas (o livre também não passa dos meses que faltam); veículos em % da categoria
+  // (o fidelidade segue o teto do livre, porque o PDF o descreve como "mais esta modalidade de Lance Livre")
+  const tetoQtd = (tipo: string): number | null => {
+    if (veiculo) {
+      if (tipo === "F25" || tipo === "F40") return porTipo.get(tipo)?.lance_pct ?? null;
+      return porTipo.get(tipo)?.max_lance_pct ?? porTipo.get("LIV")?.max_lance_pct ?? 100;
+    }
     const max = porTipo.get(tipo)?.max_parcelas_lance ?? null;
     return tipo === "LIV" ? (max === null ? faltam : Math.min(max, faltam)) : max;
   };
@@ -380,22 +403,42 @@ export function Simulador({ hoje, padroes }: { hoje: string; padroes: PadroesSim
   const [qtds, setQtds] = useState<Record<string, string>>(() => ({
     FIX: String(tetoQtd("FIX") ?? 0),
     LIM: String(tetoQtd("LIM") ?? 0),
-    LIV: String(limitar("LIV", padroes.lanceLivreParcelas)),
-    FID: String(limitar("FID", padroes.lanceFidelidadeParcelas)),
+    F25: String(tetoQtd("F25") ?? 0),
+    F40: String(tetoQtd("F40") ?? 0),
+    LIV: String(limitar("LIV", veiculo ? padroes.lanceLivrePct : padroes.lanceLivreParcelas)),
+    FID: String(limitar("FID", veiculo ? padroes.lanceFidelidadePct : padroes.lanceFidelidadeParcelas)),
   }));
-  const mudarQtd = (tipo: TipoColuna) => (v: string) => setQtds((q) => ({ ...q, [tipo]: v === "" ? "" : String(limitar(tipo, Number(v))) }));
+  const mudarQtd = (tipo: TipoLance) => (v: string) => setQtds((q) => ({ ...q, [tipo]: v === "" ? "" : String(limitar(tipo, Number(v))) }));
 
   const tipo = tipos.find((t) => t.codigo === tipoSel);
+  // plano reduzido em duas fases (veículos); sem os dados da importação, o plano não pode ser simulado
+  const plano: PlanoFases | null =
+    veiculo && tipo && tipo.rotulo && tipo.fase1Pct !== null && tipo.fase1Parcelas !== null && tipo.fase2Parcelas !== null
+      ? { fase1Pct: tipo.fase1Pct, fase1Parcelas: tipo.fase1Parcelas, fase2Parcelas: tipo.fase2Parcelas }
+      : null;
+  const planoSemDados = veiculo && !!tipo?.rotulo && !plano;
+  // veículos não têm furo: o linear usa o prazo da cota e o plano reduzido, as duas fases
   const mesesContemplacao = Number(meses) || 0;
   const creditoContratado = creditoSel === null ? null : creditoSel * cotas;
-  const maxMeses = Math.max(1, faltam);
+  const prazoTotal = plano ? plano.fase1Parcelas + plano.fase2Parcelas : faltam;
+  const maxMeses = Math.max(1, prazoTotal);
 
   const base =
-    creditoContratado !== null && taxaAdm !== null && tipo
-      ? calcularBase({ credito: creditoContratado, taxaAdmPct: taxaAdm, pctParcela: tipo.pct, prazoGrupo, mesesFaltam: faltam, furo, mesesContemplacao })
+    creditoContratado !== null && taxaCalc !== null && tipo && !planoSemDados
+      ? calcularBase({
+          credito: creditoContratado,
+          taxaAdmPct: taxaCalc,
+          pctParcela: plano ? 100 : tipo.pct,
+          prazoGrupo,
+          mesesFaltam: faltam,
+          furo: veiculo ? false : furo,
+          mesesContemplacao,
+          plano,
+          parcelaMinimaPct: veiculo ? g.parcela_minima_pct : null,
+        })
       : null;
 
-  const colunas: Coluna[] = COLUNAS.map((c) => {
+  const colunas: Coluna[] = (veiculo ? COLUNAS_VEICULO : COLUNAS).map((c) => {
     const m = porTipo.get(c.tipo);
     const oferecido = c.tipo === "SOR" || Boolean(m);
     const bloqueio =
@@ -405,24 +448,30 @@ export function Simulador({ hoje, padroes }: { hoje: string; padroes: PadroesSim
       !base || !oferecido || bloqueio
         ? null
         : c.tipo === "SOR"
-          ? calcularColuna(base, creditoContratado as number, null)
-          : calcularColuna(base, creditoContratado as number, { qtdParcelas: Number(qtd) || 0, regra: m as Modalidade });
+          ? veiculo
+            ? calcularColunaPct(base, creditoContratado as number, null)
+            : calcularColuna(base, creditoContratado as number, null)
+          : veiculo
+            ? calcularColunaPct(base, creditoContratado as number, { pct: Number(qtd) || 0, regra: { embutido_pct: m?.embutido_pct ?? null, embutido_base: m?.embutido_base ?? "lance" } })
+            : calcularColuna(base, creditoContratado as number, { qtdParcelas: Number(qtd) || 0, regra: m as Modalidade });
     return {
       ...c,
       oferecido,
       bloqueio,
       qtd,
-      qtdFixa: c.tipo === "FIX" || c.tipo === "LIM",
-      // cadeado = o grupo limita as parcelas do lance (ex.: fidelidade até 99); martelo = leilão sem teto do grupo
-      icone: m?.max_parcelas_lance != null ? ("cadeado" as const) : ("martelo" as const),
+      qtdFixa: veiculo ? c.tipo === "F25" || c.tipo === "F40" : c.tipo === "FIX" || c.tipo === "LIM",
+      // cadeado = o grupo limita o lance (parcelas ou %; ex.: fidelidade até 99 parcelas); martelo = leilão sem teto do grupo
+      icone: (veiculo ? m?.lance_pct != null || m?.max_lance_pct != null || (c.tipo === "FID" && porTipo.get("LIV")?.max_lance_pct != null) : m?.max_parcelas_lance != null)
+        ? ("cadeado" as const)
+        : ("martelo" as const),
       teto: c.tipo === "SOR" ? null : tetoQtd(c.tipo),
+      unidade: veiculo ? ("%" as const) : ("parcelas" as const),
       calc,
       prazoRestante: base?.prazoRestante ?? 0,
-      concorrencia: c.tipo === "SOR" ? null : padroes.concorrencia[c.tipo],
-      rodape: padroes.rodape[c.tipo],
+      concorrencia: c.tipo === "SOR" ? null : padroes.concorrencia[CHAVE_VISUAL[c.tipo] as "FIX" | "LIM" | "LIV" | "FID"],
+      rodape: padroes.rodape[CHAVE_VISUAL[c.tipo]],
     };
   });
-
 
   return (
     <section aria-label={`Simulador do grupo ${g.numero}`} className="grid items-start gap-4 lg:grid-cols-[19rem_minmax(0,1fr)]">
@@ -439,7 +488,7 @@ export function Simulador({ hoje, padroes }: { hoje: string; padroes: PadroesSim
           <div className={GRANDE + " text-right text-ouro-texto"}>{base ? reais2(base.parcelaAntes) : "—"}</div>
           <span className="text-right text-[11px] text-tinta">
             {tipo ? `Parcela ${tipo.descricao}` : "Escolha o tipo de parcela no cabeçalho"}
-            {furo ? " · com furo" : " · sem furo"}
+            {veiculo ? "" : furo ? " · com furo" : " · sem furo"}
           </span>
           <div className="pt-1">
             {/* verde = o grupo oferece; laranja = o escolhido nesta simulação; o título é a frase "Parcela … · com furo" logo acima */}
@@ -466,13 +515,19 @@ export function Simulador({ hoje, padroes }: { hoje: string; padroes: PadroesSim
                             : "border-[#b8dcc0] bg-ok-fundo text-ok hover:border-ok")
                       }
                     >
-                      {t.pct}%
+                      {t.rotulo ?? `${t.pct}%`}
                     </button>
                   );
                 })}
             </div>
           </div>
-          <div className="flex items-center justify-between gap-2 pt-1">
+          {planoSemDados && <p className="text-[11px] text-alerta">Este plano ainda não tem as fases cadastradas (vêm da importação do PDF).</p>}
+          {base?.fases && (
+            <p className="text-right text-[11px] text-tinta tabular-nums">
+              {base.fases.parcelas1}× {reais2(base.fases.parcela1)}, depois {base.fases.parcelas2}× {reais2(base.fases.parcela2)}
+            </p>
+          )}
+          {!veiculo && <div className="flex items-center justify-between gap-2 pt-1">
             <span className="text-[13px] text-tinta" id="furo-sim-rotulo">
               Pagamento com furo
             </span>
@@ -502,7 +557,7 @@ export function Simulador({ hoje, padroes }: { hoje: string; padroes: PadroesSim
                 );
               })}
             </div>
-          </div>
+          </div>}
         </Bloco>
 
         {/* "Contemplação em" da proposta D: número grande, régua e atalhos */}
@@ -564,8 +619,8 @@ export function Simulador({ hoje, padroes }: { hoje: string; padroes: PadroesSim
 
         <Bloco titulo="Informações complementares">
           <Par r="Fidelidade em" v={fidelidadeMeses ? `${fidelidadeMeses} meses` : "—"} />
-          <Par r="Taxa de adm. mensal" v={taxaMensal === null ? "—" : p2(taxaMensal)} />
-          <Par r="Parcela para lance" v={base ? reais2(base.parcelaLance) : "—"} />
+          <Par r={veiculo ? "Taxa + fundo mensal" : "Taxa de adm. mensal"} v={taxaMensal === null ? "—" : p2(taxaMensal)} />
+          <Par r={veiculo ? "Categoria (crédito + taxas)" : "Parcela para lance"} v={base ? reais2(veiculo ? base.categoria : base.parcelaLance) : "—"} />
         </Bloco>
 
         {/* mesmo desenho de Informações complementares: rótulo à esquerda, valor à direita; campos só com o risco embaixo */}

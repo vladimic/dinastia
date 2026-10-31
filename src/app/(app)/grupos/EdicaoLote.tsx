@@ -145,6 +145,7 @@ function Tabela({ familia, dados, mudarPendentes, aviso }: { familia: string; da
   // fotografia da lista ao abrir: é ela que os filtros enxergam
   const [fotos] = useState(() => dados.linhas.map((l) => paraItem(l, dados.tipos)));
   const { visiveis, barra } = useFiltrosGrupos(fotos, familia);
+  const semFuro = familia === "veiculos"; // veículos não trabalham com furo
   const mostrar = new Set(visiveis.map((g) => g.numero));
   const lista = linhas.filter((l) => mostrar.has(l.numero));
 
@@ -196,9 +197,11 @@ function Tabela({ familia, dados, mudarPendentes, aviso }: { familia: string; da
                   {t.pct}%
                 </th>
               ))}
-              <th scope="col" className={CAB + " text-center"}>
-                Furo
-              </th>
+              {!semFuro && (
+                <th scope="col" className={CAB + " text-center"}>
+                  Furo
+                </th>
+              )}
             </tr>
           </thead>
           <tbody>
@@ -212,14 +215,14 @@ function Tabela({ familia, dados, mudarPendentes, aviso }: { familia: string; da
                     <Chave ligada={l.tipos.includes(t.codigo)} rotulo={`Grupo ${l.numero}: parcela ${t.pct}%`} aoAlternar={() => alternarTipo(l, t.codigo)} />
                   </td>
                 ))}
-                <td className={CEL + " bg-white text-center group-hover:bg-lavanda"}>
+                {!semFuro && <td className={CEL + " bg-white text-center group-hover:bg-lavanda"}>
                   <Chave ligada={l.furo} rotulo={`Grupo ${l.numero}: pagamento com furo`} aoAlternar={() => alternarFuro(l)} />
-                </td>
+                </td>}
               </tr>
             ))}
             {!lista.length && (
               <tr>
-                <td colSpan={dados.tipos.length + 2} className="px-3 py-4 text-sm text-tinta">
+                <td colSpan={dados.tipos.length + (semFuro ? 1 : 2)} className="px-3 py-4 text-sm text-tinta">
                   Nenhum grupo com esses filtros.
                 </td>
               </tr>

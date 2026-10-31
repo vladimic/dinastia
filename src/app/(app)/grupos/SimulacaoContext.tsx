@@ -3,7 +3,17 @@
 import { createContext, useContext, useState } from "react";
 
 // Escolhas que a tela do grupo repassa ao simulador: o crédito (caixa "Faixa de crédito") e o tipo de parcela (caixa "Tipos de parcela").
-export type TipoSim = { codigo: string; descricao: string; pct: number };
+export type TipoSim = {
+  codigo: string;
+  descricao: string;
+  pct: number;
+  /** texto curto no lugar de “N%” (planos de veículos: Plano 50, Clearance) */
+  rotulo: string | null;
+  /** plano em duas fases (veículos) */
+  fase1Pct: number | null;
+  fase1Parcelas: number | null;
+  fase2Parcelas: number | null;
+};
 
 type Ctx = {
   creditoSel: number | null;

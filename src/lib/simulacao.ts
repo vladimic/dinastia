@@ -16,7 +16,14 @@ export type Entrada = {
   furo: boolean;
   /** contemplação daqui a quantos meses */
   mesesContemplacao: number;
+  /** veículos: plano reduzido em duas fases (nulo = plano linear ou reduzido até a contemplação, como nos imóveis) */
+  plano?: PlanoFases | null;
+  /** veículos: parcela mínima após a contemplação por lance, % do crédito */
+  parcelaMinimaPct?: number | null;
 };
+
+/** Plano reduzido em duas fases: fase 1 paga `fase1Pct`% do crédito por mês (sem taxas); a fase 2 divide o que falta para 100%. */
+export type PlanoFases = { fase1Pct: number; fase1Parcelas: number; fase2Parcelas: number };
 
 export type Base = {
   taxaAdmValor: number;
@@ -31,14 +38,49 @@ export type Base = {
   prazoRestante: number;
   /** ((crédito + taxa de administração) − total pago até a contemplação) / prazo restante; nulo se o prazo restante acabou */
   parcelaApos: number | null;
+  /** crédito + taxa de administração (+ fundo de reserva em veículos): a "categoria" em que os lances em % se baseiam */
+  categoria: number;
+  /** parcela mínima após a contemplação, em R$ (nulo = sem regra) */
+  parcelaMinima: number | null;
+  /** plano em duas fases: parcela da fase 1 e da fase 2, em R$ */
+  fases: { parcela1: number; parcela2: number; parcelas1: number; parcelas2: number } | null;
 };
 
 export function calcularBase(e: Entrada): Base {
   const taxaAdmValor = e.credito * (e.taxaAdmPct / 100);
+  const categoria = e.credito + taxaAdmValor;
+  const parcelaMinima = e.parcelaMinimaPct ? (e.credito * e.parcelaMinimaPct) / 100 : null;
+  const m = e.mesesContemplacao;
+
+  if (e.plano) {
+    // plano reduzido em duas fases (veículos): a parcela vai do crédito puro × (1 + taxas); a fase 2 fecha os 100%
+    const { fase1Pct, fase1Parcelas: n1, fase2Parcelas: n2 } = e.plano;
+    const fase2Pct = (100 - fase1Pct * n1) / n2;
+    const fator = 1 + e.taxaAdmPct / 100;
+    const parcela1 = ((e.credito * fase1Pct) / 100) * fator;
+    const parcela2 = ((e.credito * fase2Pct) / 100) * fator;
+    const prazoPlano = n1 + n2;
+    const noPlano = Math.min(m, prazoPlano);
+    const totalPago = Math.min(noPlano, n1) * parcela1 + Math.max(0, noPlano - n1) * parcela2;
+    const prazoRestante = prazoPlano - m;
+    return {
+      taxaAdmValor,
+      parcelaLance: 0,
+      prazoAntes: prazoPlano,
+      parcelaAntes: parcela1,
+      totalPago,
+      prazoRestante,
+      parcelaApos: prazoRestante > 0 ? (categoria - totalPago) / prazoRestante : null,
+      categoria,
+      parcelaMinima,
+      fases: { parcela1, parcela2, parcelas1: n1, parcelas2: n2 },
+    };
+  }
+
   const prazoAntes = e.furo ? e.prazoGrupo : e.mesesFaltam;
   const parcelaAntes = prazoAntes > 0 ? (e.credito * (e.pctParcela / 100) + taxaAdmValor) / prazoAntes : 0;
-  const totalPago = parcelaAntes * e.mesesContemplacao;
-  const prazoRestante = e.mesesFaltam - e.mesesContemplacao;
+  const totalPago = parcelaAntes * m;
+  const prazoRestante = e.mesesFaltam - m;
   return {
     taxaAdmValor,
     parcelaLance: e.prazoGrupo > 0 ? (e.credito + taxaAdmValor) / e.prazoGrupo : 0,
@@ -47,6 +89,9 @@ export function calcularBase(e: Entrada): Base {
     totalPago,
     prazoRestante,
     parcelaApos: prazoRestante > 0 ? (e.credito + taxaAdmValor - totalPago) / prazoRestante : null,
+    categoria,
+    parcelaMinima,
+    fases: null,
   };
 }
 
@@ -72,6 +117,11 @@ export function fracaoEmbutido(r: RegraEmbutido, qtdParcelas: number): number {
 
 export type TipoColuna = "SOR" | "FIX" | "LIM" | "LIV" | "FID";
 
+/** Colunas do simulador: as cinco de sempre e, em veículos, os dois lances fixos em % (F25, F40). */
+export type TipoLance = TipoColuna | "F25" | "F40";
+/** Cores, concorrência e textos de rodapé de cada coluna: F25 usa os do Fixo e F40 os do Limitado. */
+export const CHAVE_VISUAL: Record<TipoLance, TipoColuna> = { SOR: "SOR", FIX: "FIX", LIM: "LIM", LIV: "LIV", FID: "FID", F25: "FIX", F40: "LIM" };
+
 export type Coluna = {
   fracaoCarta: number;
   /** parcelas do lance × parcela para lance × % embutido */
@@ -82,6 +132,8 @@ export type Coluna = {
   creditoDisponivel: number;
   /** ((crédito + taxa) − total pago até a contemplação − lance da carta − lance próprio) / prazo restante; nulo se o prazo restante acabou */
   parcelaApos: number | null;
+  /** meses que restam depois da contemplação (com parcela mínima, o saldo pode quitar antes do prazo) */
+  prazoRestante: number;
   /** parcela após × prazo restante */
   saldoDevedor: number | null;
   /** parcelas pagas até a contemplação */
@@ -102,27 +154,56 @@ export type Coluna = {
 export function calcularColuna(base: Base, credito: number, lance: { qtdParcelas: number; regra: RegraEmbutido } | null): Coluna {
   const fracaoCarta = lance ? fracaoEmbutido(lance.regra, lance.qtdParcelas) : 0;
   const totalLance = lance ? lance.qtdParcelas * base.parcelaLance : 0;
-  const recursoCarta = totalLance * fracaoCarta;
+  return montarColuna(base, credito, totalLance, totalLance * fracaoCarta, fracaoCarta);
+}
+
+export type RegraEmbutidoVeiculo = {
+  /** % que pode ser embutido, sobre a base abaixo; nulo = sem embutido */
+  embutido_pct: number | null;
+  /** lance = % do lance ofertado; categoria = % do crédito + taxas */
+  embutido_base: "lance" | "categoria";
+};
+
+/** Veículos: o lance é `pct`% da categoria (crédito + taxas). Sorteio: passe `lance = null`. */
+export function calcularColunaPct(base: Base, credito: number, lance: { pct: number; regra: RegraEmbutidoVeiculo } | null): Coluna {
+  const totalLance = lance ? (base.categoria * lance.pct) / 100 : 0;
+  let recursoCarta = 0;
+  if (lance && lance.regra.embutido_pct !== null) {
+    const p = Number(lance.regra.embutido_pct) / 100;
+    recursoCarta = lance.regra.embutido_base === "categoria" ? Math.min(totalLance, base.categoria * p) : totalLance * Math.min(1, p);
+  }
+  return montarColuna(base, credito, totalLance, recursoCarta, totalLance > 0 ? recursoCarta / totalLance : 0);
+}
+
+function montarColuna(base: Base, credito: number, totalLance: number, recursoCarta: number, fracaoCarta: number): Coluna {
   const recursoProprio = totalLance - recursoCarta;
   const creditoDisponivel = credito - recursoCarta;
   const saldoAntes = credito + base.taxaAdmValor - base.totalPago;
-  const parcelaApos = base.prazoRestante > 0 ? Math.max(0, (saldoAntes - totalLance) / base.prazoRestante) : null;
+  const saldo = Math.max(0, saldoAntes - totalLance);
+  let parcelaApos: number | null = base.prazoRestante > 0 ? saldo / base.prazoRestante : null;
+  let prazoRestante = base.prazoRestante;
+  // parcela mínima (veículos): se o rateio ficar abaixo dela, paga-se o mínimo e o saldo quita antes do prazo
+  if (parcelaApos !== null && base.parcelaMinima !== null && parcelaApos < base.parcelaMinima && saldo > 0) {
+    parcelaApos = base.parcelaMinima;
+    prazoRestante = Math.min(base.prazoRestante, Math.ceil(saldo / base.parcelaMinima));
+  }
   const creditoMenosProprio = creditoDisponivel - recursoProprio;
   // o custo compara o que se recebe de fato (já descontadas as parcelas pagas até a contemplação) com as parcelas que restam
-  const custoMensal = parcelaApos === null ? null : taxaMensal(base.prazoRestante, parcelaApos, creditoMenosProprio - base.totalPago);
+  const custoMensal = parcelaApos === null ? null : taxaMensal(prazoRestante, parcelaApos, creditoMenosProprio - base.totalPago);
   return {
     fracaoCarta,
     recursoCarta,
     recursoProprio,
     creditoDisponivel,
     parcelaApos,
-    saldoDevedor: parcelaApos === null ? null : parcelaApos * base.prazoRestante,
+    prazoRestante,
+    saldoDevedor: parcelaApos === null ? null : parcelaApos * prazoRestante,
     valorInvestido: base.totalPago,
     lanceTotal: totalLance,
     creditoMenosProprio,
     proprioPct: credito > 0 ? (recursoProprio / credito) * 100 : 0,
     custoMensal,
-    custoAnual: custoMensal === null ? null : (Math.pow(1 + custoMensal, 12) - 1),
+    custoAnual: custoMensal === null ? null : Math.pow(1 + custoMensal, 12) - 1,
   };
 }
 
@@ -159,6 +240,9 @@ export type PadroesSimulador = {
   seguroPct: number;
   lanceLivreParcelas: number;
   lanceFidelidadeParcelas: number;
+  /** veículos: % da categoria com que o simulador abre os lances livre e fidelidade */
+  lanceLivrePct: number;
+  lanceFidelidadePct: number;
   /** concorrência de cada lance, % (só se altera em Parâmetros globais) */
   concorrencia: Record<"FIX" | "LIM" | "LIV" | "FID", number>;
   /** textos do rodapé de cada coluna */
@@ -192,6 +276,8 @@ export function padroesDeLinha(l: Record<string, unknown> | null | undefined): P
     seguroPct: n(l?.seguro_padrao_pct, 0),
     lanceLivreParcelas: n(l?.lance_livre_parcelas, 150),
     lanceFidelidadeParcelas: n(l?.lance_fidelidade_parcelas, 130),
+    lanceLivrePct: n(l?.lance_livre_pct, 55),
+    lanceFidelidadePct: n(l?.lance_fidelidade_pct, 45),
     concorrencia: {
       FIX: n(l?.concorrencia_fixo_pct, 25),
       LIM: n(l?.concorrencia_limitado_pct, 10),
