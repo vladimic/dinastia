@@ -2,6 +2,13 @@
 // Regra: a cada mudança entregue, acrescentar uma entrada NO TOPO.
 export const VERSOES: { numero: string; data: string; itens: string[] }[] = [
   {
+    numero: "0114",
+    data: "31/10/2026",
+    itens: [
+      "Veículos, etapa 1 (modelo de dados, sem mudança nas telas): novas modalidades de lance Fixo 40% (cor do Limitado) e Fixo 25% (cor do Fixo), todas as modalidades de lance em % da categoria, teto do Livre, base do embutido (do lance ou da categoria), parcela mínima no grupo e plano reduzido em duas fases (Plano 40, 50, 75 e Clearance). Imóveis não mudam.",
+    ],
+  },
+  {
     numero: "0113",
     data: "31/10/2026",
     itens: [

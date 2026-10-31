@@ -19,9 +19,11 @@ const ORDEM_TIPO = [
   "LIV",
   "LIM",
   "FIX",
+  "F40",
+  "F25",
   "FID",
 ];
-export const ehLance = (codigo: string) => ["LIV", "LIM", "FIX", "FID"].includes(codigo);
+export const ehLance = (codigo: string) => ["LIV", "LIM", "FIX", "F40", "F25", "FID"].includes(codigo);
 
 const nums = (v: unknown) => ((v ?? []) as (number | string)[]).map(Number);
 
@@ -154,6 +156,12 @@ export type Modalidade = {
   max_parcelas_lance: number | null;
   embutido_max_parcelas: number | null;
   embutido_pct: number | null;
+  /** base do embutido_pct: "lance" (% do lance) ou "categoria" (% do crédito + taxas) */
+  embutido_base: "lance" | "categoria";
+  /** veículos: lance fixo em % da categoria */
+  lance_pct: number | null;
+  /** veículos: teto do lance livre/fidelidade em % da categoria */
+  max_lance_pct: number | null;
   a_partir_assembleia_cota: number;
   requisitos: string | null;
   tipo_contemplacao: TipoRef;
@@ -175,7 +183,7 @@ export async function carregarGrupo(numero: number) {
         `id, aprovado_por, aprovado_em, observacoes, pagamento_com_furo, fidelidade_meses,
          arquivo_importado(nome),
          grupo_assembleia_tipo_parcela(tipo_parcela(codigo, descricao, pct)),
-         grupo_modalidade(tipo, max_parcelas_lance, embutido_max_parcelas, embutido_pct,
+         grupo_modalidade(tipo, max_parcelas_lance, embutido_max_parcelas, embutido_pct, embutido_base, lance_pct, max_lance_pct,
            a_partir_assembleia_cota, requisitos, tipo_contemplacao(codigo, nome)),
          grupo_sequencia_faixa(assembleia_de, assembleia_ate, demais_tipo, demais_tipo_2,
            grupo_sequencia(ordem, quantidade, tipo, tipo_contemplacao(codigo, nome)))`,
