@@ -17,20 +17,21 @@ const dinheiro = (v: number | null | undefined) => (v === null || v === undefine
 const nf2 = new Intl.NumberFormat("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 const nf4 = new Intl.NumberFormat("pt-BR", { minimumFractionDigits: 4, maximumFractionDigits: 4 });
 
-type Cor = "navy" | "ouro" | "laranja" | "livre";
-type Meta = { chave: string; tipo: TipoColuna; titulo: string; numero?: number; cor: Cor };
+type Meta = { chave: string; tipo: TipoColuna; titulo: string; numero?: number };
 
 const COLUNAS: Meta[] = [
-  { chave: "sorteio", tipo: "SOR", titulo: "Sorteio", cor: "navy" },
-  { chave: "fixo", tipo: "FIX", titulo: "Lance Fixo", numero: 1, cor: "navy" },
-  { chave: "limitado", tipo: "LIM", titulo: "Lance Limitado", numero: 2, cor: "ouro" },
-  { chave: "livre", tipo: "LIV", titulo: "Lance Livre", numero: 3, cor: "livre" },
-  { chave: "fidelidade", tipo: "FID", titulo: "Lance Fidelidade", numero: 4, cor: "laranja" },
+  { chave: "sorteio", tipo: "SOR", titulo: "Sorteio" },
+  { chave: "fixo", tipo: "FIX", titulo: "Lance Fixo", numero: 1 },
+  { chave: "limitado", tipo: "LIM", titulo: "Lance Limitado", numero: 2 },
+  { chave: "livre", tipo: "LIV", titulo: "Lance Livre", numero: 3 },
+  { chave: "fidelidade", tipo: "FID", titulo: "Lance Fidelidade", numero: 4 },
 ];
 
 // cor de cada coluna só na borda de cima e em fundos claros: o corpo da página fica claro, distinto do menu azul
-const BORDA: Record<Cor, string> = { navy: "border-t-navy", ouro: "border-t-ouro", laranja: "border-t-laranja", livre: "border-t-tinta" };
-const FUNDO: Record<Cor, string> = { navy: "bg-lavanda", ouro: "bg-ouro-claro", laranja: "bg-laranja-claro", livre: "bg-[#efedf5]" };
+// cores de cada lance (as da Tabela Resumo, em pastel): faixa de cima, fundo e barra de concorrência
+const BORDA: Record<TipoColuna, string> = { SOR: "border-t-[#8cc063]", FIX: "border-t-[#6f93d6]", LIM: "border-t-[#f0a06b]", LIV: "border-t-[#ee7a7a]", FID: "border-t-[#ee8fee]" };
+const FUNDO: Record<TipoColuna, string> = { SOR: "bg-[#e6f2dc]", FIX: "bg-[#dde6f6]", LIM: "bg-[#fde6d6]", LIV: "bg-[#fbe0e0]", FID: "bg-[#fbe3fb]" };
+const BARRA: Record<TipoColuna, string> = { SOR: "bg-[#8cc063]", FIX: "bg-[#6f93d6]", LIM: "bg-[#f0a06b]", LIV: "bg-[#ee7a7a]", FID: "bg-[#ee8fee]" };
 
 type Coluna = Meta & {
   oferecido: boolean;
@@ -73,7 +74,7 @@ function Passo({ sinal, rotulo, desligado, aoClicar }: { sinal: string; rotulo: 
       title={rotulo}
       disabled={desligado}
       onClick={aoClicar}
-      className="flex h-6 w-5 shrink-0 items-center justify-center rounded border border-borda-campo bg-white text-[14px] leading-none font-bold text-navy hover:border-navy disabled:cursor-not-allowed disabled:opacity-35 disabled:hover:border-borda-campo"
+      className="flex h-6 w-4 shrink-0 items-center justify-center rounded border border-borda-campo bg-white text-[14px] leading-none font-bold text-navy hover:border-navy disabled:cursor-not-allowed disabled:opacity-35 disabled:hover:border-borda-campo"
     >
       {sinal}
     </button>
@@ -83,7 +84,7 @@ function Passo({ sinal, rotulo, desligado, aoClicar }: { sinal: string; rotulo: 
 function Cabecalho({ c, aoMudarQtd }: { c: Coluna; aoMudarQtd: (v: string) => void }) {
   const qtdNum = Number(c.qtd) || 0;
   return (
-    <div className={`flex min-h-[7rem] flex-col gap-1.5 rounded-t-lg border-t-4 px-2.5 py-2 ${BORDA[c.cor]} ${FUNDO[c.cor]}`}>
+    <div className={`flex min-h-[7rem] flex-col gap-1.5 rounded-t-lg border-t-4 px-2.5 py-2 ${BORDA[c.tipo]} ${FUNDO[c.tipo]}`}>
       <div className="flex items-center gap-1.5">
         {c.numero && (
           <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded border-2 border-navy text-[11px] leading-none font-extrabold">{c.numero}</span>
@@ -97,7 +98,7 @@ function Cabecalho({ c, aoMudarQtd }: { c: Coluna; aoMudarQtd: (v: string) => vo
           {c.oferecido && c.qtd !== null && (
             <div className="flex flex-col gap-0.5">
               <label
-                className={"flex items-center text-[11px] font-semibold text-tinta " + (c.qtdFixa ? "gap-1" : "flex-wrap gap-x-0.5")}
+                className={"flex items-center text-[11px] font-semibold text-tinta " + (c.qtdFixa ? "gap-1" : "gap-0.5 whitespace-nowrap")}
                 title={
                   c.icone === "cadeado"
                     ? `Lance com máximo pré-definido pelo grupo${c.teto !== null ? ` (${c.teto} parcelas)` : ""}`
@@ -107,7 +108,7 @@ function Cabecalho({ c, aoMudarQtd }: { c: Coluna; aoMudarQtd: (v: string) => vo
                 {!c.qtdFixa && <Passo sinal="−" rotulo={`Diminuir as parcelas do ${c.titulo}`} desligado={qtdNum <= 1} aoClicar={() => aoMudarQtd(String(Math.max(1, qtdNum - 1)))} />}
                 <span
                   className={
-                    "flex h-6 items-center gap-0.5 rounded border px-0.5 text-navy " +
+                    "flex h-6 items-center gap-px rounded border px-0.5 text-navy " +
                     (c.icone === "cadeado" ? "border-dashed border-navy " : "border-solid border-[#c2410c] ") + (c.qtdFixa ? "bg-linha" : "bg-white")
                   }
                 >
@@ -118,7 +119,7 @@ function Cabecalho({ c, aoMudarQtd }: { c: Coluna; aoMudarQtd: (v: string) => vo
                     value={c.qtd}
                     aria-label={`Parcelas do ${c.titulo}`}
                     onChange={(e) => aoMudarQtd(e.target.value.replace(/\D/g, "").slice(0, 3))}
-                    className="w-7 bg-transparent text-right text-[12px] font-bold tabular-nums outline-none"
+                    className={(c.qtdFixa ? "w-7" : "w-6") + " bg-transparent text-right text-[12px] font-bold tabular-nums outline-none"}
                   />
                 </span>
                 {!c.qtdFixa && (
@@ -129,7 +130,7 @@ function Cabecalho({ c, aoMudarQtd }: { c: Coluna; aoMudarQtd: (v: string) => vo
                     aoClicar={() => aoMudarQtd(String(Math.min(c.teto ?? 999, qtdNum + 1)))}
                   />
                 )}
-                <span className={c.qtdFixa ? "" : "basis-full"}>parcelas</span>
+                <span>{c.qtdFixa ? "parcelas" : "parc."}</span>
               </label>
             </div>
           )}
@@ -139,7 +140,7 @@ function Cabecalho({ c, aoMudarQtd }: { c: Coluna; aoMudarQtd: (v: string) => vo
               <span className="tabular-nums">{c.concorrencia === null ? "—" : `${c.concorrencia.toLocaleString("pt-BR", { maximumFractionDigits: 2 })}%`}</span>
             </div>
             <div className="mt-0.5 h-1.5 overflow-hidden rounded-full bg-white" role="img" aria-label={`Concorrência ${c.concorrencia ?? 0}%`}>
-              <div className="h-full bg-ouro" style={{ width: `${Math.min(100, (c.concorrencia ?? 0) * 3)}%` }} />
+              <div className={"h-full " + BARRA[c.tipo]} style={{ width: `${Math.min(100, (c.concorrencia ?? 0) * 3)}%` }} />
             </div>
           </div>
           <div className="mt-auto flex items-center gap-1 text-[10px] font-bold whitespace-nowrap text-tinta">
@@ -219,7 +220,7 @@ function Grade({ colunas, aoMudarQtd }: { colunas: Coluna[]; aoMudarQtd: (t: Tip
             return (
               <div key={c.chave} className="flex flex-col rounded-md border border-linha">
                 {visiveis.map((l) => (
-                  <div key={l.r} className={(aberto ? "min-h-[2.5rem] " : "min-h-[3.25rem] ") + "flex flex-1 flex-col items-center justify-center px-1 text-center " + (l.forte ? "bg-lavanda" : "")}>
+                  <div key={l.r} className={(aberto ? "min-h-[2.5rem] " : "min-h-[3.25rem] ") + "flex flex-1 flex-col items-center justify-center px-1 text-center " + (l.forte ? FUNDO[c.tipo] : "")}>
                     {msg ? (
                       l === visiveis[0] && <span className="text-[10px] leading-tight text-tinta">{msg}</span>
                     ) : (
@@ -247,7 +248,7 @@ function Grade({ colunas, aoMudarQtd }: { colunas: Coluna[]; aoMudarQtd: (t: Tip
       <div className={GRADE + " py-1.5"}>
         <div aria-hidden="true" />
         {colunas.map((c) => (
-          <div key={c.chave} className={`flex min-h-[3.2rem] flex-col items-center justify-center rounded-md px-1.5 py-1 text-center ${FUNDO[c.cor]}`}>
+          <div key={c.chave} className={`flex min-h-[3.2rem] flex-col items-center justify-center rounded-md px-1.5 py-1 text-center ${FUNDO[c.tipo]}`}>
             <div className="text-[11px] font-bold">{c.rodape.titulo}</div>
             <div className="text-[10px] text-tinta">{c.rodape.texto}</div>
           </div>

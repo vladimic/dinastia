@@ -2,6 +2,14 @@
 // Regra: a cada mudança entregue, acrescentar uma entrada NO TOPO.
 export const VERSOES: { numero: string; data: string; itens: string[] }[] = [
   {
+    numero: "0112",
+    data: "31/10/2026",
+    itens: [
+      "Simulador: nova paleta de cores por lance, em pastel e com as cores da Tabela Resumo: Sorteio verde, Fixo azul, Limitado laranja, Livre vermelho e Fidelidade rosa (cabeçalho, barra de concorrência, linha Lance Total e rodapé de cada coluna).",
+      "Simulador: o − e o + do Livre e do Fidelidade ficam na mesma linha do campo de parcelas (o texto passou para “parc.” nesses dois lances).",
+    ],
+  },
+  {
     numero: "0111",
     data: "31/10/2026",
     itens: [
