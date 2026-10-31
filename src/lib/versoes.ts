@@ -2,6 +2,13 @@
 // Regra: a cada mudança entregue, acrescentar uma entrada NO TOPO.
 export const VERSOES: { numero: string; data: string; itens: string[] }[] = [
   {
+    numero: "0113",
+    data: "31/10/2026",
+    itens: [
+      "Simulador: nos lances Livre e Fidelidade, o texto ao lado do − e do + volta a ser “parcelas” por extenso quando a coluna tem espaço; “parc.” só aparece em colunas estreitas.",
+    ],
+  },
+  {
     numero: "0112",
     data: "31/10/2026",
     itens: [
