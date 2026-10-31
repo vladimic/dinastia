@@ -10,7 +10,7 @@ Regras decididas com o negócio. Valem para qualquer família e prevalecem sobre
 ## Veículos
 - Lances em % da **categoria** (crédito + taxa de administração + fundo de reserva). O fundo de reserva apenas se soma à taxa.
 - **Embutido:** "25% para todas as modalidades" = até 25% da categoria. "Livre permitido até 60%" = embute o lance inteiro até 60% da categoria; o que passar é recurso próprio (lance de 70% = 60% embutido + 10% próprio). "20% limite máximo no livre" = até 20% da categoria (lance de 50% = 20% embutido + 30% próprio). "50% do valor ofertado" = até 50% do próprio lance. "Fixo 25%/40% … embutir o lance integral" = 100% do lance.
-- **Parcela mínima** depois da contemplação: a do PDF; sem ela, o padrão de Parâmetros globais (0,7%).
+- **Parcela mínima** depois da contemplação, em % da categoria (crédito + taxas): a do PDF; sem ela, o padrão de Parâmetros globais (0,7%).
 - **Plano reduzido em duas fases:** fase 1 = X% do crédito por mês (sem taxas) por N1 parcelas; fase 2 fecha os 100%. Parcela = crédito × % × (1 + taxa + fundo). Se o plano dura mais que a cota, as parcelas a mais (furo) são diluídas na contemplação, no prazo que resta da cota. Veículos não trabalham com furo.
 - Lance Fixo 25% e Fixo 40% são modalidades próprias (F25 e F40), com as cores do Fixo e do Limitado.
 - Sequência: um lance de cada tipo por assembleia; Fidelidade a partir da 13ª, com o mesmo teto do Livre.

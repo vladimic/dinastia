@@ -16,7 +16,12 @@ export type GrupoBase = {
   mes_reajuste: number | null;
   primeira_correcao: string | null;
   dia_vencimento: number | null;
+  /** veículos: parcela mínima após a contemplação, % da categoria */
+  parcela_minima_pct: number | string | null;
 };
+
+/** Plano reduzido em duas fases de uma versão (veículos). */
+export type PlanoFaseBase = { tipo: string; fase1_pct: number; fase1_parcelas: number; fase2_parcelas: number };
 
 export type VersaoBase = {
   assembleia_numero: number;
@@ -26,6 +31,7 @@ export type VersaoBase = {
   observacoes: string | null;
   pagamento_com_furo: boolean | null;
   tipos_parcela: string[];
+  planos_fase: PlanoFaseBase[];
   modalidades: Record<string, Modalidade>;
   faixas: Faixa[];
 };
@@ -59,6 +65,14 @@ export function classificar(l: Leitura, e: EstadoGrupo): Classificacao {
 export const tiposParcelaDe = (l: Leitura): string[] =>
   l.plano_reduzido !== undefined ? ["NORMAL", ...(l.plano_reduzido ? [l.plano_reduzido.tipo] : [])] : l.planos.DILUIDA.map((p) => TIPO_PARCELA[p]).filter(Boolean);
 
+/** Planos em duas fases da leitura (veículos), no formato da base. */
+export const planosFaseDe = (l: Leitura): PlanoFaseBase[] => {
+  const p = l.plano_reduzido;
+  return p && p.fase1_pct !== null && p.fase1_parcelas !== null && p.fase2_parcelas !== null
+    ? [{ tipo: p.tipo, fase1_pct: p.fase1_pct, fase1_parcelas: p.fase1_parcelas, fase2_parcelas: p.fase2_parcelas }]
+    : [];
+};
+
 const n = (v: unknown) => (v === null || v === undefined || v === "" ? null : Number(v));
 const mesmo = (a: unknown, b: unknown) => {
   const x = typeof a === "string" && a !== "" && !Number.isNaN(Number(a)) ? Number(a) : a;
@@ -78,6 +92,7 @@ const CAMPOS_GRUPO: { campo: keyof GrupoBase; rotulo: string; leitura: (l: Leitu
   { campo: "mes_reajuste", rotulo: "Mês do reajuste", leitura: (l) => l.mes_reajuste },
   { campo: "primeira_correcao", rotulo: "1ª correção", leitura: (l) => l.primeira_correcao },
   { campo: "dia_vencimento", rotulo: "Dia de vencimento", leitura: (l) => l.vencimento },
+  { campo: "parcela_minima_pct", rotulo: "Parcela mínima (% da categoria)", leitura: (l) => l.parcela_minima_pct },
 ];
 
 const CAMPOS_MODALIDADE: { campo: keyof Modalidade; rotulo: string; vazioConta: boolean }[] = [
@@ -87,9 +102,16 @@ const CAMPOS_MODALIDADE: { campo: keyof Modalidade; rotulo: string; vazioConta: 
   { campo: "emb_pct", rotulo: "embutido: % do lance", vazioConta: true },
   { campo: "a_partir", rotulo: "a partir da assembleia da cota", vazioConta: false },
   { campo: "req", rotulo: "requisitos", vazioConta: false },
+  // veículos: lances em % da categoria e a base do embutido
+  { campo: "lance_pct", rotulo: "lance fixo (% da categoria)", vazioConta: false },
+  { campo: "max_lance_pct", rotulo: "teto do lance (% da categoria)", vazioConta: false },
+  { campo: "emb_base", rotulo: "embutido: base (lance ou categoria)", vazioConta: false },
 ];
 
-const NOME_MODALIDADE: Record<string, string> = { SOR: "Sorteio", LIV: "Lance livre", LIM: "Lance limitado", FIX: "Lance fixo", FID: "Lance fidelidade" };
+// o que a base e a leitura trazem de cada campo (sem base de embutido, vale "lance", como nos imóveis)
+const valorDe = (m: Modalidade, campo: keyof Modalidade) => (campo === "emb_base" ? (m.emb_base ?? "lance") : (m[campo] ?? null));
+
+const NOME_MODALIDADE: Record<string, string> = { SOR: "Sorteio", LIV: "Lance livre", LIM: "Lance limitado", FIX: "Lance fixo", F40: "Lance fixo 40%", F25: "Lance fixo 25%", FID: "Lance fidelidade" };
 export const nomeModalidade = (t: string) => NOME_MODALIDADE[t] ?? t;
 
 export function comparar(l: Leitura, e: EstadoGrupo, c: Classificacao): Diferenca[] {
@@ -122,6 +144,13 @@ export function comparar(l: Leitura, e: EstadoGrupo, c: Classificacao): Diferenc
   const tAtuais = [...v.tipos_parcela].sort();
   if (!mesmaLista(tAtuais, tNovos)) d.push({ escopo: "tipos_parcela", chave: "", campo: "tipos_parcela", rotulo: "Tipos de parcela", valor_atual: tAtuais, valor_novo: tNovos });
 
+  // veículos: plano reduzido em duas fases (% da fase 1 e parcelas de cada fase); só se compara quando o leitor é o de veículos
+  if (l.plano_reduzido !== undefined) {
+    const pNovos = planosFaseDe(l);
+    const pAtuais = [...v.planos_fase].sort((x, y) => x.tipo.localeCompare(y.tipo));
+    if (canon(pAtuais) !== canon(pNovos)) d.push({ escopo: "tipos_parcela", chave: "", campo: "planos_fase", rotulo: "Plano reduzido em duas fases", valor_atual: pAtuais, valor_novo: pNovos });
+  }
+
   for (const t of new Set([...Object.keys(v.modalidades), ...Object.keys(l.modalidades)])) {
     const a = v.modalidades[t];
     const b = l.modalidades[t];
@@ -131,8 +160,8 @@ export function comparar(l: Leitura, e: EstadoGrupo, c: Classificacao): Diferenc
     }
     for (const f of CAMPOS_MODALIDADE) {
       // campo vazio no PDF não apaga o que a base tem (exceto o embutido, que o PDF sempre define)
-      if (!f.vazioConta && b[f.campo] === null) continue;
-      if (!mesmo(a[f.campo], b[f.campo])) d.push({ escopo: "modalidade", chave: t, campo: f.campo, rotulo: `${nomeModalidade(t)}: ${f.rotulo}`, valor_atual: a[f.campo] ?? null, valor_novo: b[f.campo] });
+      if (!f.vazioConta && valorDe(b, f.campo) === null) continue;
+      if (!mesmo(valorDe(a, f.campo), valorDe(b, f.campo))) d.push({ escopo: "modalidade", chave: t, campo: f.campo, rotulo: `${nomeModalidade(t)}: ${f.rotulo}`, valor_atual: valorDe(a, f.campo), valor_novo: valorDe(b, f.campo) });
     }
   }
 
@@ -158,7 +187,7 @@ function resumoGrupoNovo(l: Leitura) {
     creditos: l.creditos.length,
     tipos_parcela: tiposParcelaDe(l),
     // em ordem fixa: o banco (jsonb) devolve as chaves de l.modalidades noutra ordem e a conferência antes de aplicar compara este resumo
-    modalidades: ["SOR", "LIV", "LIM", "FIX", "FID"].filter((t) => t in l.modalidades),
+    modalidades: ["SOR", "LIV", "LIM", "FIX", "F40", "F25", "FID"].filter((t) => t in l.modalidades),
   };
 }
 
@@ -181,10 +210,11 @@ export function montarFinal(l: Leitura, e: EstadoGrupo, c: Classificacao, decidi
   if (c.tipo === "grupo_novo") {
     return {
       ...comum,
-      grupo: { familia: l.familia.replace("-", "_"), prazo_grupo_meses: l.prazo_grupo, participantes: l.participantes, taxa_adm_total: l.taxa_adm, fundo_reserva: l.fundo_reserva, indice: l.indice, mes_reajuste: l.mes_reajuste, primeira_correcao: l.primeira_correcao, dia_vencimento: l.vencimento },
+      grupo: { familia: l.familia.replace("-", "_"), prazo_grupo_meses: l.prazo_grupo, participantes: l.participantes, taxa_adm_total: l.taxa_adm, fundo_reserva: l.fundo_reserva, indice: l.indice, mes_reajuste: l.mes_reajuste, primeira_correcao: l.primeira_correcao, dia_vencimento: l.vencimento, parcela_minima_pct: l.parcela_minima_pct },
       versao: {
         data_assembleia: l.data_assembleia, prazo_cota: l.prazo_cota, observacoes: l.observacoes, creditos: l.creditos.map((x) => x.credito), tipos_parcela: tiposParcelaDe(l),
-        pagamento_com_furo: true, // grupo novo entra com pagamento com furo = sim
+        pagamento_com_furo: l.familia !== "veiculos", // grupo novo entra com pagamento com furo = sim (veículos não trabalham com furo)
+        planos_fase: planosFaseDe(l),
         modalidades: Object.entries(l.modalidades).map(([tipo, m]) => limpa({ tipo, ...m })),
         faixas: l.faixas.map((f) => limpa({ de: f.de, ate: f.ate, demais: f.demais, demais2: f.demais2, itens: f.itens })),
       },
@@ -209,6 +239,7 @@ export function montarFinal(l: Leitura, e: EstadoGrupo, c: Classificacao, decidi
     mes_reajuste: val("grupo", "", "mes_reajuste", g.mes_reajuste),
     primeira_correcao: val("grupo", "", "primeira_correcao", g.primeira_correcao),
     dia_vencimento: val("grupo", "", "dia_vencimento", g.dia_vencimento),
+    parcela_minima_pct: val("grupo", "", "parcela_minima_pct", g.parcela_minima_pct),
   };
 
   const mods: Record<string, Modalidade> = {};
@@ -238,6 +269,7 @@ export function montarFinal(l: Leitura, e: EstadoGrupo, c: Classificacao, decidi
       observacoes: val("versao", "", "observacoes", v.observacoes),
       creditos: val("creditos", "", "creditos", lista(v.creditos)),
       tipos_parcela: val("tipos_parcela", "", "tipos_parcela", v.tipos_parcela),
+      planos_fase: val("tipos_parcela", "", "planos_fase", v.planos_fase),
       pagamento_com_furo: v.pagamento_com_furo ?? false,
       modalidades: Object.entries(mods).map(([tipo, m]) => limpa({ tipo, ...m })),
       faixas: [...faixas.values()].filter((f): f is Faixa => !!f).sort((a, b) => a.de - b.de).map((f) => limpa({ de: f.de, ate: f.ate, demais: f.demais, demais2: f.demais2, itens: f.itens })),

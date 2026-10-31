@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { escolherPasta, guardarPasta, lerPastaGuardada, liberarLeitura, pdfsDaRaiz, suportaSeletorDePasta, type PastaHandle } from "@/lib/pastaLocal";
 import { extrairLinhas } from "@/lib/pdf/extrair";
+import { ehEstrategia } from "@/lib/pdf/estrategia";
 import { interpretar } from "@/lib/pdf/interpretar";
 import type { Leitura } from "@/lib/pdf/tipos";
 import { hashesJaLidos, registrarLeituras, type ResumoLote } from "./actions";
@@ -26,7 +27,7 @@ export function LeituraPdfs({ rotulo, caminho, chave }: { rotulo: string; caminh
   const router = useRouter();
   const entrada = useRef<HTMLInputElement>(null);
   const [estado, setEstado] = useState<{ fase: string; feito: number; total: number } | null>(null);
-  const [resumo, setResumo] = useState<{ pdfs: number; variacoes: number; duplicados: number; jaLidos: number; r: ResumoLote; ilegiveis: string[]; desconsiderados: { arquivo: string; motivo: string }[] } | null>(null);
+  const [resumo, setResumo] = useState<{ pdfs: number; variacoes: number; duplicados: number; jaLidos: number; r: ResumoLote; ilegiveis: string[]; estrategias: string[]; desconsiderados: { arquivo: string; motivo: string }[] } | null>(null);
   const [erro, setErro] = useState("");
   const ocupado = estado !== null;
   const [guardada, setGuardada] = useState<PastaHandle | null>(null);
@@ -104,6 +105,7 @@ export function LeituraPdfs({ rotulo, caminho, chave }: { rotulo: string; caminh
       let leituras: Leitura[] = [];
       let falhas: { arquivo: string; hash: string; motivo: string }[] = [];
       const desconsiderados: { arquivo: string; motivo: string }[] = []; // PDFs que o leitor não conseguiu interpretar
+      const estrategias: string[] = []; // "Estratégia Comercial" de Veículos: não é tabela de grupo
       const enviar = async () => {
         if (!leituras.length && !falhas.length) return;
         const r = await registrarLeituras(leituras, falhas);
@@ -118,6 +120,11 @@ export function LeituraPdfs({ rotulo, caminho, chave }: { rotulo: string; caminh
         const { file, dados } = unicos.get(novos[i])!;
         try {
           const linhas = await extrairLinhas(pdfjs, new Uint8Array(dados.slice(0)));
+          // a Estratégia Comercial (um PDF com todos os grupos) não entra: os valores vêm só do PDF de cada grupo
+          if (ehEstrategia(linhas)) {
+            estrategias.push(file.name);
+            continue;
+          }
           const lida = interpretar(linhas, file.name, novos[i]);
           leituras.push(lida);
           if (lida.erros.length) desconsiderados.push({ arquivo: file.name, motivo: lida.erros[0] });
@@ -133,7 +140,7 @@ export function LeituraPdfs({ rotulo, caminho, chave }: { rotulo: string; caminh
       }
       setEstado({ fase: "Comparando com a base", feito: novos.length, total: novos.length });
       await enviar();
-      setResumo({ pdfs: pdfs.length, variacoes, duplicados, jaLidos: unicos.size - novos.length, r: total, ilegiveis, desconsiderados });
+      setResumo({ pdfs: pdfs.length, variacoes, duplicados, jaLidos: unicos.size - novos.length, r: total, ilegiveis, estrategias, desconsiderados });
       router.refresh();
     } catch (e) {
       setErro((e as Error).message || "Não foi possível concluir a leitura.");
@@ -190,6 +197,12 @@ export function LeituraPdfs({ rotulo, caminho, chave }: { rotulo: string; caminh
         <p role="status" className="text-xs text-tinta">
           <strong className="text-navy">{resumo.pdfs} PDFs na pasta:</strong> {resumo.variacoes > 0 && `${resumo.variacoes} variações “- 1%” / “- 2%” desprezadas · `}{resumo.duplicados} duplicados desprezados · {resumo.jaLidos} já lidos antes · {resumo.r.lidos} lidos agora
           {resumo.r.lidos > 0 && ` (${resumo.r.novos} grupos novos, ${resumo.r.novasAssembleias} novas assembleias, ${resumo.r.semMudanca} sem mudança, ${resumo.r.ignorados} ignorados, ${resumo.r.erros} com erro)`}.
+          {resumo.estrategias.length > 0 && (
+            <span className="text-tinta">
+              {" "}
+              Estratégia Comercial ({resumo.estrategias.join(", ")}) não é tabela de grupo: não foi importada nem usada nos valores.
+            </span>
+          )}
           {resumo.ilegiveis.length > 0 && (
             <span className="font-semibold text-[#9b1c1c]">
               {" "}

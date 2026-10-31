@@ -2,6 +2,17 @@
 // Regra: a cada mudança entregue, acrescentar uma entrada NO TOPO.
 export const VERSOES: { numero: string; data: string; itens: string[] }[] = [
   {
+    numero: "0118",
+    data: "31/10/2026",
+    itens: [
+      "Veículos, etapa 4 (importação): a importação de tabelas passa a gravar Veículos e Motos, com o mesmo fluxo dos Imóveis: leitura da pasta, comparação com a base, decisão por campo (aceitar, rejeitar, editar) e aplicação. Entram os campos novos: parcela mínima do grupo, plano reduzido em duas fases, Fixo 40% e 25%, teto do Livre e base do embutido. Grupo novo de Veículos entra sem furo.",
+      "Importação: cada família tem a sua assembleia de referência para a lista de grupos sem PDF (Imóveis e Veículos têm datas diferentes) e o salto automático também vale para Veículos.",
+      "Importação: a Estratégia Comercial de Veículos é reconhecida e deixada de lado (não é tabela de grupo nem fonte de valores), com um aviso na leitura.",
+      "Veículos: a leitura passou a entender a quantidade de sorteios da faixa (ex.: “03 Sorteios Cotas Ativas” nos grupos 1690 e 1691) e confere que a sequência não repete modalidade. O backup leva e restaura os campos novos.",
+      "Parcela mínima de Veículos passa a ser % da categoria (crédito + taxas), no PDF e no padrão de Parâmetros globais.",
+    ],
+  },
+  {
     numero: "0117",
     data: "31/10/2026",
     itens: [
