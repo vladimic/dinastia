@@ -19,13 +19,16 @@ export type ItemGrupo = {
   participantes: number | null;
   furo: boolean;
   reduzidas: number[];
+  /** quantidade de parcelas reduzidas dos planos em duas fases (veículos) */
+  fases?: number[];
   /** códigos das 20 primeiras contemplações (desenhadas no pop-up) */
   seq: string[];
 };
 
 type Familia = { slug: string; nome: string };
 
-const PARTICIPANTES_MAX = 9999; // barra cheia
+// barra cheia: 9999 participantes (imóveis) e 5000 (veículos)
+const participantesMax = (familia: string) => (familia === "veiculos" ? 5000 : 9999);
 const mil = (v: number) => `R$ ${Math.round(v / 1000).toLocaleString("pt-BR")} mil`;
 const dataBR = (iso: string) => iso.slice(0, 10).split("-").reverse().join("/");
 
@@ -327,7 +330,8 @@ function Lista({
             const sel = g.numero === ativo;
             const r = realizadas(g);
             const tam = g.participantes;
-            const marcas = [g.furo && "furo", tem70(g) && "parcela 70", temAte55(g) && "parcela 50 ou 55"].filter(Boolean).join(", ");
+            const veic = familia === "veiculos";
+            const marcas = (veic ? [g.reduzidas.length > 0 && "parcela reduzida"] : [g.furo && "furo", tem70(g) && "parcela 70", temAte55(g) && "parcela 50 ou 55"]).filter(Boolean).join(", ");
             return (
               <li key={g.numero}>
                 <Link
@@ -353,9 +357,15 @@ function Lista({
                   <span className="flex items-center justify-between gap-1">
                     <span className="text-[14px] leading-tight font-extrabold tabular-nums">{g.numero}</span>
                     <span aria-hidden="true" className="flex shrink-0 gap-[2px]">
-                      {g.furo && <i className="h-[7px] w-[7px] rounded-full bg-furo" />}
-                      {tem70(g) && <i className="h-[7px] w-[7px] rounded-full bg-setenta" />}
-                      {temAte55(g) && <i className="h-[7px] w-[7px] rounded-full bg-reduzida" />}
+                      {veic ? (
+                        g.reduzidas.length > 0 && <i className="h-[7px] w-[7px] rounded-full bg-reduzida" />
+                      ) : (
+                        <>
+                          {g.furo && <i className="h-[7px] w-[7px] rounded-full bg-furo" />}
+                          {tem70(g) && <i className="h-[7px] w-[7px] rounded-full bg-setenta" />}
+                          {temAte55(g) && <i className="h-[7px] w-[7px] rounded-full bg-reduzida" />}
+                        </>
+                      )}
                     </span>
                   </span>
                   <span className="truncate text-[10px] leading-none font-semibold text-tinta tabular-nums">
@@ -363,7 +373,7 @@ function Lista({
                   </span>
                   <span className="flex items-center gap-1.5">
                     <span className="relative h-1.5 flex-1 overflow-hidden rounded-full bg-lavanda" aria-hidden="true">
-                      {tam ? <span className="absolute inset-y-0 left-0 rounded-full bg-[#8b83c9]" style={{ width: `${Math.min(100, (tam / PARTICIPANTES_MAX) * 100)}%` }} /> : null}
+                      {tam ? <span className="absolute inset-y-0 left-0 rounded-full bg-[#8b83c9]" style={{ width: `${Math.min(100, (tam / participantesMax(familia)) * 100)}%` }} /> : null}
                     </span>
                     <span className="text-[11px] leading-none font-bold tabular-nums">{tam ? tam.toLocaleString("pt-BR") : "—"}</span>
                   </span>

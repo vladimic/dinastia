@@ -12,7 +12,10 @@ export const tem70 = (g: Pick<ItemGrupo, "reduzidas">) => g.reduzidas.includes(7
 
 /** Estado dos filtros + a barra desenhada (`barra`) + os grupos que passam (`visiveis`, em ordem de número). */
 export function useFiltrosGrupos(grupos: ItemGrupo[], familia: string) {
-  const [filtros, setFiltros] = useState({ furo: false, r70: false, r55: false });
+  const [filtros, setFiltros] = useState({ furo: false, r70: false, r55: false, red: false });
+  // quantidades de parcelas reduzidas marcadas (veículos; vazio = todas)
+  const [fasesMarcadas, setFasesMarcadas] = useState<number[]>([]);
+  const veic = familia === "veiculos";
   // faixa de crédito escolhida (null = toda a faixa da família) e participantes marcados (vazio = todos)
   const [faixa, setFaixa] = useState<{ de: number; ate: number } | null>(null);
   const [marcados, setMarcados] = useState<number[]>([]);
@@ -22,6 +25,8 @@ export function useFiltrosGrupos(grupos: ItemGrupo[], familia: string) {
     setFamiliaDoFiltro(familia);
     setFaixa(null);
     setMarcados([]);
+    setFasesMarcadas([]);
+    setFiltros({ furo: false, r70: false, r55: false, red: false });
   }
 
   // do menor ao maior crédito de todos os grupos da família (em múltiplos de R$ 1.000)
@@ -31,6 +36,7 @@ export function useFiltrosGrupos(grupos: ItemGrupo[], familia: string) {
     if (!mins.length) return null;
     return { minimo: Math.floor(Math.min(...mins) / 1000) * 1000, maximo: Math.ceil(Math.max(...maxs) / 1000) * 1000 };
   }, [grupos]);
+  const valoresFases = useMemo(() => [...new Set(grupos.flatMap((g) => g.fases ?? []))].sort((a, b) => a - b), [grupos]);
   const valoresParticipantes = useMemo(() => [...new Set(grupos.flatMap((g) => (g.participantes ? [g.participantes] : [])))].sort((a, b) => a - b), [grupos]);
   const de = limites ? Math.max(limites.minimo, Math.min(faixa?.de ?? limites.minimo, limites.maximo)) : 0;
   const ate = limites ? Math.max(de, Math.min(faixa?.ate ?? limites.maximo, limites.maximo)) : 0;
@@ -43,17 +49,20 @@ export function useFiltrosGrupos(grupos: ItemGrupo[], familia: string) {
       (g) =>
         noCredito(g) &&
         (!marcados.length || (g.participantes !== null && marcados.includes(g.participantes))) &&
+        (!fasesMarcadas.length || (g.fases ?? []).some((x) => fasesMarcadas.includes(x))) &&
+        (!filtros.red || g.reduzidas.length > 0) &&
         (!filtros.furo || g.furo) &&
         (!filtros.r70 || tem70(g)) &&
         (!filtros.r55 || temAte55(g)),
     )
     .sort((a, b) => a.numero - b.numero);
 
-  const temFiltro = filtraCredito || marcados.length > 0 || filtros.furo || filtros.r70 || filtros.r55;
+  const temFiltro = filtraCredito || marcados.length > 0 || fasesMarcadas.length > 0 || filtros.red || filtros.furo || filtros.r70 || filtros.r55;
   const limparTudo = () => {
-    setFiltros({ furo: false, r70: false, r55: false });
+    setFiltros({ furo: false, r70: false, r55: false, red: false });
     setFaixa(null);
     setMarcados([]);
+    setFasesMarcadas([]);
   };
 
   const chip = (on: boolean) =>
@@ -62,18 +71,54 @@ export function useFiltrosGrupos(grupos: ItemGrupo[], familia: string) {
   const barra = (
     <>
     <div className="flex shrink-0 flex-wrap gap-1.5" role="group" aria-label="Filtros">
-      <button type="button" aria-pressed={filtros.furo} onClick={() => setFiltros((f) => ({ ...f, furo: !f.furo }))} className={chip(filtros.furo)}>
-        <i aria-hidden="true" className="h-2 w-2 rounded-full bg-furo" /> Furo
-      </button>
-      <button type="button" aria-pressed={filtros.r70} onClick={() => setFiltros((f) => ({ ...f, r70: !f.r70 }))} className={chip(filtros.r70)}>
-        <i aria-hidden="true" className="h-2 w-2 rounded-full bg-setenta" /> Parcela 70
-      </button>
-      <button type="button" aria-pressed={filtros.r55} onClick={() => setFiltros((f) => ({ ...f, r55: !f.r55 }))} className={chip(filtros.r55)}>
-        <i aria-hidden="true" className="h-2 w-2 rounded-full bg-reduzida" /> Parcela 50 / 55
-      </button>
+      {veic ? (
+        <button type="button" aria-pressed={filtros.red} onClick={() => setFiltros((f) => ({ ...f, red: !f.red }))} className={chip(filtros.red)}>
+          <i aria-hidden="true" className="h-2 w-2 rounded-full bg-reduzida" /> Parcela reduzida
+        </button>
+      ) : (
+        <>
+          <button type="button" aria-pressed={filtros.furo} onClick={() => setFiltros((f) => ({ ...f, furo: !f.furo }))} className={chip(filtros.furo)}>
+            <i aria-hidden="true" className="h-2 w-2 rounded-full bg-furo" /> Furo
+          </button>
+          <button type="button" aria-pressed={filtros.r70} onClick={() => setFiltros((f) => ({ ...f, r70: !f.r70 }))} className={chip(filtros.r70)}>
+            <i aria-hidden="true" className="h-2 w-2 rounded-full bg-setenta" /> Parcela 70
+          </button>
+          <button type="button" aria-pressed={filtros.r55} onClick={() => setFiltros((f) => ({ ...f, r55: !f.r55 }))} className={chip(filtros.r55)}>
+            <i aria-hidden="true" className="h-2 w-2 rounded-full bg-reduzida" /> Parcela 50 / 55
+          </button>
+        </>
+      )}
     </div>
     {limites && (
       <FiltroCredito minimo={limites.minimo} maximo={limites.maximo} de={de} ate={ate} aoMudar={(a, b) => setFaixa({ de: a, ate: b })} />
+    )}
+    {veic && valoresFases.length > 0 && (
+      <div role="group" aria-labelledby="rotulo-fases" className="flex h-[42px] shrink-0 flex-col justify-center gap-[3px]">
+        <div className="flex h-3 items-center">
+          <span id="rotulo-fases" className="text-[10px] leading-none font-extrabold tracking-wider text-tinta uppercase">
+            Parcelas reduzidas
+          </span>
+        </div>
+        <div className="flex items-center gap-1">
+          {valoresFases.map((v) => {
+            const on = fasesMarcadas.includes(v);
+            return (
+              <button
+                key={v}
+                type="button"
+                aria-pressed={on}
+                onClick={() => setFasesMarcadas((m) => (m.includes(v) ? m.filter((x) => x !== v) : [...m, v]))}
+                className={
+                  "flex h-[26px] min-w-[2.5rem] items-center justify-center rounded-full border px-2 text-[12px] font-bold tabular-nums " +
+                  (on ? "border-laranja bg-laranja-claro text-navy" : "border-borda-campo bg-white text-navy hover:border-navy")
+                }
+              >
+                {v}
+              </button>
+            );
+          })}
+        </div>
+      </div>
     )}
     {valoresParticipantes.length > 0 && (
       <div role="group" aria-labelledby="rotulo-participantes" className="flex h-[42px] shrink-0 flex-col justify-center gap-[3px]">

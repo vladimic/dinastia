@@ -91,9 +91,9 @@ function Informacoes() {
             info.participantes || "—"
           )}
         </Campo>
-        <Campo rotulo="Taxa adm. total">
+        <Campo rotulo="Taxa de administração">
           {editando ? (
-            <input className={campo} inputMode="decimal" aria-label="Taxa de administração total" value={info.taxa_adm_total} onChange={muda("taxa_adm_total")} onBlur={sai("taxa_adm_total")} onKeyDown={enter} />
+            <input className={campo} inputMode="decimal" aria-label="Taxa de administração" value={info.taxa_adm_total} onChange={muda("taxa_adm_total")} onBlur={sai("taxa_adm_total")} onKeyDown={enter} />
           ) : (
             info.taxa_adm_total || "—"
           )}

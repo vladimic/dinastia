@@ -137,6 +137,7 @@ const paraItem = (l: LinhaLote, tipos: DadosLote["tipos"]): ItemGrupo => ({
   participantes: l.participantes,
   furo: l.furo,
   reduzidas: tipos.filter((t) => t.pct < 100 && l.tipos.includes(t.codigo)).map((t) => t.pct).sort((a, b) => a - b),
+  fases: l.fases ?? [],
   seq: [],
 });
 

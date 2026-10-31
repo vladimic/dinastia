@@ -3,6 +3,7 @@ import { Suspense } from "react";
 import { AcessoRestrito } from "@/components/AcessoRestrito";
 import { createClient } from "@/lib/supabase/server";
 import { ehAdministrador } from "@/lib/usuario";
+import { FAMILIAS, nomeFamilia } from "@/lib/grupos";
 import { excluirModalidade, incluirModalidade, salvarModalidade } from "./actions";
 
 export const metadata: Metadata = { title: "Modalidades de Contemplação · Dinastia" };
@@ -33,12 +34,12 @@ async function Lista({ searchParams }: { searchParams: PageProps<"/modalidades">
   if (!(await ehAdministrador())) return <AcessoRestrito />;
   const sp = await searchParams;
   const supabase = await createClient();
-  const { data, error } = await supabase.from("tipo_contemplacao").select("codigo, nome, cor").order("codigo");
+  const { data, error } = await supabase.from("tipo_contemplacao").select("familia, codigo, nome, cor").order("familia").order("codigo");
   if (error) throw error;
   const erro = typeof sp.erro === "string" ? (ERROS[sp.erro] ?? ERROS.dados) : null;
 
   return (
-    <div className="flex w-[40rem] max-w-full flex-col gap-4">
+    <div className="flex w-[46rem] max-w-full flex-col gap-4">
       {sp.salvo === "1" && (
         <p role="status" className="rounded-lg bg-ok-fundo px-3 py-2 text-sm font-semibold text-ok">
           Modalidades salvas.
@@ -51,7 +52,8 @@ async function Lista({ searchParams }: { searchParams: PageProps<"/modalidades">
       )}
 
       <div className="rounded-2xl border border-borda bg-white p-5">
-        <div className="mb-2 grid grid-cols-[6rem_1fr_4rem_auto] gap-3 text-[11px] font-semibold uppercase tracking-wide text-tinta">
+        <div className="mb-2 grid grid-cols-[7rem_6rem_1fr_4rem_auto] gap-3 text-[11px] font-semibold uppercase tracking-wide text-tinta">
+          <span>Família</span>
           <span>Código</span>
           <span>Nome</span>
           <span>Cor</span>
@@ -59,9 +61,11 @@ async function Lista({ searchParams }: { searchParams: PageProps<"/modalidades">
         </div>
         <ul className="flex flex-col gap-2">
           {(data ?? []).map((m) => (
-            <li key={m.codigo} className="flex items-center gap-2">
-              <form action={salvarModalidade} className="grid flex-1 grid-cols-[6rem_1fr_4rem_auto] items-center gap-3">
+            <li key={`${m.familia}-${m.codigo}`} className="flex items-center gap-2">
+              <form action={salvarModalidade} className="grid flex-1 grid-cols-[7rem_6rem_1fr_4rem_auto] items-center gap-3">
+                <input type="hidden" name="familia" value={m.familia} />
                 <input type="hidden" name="codigo" value={m.codigo} />
+                <span className="text-xs font-semibold text-tinta">{nomeFamilia(m.familia)}</span>
                 <span className="font-mono text-sm font-bold">{m.codigo}</span>
                 <input className="campo-sm" name="nome" defaultValue={m.nome} maxLength={80} required aria-label={`Nome de ${m.codigo}`} />
                 <input type="color" name="cor" defaultValue={m.cor.toLowerCase()} className="h-8 w-14 cursor-pointer rounded border border-borda-campo bg-campo p-0.5" aria-label={`Cor de ${m.codigo}`} />
@@ -70,6 +74,7 @@ async function Lista({ searchParams }: { searchParams: PageProps<"/modalidades">
                 </button>
               </form>
               <form action={excluirModalidade}>
+                <input type="hidden" name="familia" value={m.familia} />
                 <input type="hidden" name="codigo" value={m.codigo} />
                 <button type="submit" className="min-h-8 rounded-[10px] border border-borda-campo px-3 text-xs font-semibold text-tinta hover:bg-linha">
                   Excluir
@@ -80,7 +85,20 @@ async function Lista({ searchParams }: { searchParams: PageProps<"/modalidades">
         </ul>
       </div>
 
-      <form action={incluirModalidade} className="grid grid-cols-[6rem_1fr_4rem_auto] items-end gap-3 rounded-2xl border border-borda bg-white p-5">
+      <form action={incluirModalidade} className="grid grid-cols-[7rem_6rem_1fr_4rem_auto] items-end gap-3 rounded-2xl border border-borda bg-white p-5">
+        <label className="flex flex-col gap-1 text-[11px] font-semibold text-tinta">
+          Família
+          <select className="campo-sm" name="familia" required defaultValue="">
+            <option value="" disabled>
+              Escolha
+            </option>
+            {FAMILIAS.map((f) => (
+              <option key={f.slug} value={f.slug}>
+                {f.nome}
+              </option>
+            ))}
+          </select>
+        </label>
         <label className="flex flex-col gap-1 text-[11px] font-semibold text-tinta">
           Código
           <input className="campo-sm font-mono uppercase" name="codigo" maxLength={10} required />

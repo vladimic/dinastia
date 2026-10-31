@@ -52,6 +52,8 @@ export type GrupoResumo = {
   furo: boolean;
   /** percentuais de parcela reduzida (abaixo de 100) oferecidos na versão vigente, do menor para o maior */
   reduzidas: number[];
+  /** quantidade de parcelas reduzidas (fase 1) dos planos em duas fases, ex.: 12, 18, 24 (veículos) */
+  fases: number[];
 };
 
 const TAMANHO_POPUP = 20;
@@ -68,12 +70,12 @@ export async function listarGrupos(familia: string): Promise<GrupoResumo[]> {
   // sequência da versão vigente de cada grupo, numa consulta só
   const ids = (data ?? []).map((g) => g.grupo_assembleia_id as number);
   const seqPorVersao = new Map<number, string[]>();
-  const marcasPorVersao = new Map<number, { furo: boolean; reduzidas: number[] }>();
+  const marcasPorVersao = new Map<number, { furo: boolean; reduzidas: number[]; fases: number[] }>();
   if (ids.length) {
     const { data: versoes, error: e2 } = await supabase
       .from("grupo_assembleia")
       .select(
-        "id, fidelidade_meses, pagamento_com_furo, grupo_assembleia_tipo_parcela(tipo_parcela(pct)), grupo_sequencia_faixa(assembleia_de, assembleia_ate, demais_tipo, demais_tipo_2, grupo_sequencia(ordem, quantidade, tipo))",
+        "id, fidelidade_meses, pagamento_com_furo, grupo_assembleia_tipo_parcela(fase1_parcelas, tipo_parcela(pct)), grupo_sequencia_faixa(assembleia_de, assembleia_ate, demais_tipo, demais_tipo_2, grupo_sequencia(ordem, quantidade, tipo))",
       )
       .in("id", ids);
     if (e2) throw e2;
@@ -100,10 +102,12 @@ export async function listarGrupos(familia: string): Promise<GrupoResumo[]> {
       if (m?.simples) seq = linhaDetalhada(m, (ver.fidelidade_meses as number | null) ?? null, TAMANHO_POPUP).map((p) => p.codigo);
       else if (faixas.length) seq = montarOrdem(faixas[faixas.length - 1].itens, faixas[faixas.length - 1].demais, TAMANHO_POPUP, faixas[faixas.length - 1].demais2);
       seqPorVersao.set(ver.id as number, seq);
-      const pcts = ((ver.grupo_assembleia_tipo_parcela ?? []) as unknown as { tipo_parcela: { pct: number | string } | null }[]).map((t) => Number(t.tipo_parcela?.pct));
+      const tps = (ver.grupo_assembleia_tipo_parcela ?? []) as unknown as { fase1_parcelas: number | null; tipo_parcela: { pct: number | string } | null }[];
+      const pcts = tps.map((t) => Number(t.tipo_parcela?.pct));
       marcasPorVersao.set(ver.id as number, {
         furo: ver.pagamento_com_furo === true,
         reduzidas: [...new Set(pcts.filter((p) => Number.isFinite(p) && p < 100))].sort((a, b) => a - b),
+        fases: [...new Set(tps.flatMap((t) => (t.fase1_parcelas ? [t.fase1_parcelas] : [])))].sort((a, b) => a - b),
       });
     }
   }
@@ -122,6 +126,7 @@ export async function listarGrupos(familia: string): Promise<GrupoResumo[]> {
       participantes: (g.participantes as number | null) ?? null,
       furo: marcasPorVersao.get(g.grupo_assembleia_id as number)?.furo ?? false,
       reduzidas: marcasPorVersao.get(g.grupo_assembleia_id as number)?.reduzidas ?? [],
+      fases: marcasPorVersao.get(g.grupo_assembleia_id as number)?.fases ?? [],
     };
   });
 }
@@ -191,8 +196,8 @@ export async function carregarGrupo(numero: number) {
       .eq("id", g.grupo_assembleia_id)
       .single(),
     supabase.from("grupo_assembleia").select("id", { count: "exact", head: true }).eq("grupo_numero", numero),
-    supabase.from("tipo_parcela").select("codigo, descricao, pct, rotulo").order("pct", { ascending: false }),
-    supabase.from("tipo_contemplacao").select("codigo, nome, cor"),
+    supabase.from("tipo_parcela").select("codigo, descricao, pct, rotulo").eq("familia", g.familia).order("pct", { ascending: false }),
+    supabase.from("tipo_contemplacao").select("codigo, nome, cor").eq("familia", g.familia),
   ]);
   if (versao.error) throw versao.error;
   if (cadastroParcelas.error) throw cadastroParcelas.error;
@@ -207,9 +212,8 @@ export async function carregarGrupo(numero: number) {
     tipo_parcela: { codigo: string };
   }[]).map((t) => [t.tipo_parcela.codigo, t] as const);
   const oferecidos = new Map(ofertas);
-  // os planos em duas fases (com rótulo) só existem em veículos: nos demais grupos nem aparecem no cadastro
+  // o cadastro já vem só da família do grupo
   const tiposParcela = (cadastroParcelas.data ?? [])
-    .filter((t) => g.familia === "veiculos" || !t.rotulo)
     .map((t) => {
       const o = oferecidos.get(t.codigo as string);
       return {

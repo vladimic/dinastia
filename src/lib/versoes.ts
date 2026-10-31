@@ -2,6 +2,16 @@
 // Regra: a cada mudança entregue, acrescentar uma entrada NO TOPO.
 export const VERSOES: { numero: string; data: string; itens: string[] }[] = [
   {
+    numero: "0123",
+    data: "31/10/2026",
+    itens: [
+      "Tipos de Parcela e Modalidades de Contemplação agora têm Família (imóveis, veículos...). O que já existia ficou em imóveis; o que foi criado para veículos (F25, F40, planos em duas fases) ficou em veículos; Sorteio, Lance Livre e Fidelidade existem nas duas. Dentro de um grupo só aparecem os tipos da família dele. Para repetir um tipo em outra família, crie de novo com o mesmo código.",
+      "Seleção de grupos: a barra de participantes de veículos enche com 5 mil (imóveis seguem com 9.999).",
+      "Seleção de grupos de veículos: sai o filtro de Furo e Parcela 70; as parcelas 50/55 viram só Parcela reduzida; novo filtro Parcelas reduzidas (12, 18, 24) logo ao lado.",
+      "Informações do grupo: \"Taxa adm. total\" agora é \"Taxa de administração\".",
+    ],
+  },
+  {
     numero: "0122",
     data: "31/10/2026",
     itens: [

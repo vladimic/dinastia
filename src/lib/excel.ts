@@ -13,8 +13,8 @@ type Linha = Record<string, unknown>;
 export const TABELAS_EXCEL: { tabela: string; ordem: string[] }[] = [
   { tabela: "parametros_gerais", ordem: ["id"] },
   { tabela: "indice_correcao", ordem: ["sigla"] },
-  { tabela: "tipo_contemplacao", ordem: ["codigo"] },
-  { tabela: "tipo_parcela", ordem: ["codigo"] },
+  { tabela: "tipo_contemplacao", ordem: ["familia", "codigo"] },
+  { tabela: "tipo_parcela", ordem: ["familia", "codigo"] },
   { tabela: "grupo", ordem: ["numero"] },
   { tabela: "arquivo_importado", ordem: ["id"] },
   { tabela: "grupo_assembleia", ordem: ["id"] },
