@@ -64,7 +64,24 @@ function Martelo() {
 
 const GRADE = "grid grid-cols-[10.5rem_repeat(5,minmax(0,1fr))] gap-x-1.5";
 
+// botão − ou + do campo de parcelas (o limite de cada lance vem de `teto`)
+function Passo({ sinal, rotulo, desligado, aoClicar }: { sinal: string; rotulo: string; desligado: boolean; aoClicar: () => void }) {
+  return (
+    <button
+      type="button"
+      aria-label={rotulo}
+      title={rotulo}
+      disabled={desligado}
+      onClick={aoClicar}
+      className="flex h-6 w-5 shrink-0 items-center justify-center rounded border border-borda-campo bg-white text-[14px] leading-none font-bold text-navy hover:border-navy disabled:cursor-not-allowed disabled:opacity-35 disabled:hover:border-borda-campo"
+    >
+      {sinal}
+    </button>
+  );
+}
+
 function Cabecalho({ c, aoMudarQtd }: { c: Coluna; aoMudarQtd: (v: string) => void }) {
+  const qtdNum = Number(c.qtd) || 0;
   return (
     <div className={`flex min-h-[7rem] flex-col gap-1.5 rounded-t-lg border-t-4 px-2.5 py-2 ${BORDA[c.cor]} ${FUNDO[c.cor]}`}>
       <div className="flex items-center gap-1.5">
@@ -80,13 +97,14 @@ function Cabecalho({ c, aoMudarQtd }: { c: Coluna; aoMudarQtd: (v: string) => vo
           {c.oferecido && c.qtd !== null && (
             <div className="flex flex-col gap-0.5">
               <label
-                className="flex items-center gap-1 text-[11px] font-semibold text-tinta"
+                className={"flex items-center text-[11px] font-semibold text-tinta " + (c.qtdFixa ? "gap-1" : "flex-wrap gap-x-0.5")}
                 title={
                   c.icone === "cadeado"
                     ? `Lance com máximo pré-definido pelo grupo${c.teto !== null ? ` (${c.teto} parcelas)` : ""}`
                     : "Lance em leilão: você define as parcelas nesta simulação"
                 }
               >
+                {!c.qtdFixa && <Passo sinal="−" rotulo={`Diminuir as parcelas do ${c.titulo}`} desligado={qtdNum <= 1} aoClicar={() => aoMudarQtd(String(Math.max(1, qtdNum - 1)))} />}
                 <span
                   className={
                     "flex h-6 items-center gap-0.5 rounded border px-0.5 text-navy " +
@@ -103,7 +121,15 @@ function Cabecalho({ c, aoMudarQtd }: { c: Coluna; aoMudarQtd: (v: string) => vo
                     className="w-7 bg-transparent text-right text-[12px] font-bold tabular-nums outline-none"
                   />
                 </span>
-                parcelas
+                {!c.qtdFixa && (
+                  <Passo
+                    sinal="+"
+                    rotulo={`Aumentar as parcelas do ${c.titulo}`}
+                    desligado={c.teto !== null && qtdNum >= c.teto}
+                    aoClicar={() => aoMudarQtd(String(Math.min(c.teto ?? 999, qtdNum + 1)))}
+                  />
+                )}
+                <span className={c.qtdFixa ? "" : "basis-full"}>parcelas</span>
               </label>
             </div>
           )}

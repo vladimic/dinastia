@@ -2,6 +2,13 @@
 // Regra: a cada mudança entregue, acrescentar uma entrada NO TOPO.
 export const VERSOES: { numero: string; data: string; itens: string[] }[] = [
   {
+    numero: "0111",
+    data: "31/10/2026",
+    itens: [
+      "Simulador: os lances Livre e Fidelidade ganharam botões − e + ao lado do campo de parcelas, para não precisar digitar. Os limites continuam os mesmos: no Livre, o máximo do grupo e os meses que faltam; no Fidelidade, o máximo do grupo; mínimo de 1 parcela. O botão trava ao chegar no limite.",
+    ],
+  },
+  {
     numero: "0110",
     data: "31/10/2026",
     itens: [
