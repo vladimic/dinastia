@@ -2,6 +2,13 @@
 // Regra: a cada mudança entregue, acrescentar uma entrada NO TOPO.
 export const VERSOES: { numero: string; data: string; itens: string[] }[] = [
   {
+    numero: "0126",
+    data: "31/10/2026",
+    itens: [
+      "Veículos, modalidades: no Lance Livre e no Fidelidade sem teto (*), o Próprio deixa de ser traço e passa a mostrar \"Lance − 25%\" (o lance menos o embutido).",
+    ],
+  },
+  {
     numero: "0125",
     data: "31/10/2026",
     itens: [
