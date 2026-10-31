@@ -2,6 +2,15 @@
 // Regra: a cada mudança entregue, acrescentar uma entrada NO TOPO.
 export const VERSOES: { numero: string; data: string; itens: string[] }[] = [
   {
+    numero: "0115",
+    data: "31/10/2026",
+    itens: [
+      "Veículos, etapa 2 (simulador): colunas Sorteio, Fixo 25%, Fixo 40%, Livre e Fidelidade, com os lances em % da categoria (crédito + taxa + fundo de reserva). Os botões − e + mudam o % de 1 em 1, dentro do teto do grupo (o Fidelidade segue o teto do Livre). Livre abre em 55% e Fidelidade em 45% (Parâmetros globais).",
+      "Veículos, simulador: o plano linear usa o prazo da cota e o plano reduzido (Plano 40, 50, 75 e Clearance) usa as duas fases; a parcela mínima do grupo vale depois da contemplação (se o rateio ficar abaixo dela, paga-se o mínimo e o saldo quita antes do prazo). O embutido pode ser % do lance ou % da categoria. Sem furo, sem a opção de furo na tela.",
+      "Veículos, telas do grupo: Modalidades mostra o lance em %, os planos reduzidos aparecem com o nome (Plano 50…) e o furo não aparece. Conferido contra as parcelas dos PDFs (grupos 1719 e 1621): linear, fase 1 e fase 2 batem ao centavo.",
+    ],
+  },
+  {
     numero: "0114",
     data: "31/10/2026",
     itens: [

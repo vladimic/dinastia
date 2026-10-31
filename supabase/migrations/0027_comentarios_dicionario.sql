@@ -7,6 +7,8 @@ comment on column public.parametros_gerais.incc_pct_ano is 'INCC projetado, em %
 comment on column public.parametros_gerais.contemplacao_meses is 'Mês de contemplação com que o simulador abre.';
 comment on column public.parametros_gerais.lance_livre_parcelas is 'Parcelas do lance livre com que o simulador abre.';
 comment on column public.parametros_gerais.lance_fidelidade_parcelas is 'Parcelas do lance fidelidade com que o simulador abre.';
+comment on column public.parametros_gerais.lance_livre_pct is 'Veículos: % da categoria do lance livre com que o simulador abre (padrão 55).';
+comment on column public.parametros_gerais.lance_fidelidade_pct is 'Veículos: % da categoria do lance fidelidade com que o simulador abre (padrão 45).';
 comment on column public.parametros_gerais.concorrencia_fixo_pct is '% de concorrência do lance fixo, mostrado no cabeçalho da coluna do simulador.';
 comment on column public.parametros_gerais.concorrencia_limitado_pct is '% de concorrência do lance limitado.';
 comment on column public.parametros_gerais.concorrencia_livre_pct is '% de concorrência do lance livre.';

@@ -61,12 +61,14 @@ type Props = {
 export function GrupoDetalhe(p: Props) {
   const g = p.grupo;
   // parcela inicial do simulador: a menor entre as oferecidas (como na versão 1)
-  const tipoInicial = g.tiposParcela.filter((t) => t.disponivel).sort((a, b) => a.pct - b.pct)[0];
+  // em veículos abre no plano linear (normal); nos demais, na menor parcela oferecida
+  const oferecidos = g.tiposParcela.filter((t) => t.disponivel);
+  const tipoInicial = (g.familia === "veiculos" && oferecidos.find((t) => t.codigo === "NORMAL")) || oferecidos.sort((a, b) => a.pct - b.pct)[0];
   return (
     <SimulacaoProvider
       creditoInicial={g.creditos[0] ?? null}
       tipoInicial={tipoInicial?.codigo ?? null}
-      tipos={g.tiposParcela.map((t) => ({ codigo: t.codigo, descricao: t.descricao, pct: t.pct }))}
+      tipos={g.tiposParcela.map((t) => ({ codigo: t.codigo, descricao: t.descricao, pct: t.pct, rotulo: t.rotulo, fase1Pct: t.fase1Pct, fase1Parcelas: t.fase1Parcelas, fase2Parcelas: t.fase2Parcelas }))}
       furoInicial={g.pagamento_com_furo}
     >
       <Conteudo {...p} />
@@ -349,7 +351,7 @@ function Resumo() {
                   (on ? "border-[#b8dcc0] bg-ok-fundo text-ok" : "border-borda bg-linha text-tinta/50")
                 }
               >
-                {t.pct}%<span className="sr-only">{on ? " oferecido" : " não oferecido"}</span>
+                {t.rotulo ?? `${t.pct}%`}<span className="sr-only">{on ? " oferecido" : " não oferecido"}</span>
               </span>
             );
           })}

@@ -182,7 +182,7 @@ export async function carregarGrupo(numero: number) {
       .select(
         `id, aprovado_por, aprovado_em, observacoes, pagamento_com_furo, fidelidade_meses,
          arquivo_importado(nome),
-         grupo_assembleia_tipo_parcela(tipo_parcela(codigo, descricao, pct)),
+         grupo_assembleia_tipo_parcela(fase1_pct, fase1_parcelas, fase2_parcelas, tipo_parcela(codigo, descricao, pct, rotulo)),
          grupo_modalidade(tipo, max_parcelas_lance, embutido_max_parcelas, embutido_pct, embutido_base, lance_pct, max_lance_pct,
            a_partir_assembleia_cota, requisitos, tipo_contemplacao(codigo, nome)),
          grupo_sequencia_faixa(assembleia_de, assembleia_ate, demais_tipo, demais_tipo_2,
@@ -191,7 +191,7 @@ export async function carregarGrupo(numero: number) {
       .eq("id", g.grupo_assembleia_id)
       .single(),
     supabase.from("grupo_assembleia").select("id", { count: "exact", head: true }).eq("grupo_numero", numero),
-    supabase.from("tipo_parcela").select("codigo, descricao, pct").order("pct", { ascending: false }),
+    supabase.from("tipo_parcela").select("codigo, descricao, pct, rotulo").order("pct", { ascending: false }),
     supabase.from("tipo_contemplacao").select("codigo, nome, cor"),
   ]);
   if (versao.error) throw versao.error;
@@ -200,17 +200,30 @@ export async function carregarGrupo(numero: number) {
   const v = versao.data;
 
   // todos os tipos do cadastro, marcando os oferecidos pelo grupo na versão vigente
-  const oferecidos = new Set(
-    ((v.grupo_assembleia_tipo_parcela ?? []) as unknown as { tipo_parcela: { codigo: string } }[]).map(
-      (t) => t.tipo_parcela.codigo,
-    ),
-  );
-  const tiposParcela = (cadastroParcelas.data ?? []).map((t) => ({
-    codigo: t.codigo as string,
-    descricao: t.descricao as string,
-    pct: Number(t.pct),
-    disponivel: oferecidos.has(t.codigo),
-  }));
+  const ofertas = ((v.grupo_assembleia_tipo_parcela ?? []) as unknown as {
+    fase1_pct: number | string | null;
+    fase1_parcelas: number | null;
+    fase2_parcelas: number | null;
+    tipo_parcela: { codigo: string };
+  }[]).map((t) => [t.tipo_parcela.codigo, t] as const);
+  const oferecidos = new Map(ofertas);
+  // os planos em duas fases (com rótulo) só existem em veículos: nos demais grupos nem aparecem no cadastro
+  const tiposParcela = (cadastroParcelas.data ?? [])
+    .filter((t) => g.familia === "veiculos" || !t.rotulo)
+    .map((t) => {
+      const o = oferecidos.get(t.codigo as string);
+      return {
+        codigo: t.codigo as string,
+        descricao: t.descricao as string,
+        pct: Number(t.pct),
+        rotulo: (t.rotulo as string | null) ?? null,
+        disponivel: oferecidos.has(t.codigo as string),
+        /** plano em duas fases: % do crédito da fase 1 e quantidade de parcelas de cada fase */
+        fase1Pct: o?.fase1_pct != null ? Number(o.fase1_pct) : null,
+        fase1Parcelas: o?.fase1_parcelas ?? null,
+        fase2Parcelas: o?.fase2_parcelas ?? null,
+      };
+    });
 
   const modalidades = ((v.grupo_modalidade ?? []) as unknown as Modalidade[]).sort(
     (a, b) => ORDEM_TIPO.indexOf(a.tipo) - ORDEM_TIPO.indexOf(b.tipo),
@@ -266,6 +279,7 @@ export async function carregarGrupo(numero: number) {
     mes_reajuste: g.mes_reajuste as number | null,
     primeira_correcao: g.primeira_correcao as string | null,
     dia_vencimento: g.dia_vencimento as number | null,
+    parcela_minima_pct: g.parcela_minima_pct != null ? Number(g.parcela_minima_pct) : null,
     grupo_assembleia_id: v.id as number,
     pagamento_com_furo: Boolean(v.pagamento_com_furo),
     fidelidade_meses: v.fidelidade_meses as number | null,

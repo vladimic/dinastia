@@ -44,7 +44,7 @@ export function DadosGrupo() {
         <Tipos />
         {/* só leitura (vem da tabela importada): o mesmo box da versão 1, esticado à largura da coluna */}
         <div className="[&>section]:h-full [&>section]:w-full [&>section]:p-4 [&_table]:flex-1 [&_tbody_tr]:h-[32%] [&_td]:py-2.5! [&_td]:text-[13px]! [&_th]:text-[13px]! [&_td]:text-center! [&_td]:align-middle! [&_th]:text-center! [&_th]:align-middle! [&_td:first-child]:text-left! [&_th:first-child]:text-left!">
-          <ModalidadesContemplacao modalidades={g.modalidades} tipos={g.tiposContemplacao} prazoGrupo={g.prazo_grupo_meses} />
+          <ModalidadesContemplacao modalidades={g.modalidades} tipos={g.tiposContemplacao} prazoGrupo={g.prazo_grupo_meses} veiculo={g.familia === "veiculos"} />
         </div>
       </div>
       <Sequencia />
@@ -375,6 +375,8 @@ function Tipos() {
                   type="checkbox"
                   checked={on}
                   aria-label={`${t.descricao}: oferecido no grupo`}
+                  disabled={!!t.rotulo}
+                  title={t.rotulo ? "Plano em duas fases: vem da importação do PDF" : undefined}
                   onChange={(e) => alternar(t.codigo, e.target.checked)}
                   className="h-4 w-4 shrink-0 cursor-pointer accent-[#1d5b2c]"
                 />
@@ -389,6 +391,7 @@ function Tipos() {
           );
         })}
       </ul>
+      {g.familia !== "veiculos" && ( // veículos não trabalham com furo
       <div className="mt-auto flex items-center justify-between border-t border-linha pt-3">
         <span id="furo-grupo" className="text-[13px] font-bold">
           Pagamento com furo
@@ -401,6 +404,7 @@ function Tipos() {
           <span className={"rounded-full px-2.5 py-0.5 text-[12px] font-bold " + (furo ? "bg-ok-fundo text-ok" : "bg-linha text-tinta")}>{furo ? "Sim" : "Não"}</span>
         )}
       </div>
+      )}
       {erro && (
         <p role="alert" className="text-[11px] font-semibold text-[#9b1c1c]">
           Não foi possível salvar. Tente de novo.

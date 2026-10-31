@@ -27,6 +27,10 @@ export async function salvarParametros(formData: FormData) {
   const livre = inteiro(formData.get("lance_livre_parcelas"));
   const fidelidade = inteiro(formData.get("lance_fidelidade_parcelas"));
   if (!(livre >= 1 && livre <= 999) || !(fidelidade >= 1 && fidelidade <= 999)) redirect("/parametros?erro=4");
+  // veículos: lances livre e fidelidade em % da categoria
+  const livrePct = lerPct(formData.get("lance_livre_pct"));
+  const fidelidadePct = lerPct(formData.get("lance_fidelidade_pct"));
+  if (livrePct === null || fidelidadePct === null || !(livrePct > 0 && livrePct <= 100) || !(fidelidadePct > 0 && fidelidadePct <= 100)) redirect("/parametros?erro=4");
 
   const conc: Record<string, number> = {};
   for (const k of ["fixo", "limitado", "livre", "fidelidade"]) {
@@ -60,6 +64,8 @@ export async function salvarParametros(formData: FormData) {
       contemplacao_prazos: prazos,
       lance_livre_parcelas: livre,
       lance_fidelidade_parcelas: fidelidade,
+      lance_livre_pct: livrePct,
+      lance_fidelidade_pct: fidelidadePct,
       ...conc,
       rodape_textos: rodape,
       ...pastas,

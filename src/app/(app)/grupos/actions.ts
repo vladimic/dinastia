@@ -175,7 +175,7 @@ export async function carregarLote(familia: string): Promise<{ ok: true; dados: 
       .select("numero, prazo_grupo_meses, assembleia_numero, data_assembleia, creditos, grupo_assembleia_id, participantes")
       .eq("familia", familia)
       .order("numero"),
-    supabase.from("tipo_parcela").select("codigo, descricao, pct").order("pct", { ascending: false }),
+    supabase.from("tipo_parcela").select("codigo, descricao, pct").is("rotulo", null).order("pct", { ascending: false }), // os planos em duas fases vêm só da importação
   ]);
   if (atuais.error || tipos.error) return { ok: false, erro: "Não foi possível carregar os grupos." };
   const ids = (atuais.data ?? []).map((g) => g.grupo_assembleia_id as number);

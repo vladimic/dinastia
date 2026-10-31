@@ -34,6 +34,8 @@ erDiagram
     int contemplacao_meses
     int lance_livre_parcelas
     int lance_fidelidade_parcelas
+    decimal lance_livre_pct
+    decimal lance_fidelidade_pct
     decimal concorrencia_fixo_pct
     decimal concorrencia_limitado_pct
     decimal concorrencia_livre_pct
@@ -221,6 +223,8 @@ Parâmetros globais do sistema. Tem sempre uma única linha (id = 1). Tela: Cada
 | `contemplacao_meses` | inteiro | sim |  | Mês de contemplação com que o simulador abre. |
 | `lance_livre_parcelas` | inteiro | sim |  | Parcelas do lance livre com que o simulador abre. |
 | `lance_fidelidade_parcelas` | inteiro | sim |  | Parcelas do lance fidelidade com que o simulador abre. |
+| `lance_livre_pct` | número decimal | sim |  | Veículos: % da categoria do lance livre com que o simulador abre (padrão 55). |
+| `lance_fidelidade_pct` | número decimal | sim |  | Veículos: % da categoria do lance fidelidade com que o simulador abre (padrão 45). |
 | `concorrencia_fixo_pct` | número decimal | sim |  | % de concorrência do lance fixo, mostrado no cabeçalho da coluna do simulador. |
 | `concorrencia_limitado_pct` | número decimal | sim |  | % de concorrência do lance limitado. |
 | `concorrencia_livre_pct` | número decimal | sim |  | % de concorrência do lance livre. |
