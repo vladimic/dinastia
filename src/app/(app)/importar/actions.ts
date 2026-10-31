@@ -219,6 +219,18 @@ export async function descartarItem(itemId: number): Promise<{ ok: true } | Falh
   return { ok: true };
 }
 
+/** Remove da lista os PDFs com erro de leitura (um, alguns ou todos): ficam como descartados e a leitura da pasta não os lê mais. */
+export async function removerErros(ids?: number[]): Promise<{ ok: true; removidos: number } | Falha> {
+  if (!(await quem())) return NEGADO;
+  const supabase = await createClient();
+  let q = supabase.from("importacao_item").update({ situacao: "rejeitado", motivo: "Removido da lista de erros pelo administrador" }).eq("situacao", "erro");
+  if (ids) q = q.in("id", ids);
+  const { data, error } = await q.select("id");
+  if (error) return { ok: false, erro: "Não foi possível remover." };
+  revalidatePath("/importar");
+  return { ok: true, removidos: data?.length ?? 0 };
+}
+
 /** Tira da lista um PDF descartado, ignorado ou com erro: na próxima leitura da pasta ele volta a ser lido. */
 export async function reativarItem(itemId: number): Promise<{ ok: true } | Falha> {
   if (!(await quem())) return NEGADO;
