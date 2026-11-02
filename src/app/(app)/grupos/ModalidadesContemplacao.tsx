@@ -33,9 +33,15 @@ function celulaVeiculo(m: Modalidade, teto: number | null) {
   const qtd = lance !== null ? `${lance}%` : teto !== null ? `até ${teto}%` : "*";
   const fmt = (v: number) => `${String(Math.round(v * 100) / 100).replace(".", ",")}%`;
   if (m.embutido_pct === null) return { qtd, emb: "0%", proprio: max !== null ? fmt(max) : "—" };
-  const pct = Number(m.embutido_pct);
+  let pct = Number(m.embutido_pct);
+  let base = m.embutido_base;
+  // 100% do lance fixo = o lance inteiro: mostra em % da categoria (25 ou 40), igual ao livre e ao fidelidade
+  if (base === "lance" && pct === 100 && lance !== null) {
+    pct = lance;
+    base = "categoria";
+  }
   // regra em % do lance (PDF: "50% do valor ofertado"): embutido e próprio são partes do lance, sem conta
-  if (m.embutido_base === "lance") return { qtd, emb: `${pct}% do lance`, proprio: `${Math.round((100 - pct) * 100) / 100}% do lance` };
+  if (base === "lance") return { qtd, emb: `${pct}% do lance`, proprio: `${Math.round((100 - pct) * 100) / 100}% do lance` };
   const emb = max !== null ? Math.min(pct, max) : pct;
   // livre/fidelidade sem teto (*): o lance não é conhecido, então o próprio é "Lance − embutido"
   return { qtd, emb: fmt(emb), proprio: max !== null ? fmt(max - emb) : `Lance − ${fmt(emb)}` };

@@ -108,6 +108,7 @@ function embVeiculo(m: ModalidadeEntrada | undefined, lanceMax: number): number 
   if (m.emb_pct === null) return 0;
   const pct = Number(m.emb_pct);
   if (m.emb_base === "categoria") return Math.min(pct, lanceMax) / 100;
+  if (pct === 100 && m.lance_pct != null) return Number(m.lance_pct) / 100; // 100% do lance fixo = o lance inteiro, em % da categoria
   return `${String(pct).replace(".", ",")}%L`;
 }
 
