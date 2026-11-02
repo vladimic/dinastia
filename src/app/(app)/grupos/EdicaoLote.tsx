@@ -3,7 +3,7 @@
 import { useEffect, useState, useTransition } from "react";
 import { createPortal } from "react-dom";
 import { alternarTipoParcela, carregarLote, definirPagamentoComFuro, fecharLote, type DadosLote, type LinhaLote } from "./actions";
-import { useFiltrosGrupos } from "./FiltrosGrupos";
+import { temAC, useFiltrosGrupos } from "./FiltrosGrupos";
 import type { ItemGrupo } from "./SeletorGrupo";
 
 // Edição em lote (botão do cabeçalho de Grupos e Tabelas): uma tabela com todos os grupos da família, em que se liga ou desliga
@@ -204,6 +204,11 @@ function Tabela({ familia, dados, mudarPendentes, aviso }: { familia: string; da
                     {q}
                   </th>
                 ))}
+              {semFuro && (
+                <th scope="col" className={CAB + " text-center"} title="Parcela reduzida até a contemplação (sem quantidade fixa de parcelas)">
+                  AC
+                </th>
+              )}
               {!semFuro && (
                 <th scope="col" className={CAB + " text-center"}>
                   Furo
@@ -228,6 +233,11 @@ function Tabela({ familia, dados, mudarPendentes, aviso }: { familia: string; da
                       <i aria-hidden="true" className={"inline-block h-2.5 w-2.5 rounded-full " + ((l.fases ?? []).includes(q) ? "bg-ok" : "bg-[#cfcbe0]")} />
                     </td>
                   ))}
+                {semFuro && (
+                  <td className={CEL + " bg-white text-center group-hover:bg-lavanda"} aria-label={`Grupo ${l.numero}: reduzida até a contemplação ${temAC(paraItem(l, dados.tipos)) ? "sim" : "não"}`}>
+                    <i aria-hidden="true" className={"inline-block h-2.5 w-2.5 rounded-full " + (temAC(paraItem(l, dados.tipos)) ? "bg-ok" : "bg-[#cfcbe0]")} />
+                  </td>
+                )}
                 {!semFuro && <td className={CEL + " bg-white text-center group-hover:bg-lavanda"}>
                   <Chave ligada={l.furo} rotulo={`Grupo ${l.numero}: pagamento com furo`} aoAlternar={() => alternarFuro(l)} />
                 </td>}
@@ -235,7 +245,7 @@ function Tabela({ familia, dados, mudarPendentes, aviso }: { familia: string; da
             ))}
             {!lista.length && (
               <tr>
-                <td colSpan={dados.tipos.length + (semFuro ? 1 + QTD_REDUZIDAS.length : 2)} className="px-3 py-4 text-sm text-tinta">
+                <td colSpan={dados.tipos.length + (semFuro ? 2 + QTD_REDUZIDAS.length : 2)} className="px-3 py-4 text-sm text-tinta">
                   Nenhum grupo com esses filtros.
                 </td>
               </tr>

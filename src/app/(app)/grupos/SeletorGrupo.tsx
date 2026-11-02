@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useLayoutEffect, useRef, useState, useTransition } from "react";
-import { tem70, temAte55, useFiltrosGrupos } from "./FiltrosGrupos";
+import { tem70, temAC, temAte55, useFiltrosGrupos } from "./FiltrosGrupos";
 
 // Seletor de grupo (fica no cabeçalho principal da tela): um botão com o grupo atual que abre a lista (larga) da família, com busca, filtros,
 // o tamanho de cada grupo (participantes). Os filtros são: parcela, valor do crédito (slider duplo) e participantes. Sem grupo escolhido, a lista aparece aberta na página.
@@ -361,7 +361,11 @@ function Lista({
                         g.reduzidas.length > 0 && (
                           <span className="flex items-center gap-[3px]">
                             <i className="h-[7px] w-[7px] rounded-full bg-reduzida" />
-                            {(g.fases ?? []).length > 0 && <span className="text-[10px] leading-none font-bold text-tinta tabular-nums">{(g.fases ?? []).join("/")}</span>}
+                            {(g.fases ?? []).length > 0 ? (
+                              <span className="text-[10px] leading-none font-bold text-tinta tabular-nums">{(g.fases ?? []).join("/")}</span>
+                            ) : (
+                              temAC(g) && <span title="Parcela reduzida até a contemplação" className="text-[10px] leading-none font-bold text-tinta">AC</span>
+                            )}
                           </span>
                         )
                       ) : (
