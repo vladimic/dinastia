@@ -137,7 +137,7 @@ export type LinhaResumo = {
   rod: number;
   fu: "S" | "N";
   /** o que a coluna Par mostra: o % da menor parcela (imóveis) ou, em veículos com plano em fases, as parcelas reduzidas */
-  par: number | "?" | "";
+  par: number | "?" | "" | "AC";
   /** o % da menor parcela oferecida, que define a cor (50/55 verde, 70 laranja) */
   parCor: number | "?";
   fim: Mes;
@@ -185,7 +185,7 @@ export function montarLinhas(grupos: GrupoEntrada[], base: Mes, familia: Familia
         rod: g.prazo_grupo - g.prazo_cota,
         fu: g.furo ? "S" : "N",
         par: veic
-          ? g.fase1_parcelas ?? (g.pct_parcelas.some((p) => p < 100) ? Math.min(...g.pct_parcelas) : "") // veículos sem parcela reduzida: em branco
+          ? g.fase1_parcelas ?? (g.pct_parcelas.some((p) => p < 100) ? "AC" : "") // veículos: sem reduzida = em branco; reduzida simples = AC (até a contemplação)
           : g.pct_parcelas.length
             ? Math.min(...g.pct_parcelas)
             : "?",

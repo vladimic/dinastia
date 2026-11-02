@@ -8,13 +8,15 @@ import type { ItemGrupo } from "./SeletorGrupo";
 // Usados na lista do seletor de grupo e na edição em lote: o mesmo comportamento nos dois lugares.
 
 export const temAte55 = (g: Pick<ItemGrupo, "reduzidas">) => g.reduzidas.some((p) => p <= 55);
+/** veículos: parcela reduzida simples, que vale até a contemplação (sem quantidade fixa de parcelas): "AC" */
+export const temAC = (g: Pick<ItemGrupo, "reduzidas" | "fases">) => g.reduzidas.length > 0 && !(g.fases ?? []).length;
 export const tem70 = (g: Pick<ItemGrupo, "reduzidas">) => g.reduzidas.includes(70);
 
 /** Estado dos filtros + a barra desenhada (`barra`) + os grupos que passam (`visiveis`, em ordem de número). */
 export function useFiltrosGrupos(grupos: ItemGrupo[], familia: string) {
   const [filtros, setFiltros] = useState({ furo: false, r70: false, r55: false, red: false });
   // quantidades de parcelas reduzidas marcadas (veículos; vazio = todas)
-  const [fasesMarcadas, setFasesMarcadas] = useState<number[]>([]);
+  const [fasesMarcadas, setFasesMarcadas] = useState<(number | "AC")[]>([]);
   const veic = familia === "veiculos";
   // faixa de crédito escolhida (null = toda a faixa da família) e participantes marcados (vazio = todos)
   const [faixa, setFaixa] = useState<{ de: number; ate: number } | null>(null);
@@ -36,7 +38,10 @@ export function useFiltrosGrupos(grupos: ItemGrupo[], familia: string) {
     if (!mins.length) return null;
     return { minimo: Math.floor(Math.min(...mins) / 1000) * 1000, maximo: Math.ceil(Math.max(...maxs) / 1000) * 1000 };
   }, [grupos]);
-  const valoresFases = useMemo(() => [...new Set(grupos.flatMap((g) => g.fases ?? []))].sort((a, b) => a - b), [grupos]);
+  const valoresFases = useMemo<(number | "AC")[]>(() => {
+    const nums = [...new Set(grupos.flatMap((g) => g.fases ?? []))].sort((a, b) => a - b);
+    return grupos.some(temAC) ? [...nums, "AC"] : nums;
+  }, [grupos]);
   const valoresParticipantes = useMemo(() => [...new Set(grupos.flatMap((g) => (g.participantes ? [g.participantes] : [])))].sort((a, b) => a - b), [grupos]);
   const de = limites ? Math.max(limites.minimo, Math.min(faixa?.de ?? limites.minimo, limites.maximo)) : 0;
   const ate = limites ? Math.max(de, Math.min(faixa?.ate ?? limites.maximo, limites.maximo)) : 0;
@@ -49,7 +54,7 @@ export function useFiltrosGrupos(grupos: ItemGrupo[], familia: string) {
       (g) =>
         noCredito(g) &&
         (!marcados.length || (g.participantes !== null && marcados.includes(g.participantes))) &&
-        (!fasesMarcadas.length || (g.fases ?? []).some((x) => fasesMarcadas.includes(x))) &&
+        (!fasesMarcadas.length || (g.fases ?? []).some((x) => fasesMarcadas.includes(x)) || (temAC(g) && fasesMarcadas.includes("AC"))) &&
         (!filtros.red || g.reduzidas.length > 0) &&
         (!filtros.furo || g.furo) &&
         (!filtros.r70 || tem70(g)) &&

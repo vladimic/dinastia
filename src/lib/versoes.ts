@@ -2,6 +2,13 @@
 // Regra: a cada mudança entregue, acrescentar uma entrada NO TOPO.
 export const VERSOES: { numero: string; data: string; itens: string[] }[] = [
   {
+    numero: "0131",
+    data: "02/11/2026",
+    itens: [
+      "Veículos, parcela reduzida até a contemplação (PDF: \"Plano Reduzido: 0,6624% - até a contemplação\", grupos 1709, 1711, 1714 e 1715 — são os únicos): não tem quantidade fixa de parcelas, então ao lado da bolinha verde na seleção de grupos aparece AC. O mesmo AC entra na coluna Par da Tabela Resumo, no filtro Parcelas reduzidas e numa coluna AC da edição em lote. O simulador já calcula esse plano como reduzido até a contemplação (depois dela o saldo é rateado no prazo restante da cota).",
+    ],
+  },
+  {
     numero: "0130",
     data: "02/11/2026",
     itens: [
