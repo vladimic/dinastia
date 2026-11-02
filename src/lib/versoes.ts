@@ -2,6 +2,13 @@
 // Regra: a cada mudança entregue, acrescentar uma entrada NO TOPO.
 export const VERSOES: { numero: string; data: string; itens: string[] }[] = [
   {
+    numero: "0130",
+    data: "02/11/2026",
+    itens: [
+      "Veículos (modalidades e Tabela Resumo): quando o PDF permite embutir 100% do lance nos fixos (grupo 1709), o embutido dos fixos aparece em % da categoria (25% e 40%), na mesma base do Livre e do Fidelidade (60%). Antes aparecia \"100% do lance\" nos fixos e 60% nos outros, bases diferentes na mesma tabela. O \"N% do lance\" fica só para os casos em que o PDF dá outra fração (ex.: 50%, grupo 1615).",
+    ],
+  },
+  {
     numero: "0129",
     data: "31/10/2026",
     itens: [
