@@ -11,7 +11,9 @@ import { FAMILIAS, listarGrupos, type GrupoResumo } from "@/lib/grupos";
 export async function listaDaFamilia(familia: string): Promise<GrupoResumo[]> {
   const supabase = await createClient();
   const { data } = await supabase.from("lista_grupos").select("dados").eq("familia", familia).maybeSingle();
-  if (data?.dados) return data.dados as GrupoResumo[];
+  const guardada = data?.dados as GrupoResumo[] | undefined;
+  // lista guardada por uma versão antiga do programa (sem algum campo novo): é refeita, em vez de esperar alguém limpar
+  if (guardada && guardada.every((g) => "fidelidade" in g && "fases" in g)) return guardada;
   return refazerLista(supabase, familia);
 }
 

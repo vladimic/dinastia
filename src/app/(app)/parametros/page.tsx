@@ -94,7 +94,6 @@ async function Formulario({ searchParams }: { searchParams: PageProps<"/parametr
             <h3 className="border-t border-linha pt-3 text-xs font-bold">Lances</h3>
             <Campo rotulo="Parcelas do lance livre" nome="lance_livre_parcelas" valor={String(pad.lanceLivreParcelas)} />
             <Campo rotulo="Parcelas do lance fidelidade" nome="lance_fidelidade_parcelas" valor={String(pad.lanceFidelidadeParcelas)} />
-            <p className="text-[11px] leading-snug text-tinta">Parcelas com que o simulador de um grupo de imóveis abre os lances livre e fidelidade.</p>
 
             <h3 className="border-t border-linha pt-3 text-xs font-bold">Concorrência dos lances (%)</h3>
             <Campo rotulo="Lance fixo" nome="concorrencia_fixo_pct" valor={pct(pad.concorrencia.FIX)} />
@@ -114,9 +113,6 @@ async function Formulario({ searchParams }: { searchParams: PageProps<"/parametr
             <Campo rotulo="% do lance livre (da categoria)" nome="lance_livre_pct" valor={pct(pad.lanceLivrePct)} />
             <Campo rotulo="% do lance fidelidade (da categoria)" nome="lance_fidelidade_pct" valor={pct(pad.lanceFidelidadePct)} />
             <Campo rotulo="Parcela mínima padrão (% da categoria)" nome="parcela_minima_padrao_pct" valor={pct(pad.parcelaMinimaPadraoPct)} />
-            <p className="text-[11px] leading-snug text-tinta">
-              Percentuais com que o simulador de um grupo de veículos abre os lances livre e fidelidade. A parcela mínima padrão vale para os grupos cujo PDF não informa a sua.
-            </p>
 
             <h3 className="border-t border-linha pt-3 text-xs font-bold">Concorrência dos lances (%)</h3>
             <Campo rotulo="Lance fixo 25%" nome="concorrencia_veic_fixo25_pct" valor={pct(pad.concorrenciaVeic.F25)} />

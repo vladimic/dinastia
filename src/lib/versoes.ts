@@ -2,6 +2,14 @@
 // Regra: a cada mudança entregue, acrescentar uma entrada NO TOPO.
 export const VERSOES: { numero: string; data: string; itens: string[] }[] = [
   {
+    numero: "0136",
+    data: "03/11/2026",
+    itens: [
+      "Parâmetros globais: removidos os textos sob os lances livre e fidelidade (imóveis) e sob os percentuais e a parcela mínima padrão (veículos).",
+      "Filtro Fidelidade: a lista de grupos guardada por uma versão antiga do programa (sem o campo novo) era usada como estava, e o filtro não mostrava nada em veículos. Agora a lista antiga é detectada e refeita sozinha.",
+    ],
+  },
+  {
     numero: "0135",
     data: "03/11/2026",
     itens: [
