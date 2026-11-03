@@ -529,6 +529,14 @@ export function Simulador({ hoje, padroes }: { hoje: string; padroes: PadroesSim
           {base?.fases && (
             <p className="text-right text-[11px] text-tinta tabular-nums">
               {base.fases.parcelas1}× {reais2(base.fases.parcela1)}, depois {base.fases.parcelas2}× {reais2(base.fases.parcela2)}
+              {base.fases.recalculada && (
+                <>
+                  <br />
+                  <span title="O plano é mais longo que a cota. Sem contemplar na fase 1, o saldo (crédito + taxas − a fase 1 paga) é dividido nos meses que faltam.">
+                    Sem contemplar até a {base.fases.parcelas1}ª: {base.fases.recalculada.parcelas}× {reais2(base.fases.recalculada.valor)}
+                  </span>
+                </>
+              )}
             </p>
           )}
           {!veiculo && <div className="flex items-center justify-between gap-2 pt-1">

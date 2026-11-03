@@ -43,7 +43,14 @@ export type Base = {
   /** parcela mínima após a contemplação, em R$ (nulo = sem regra) */
   parcelaMinima: number | null;
   /** plano em duas fases: parcela da fase 1 e da fase 2, em R$ */
-  fases: { parcela1: number; parcela2: number; parcelas1: number; parcelas2: number } | null;
+  fases: {
+    parcela1: number;
+    parcela2: number;
+    parcelas1: number;
+    parcelas2: number;
+    /** plano mais longo que a cota e sem contemplar na fase 1: da parcela seguinte à fase 1, o saldo (categoria − fase 1 paga) é rateado nos meses que faltam */
+    recalculada: { parcelas: number; valor: number } | null;
+  } | null;
 };
 
 export function calcularBase(e: Entrada): Base {
@@ -74,7 +81,13 @@ export function calcularBase(e: Entrada): Base {
       parcelaApos: prazoRestante > 0 ? (categoria - totalPago) / prazoRestante : null,
       categoria,
       parcelaMinima,
-      fases: { parcela1, parcela2, parcelas1: n1, parcelas2: n2 },
+      fases: {
+        parcela1,
+        parcela2,
+        parcelas1: n1,
+        parcelas2: n2,
+        recalculada: prazoPlano > e.mesesFaltam && e.mesesFaltam > n1 ? { parcelas: e.mesesFaltam - n1, valor: (categoria - n1 * parcela1) / (e.mesesFaltam - n1) } : null,
+      },
     };
   }
 
