@@ -2,6 +2,13 @@
 // Regra: a cada mudança entregue, acrescentar uma entrada NO TOPO.
 export const VERSOES: { numero: string; data: string; itens: string[] }[] = [
   {
+    numero: "0138",
+    data: "03/11/2026",
+    itens: [
+      "Veículos: o tipo de parcela Reduzida mostra a quantidade de parcelas reduzidas do grupo como sufixo (\"Reduzida 24\", \"Reduzida 12\"; \"Reduzida AC\" quando é até a contemplação), no cabeçalho do grupo, no simulador e em Dados do grupo. Os filtros não mudaram.",
+    ],
+  },
+  {
     numero: "0137",
     data: "03/11/2026",
     itens: [

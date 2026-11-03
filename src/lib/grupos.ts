@@ -220,11 +220,13 @@ export async function carregarGrupo(numero: number) {
   const tiposParcela = (cadastroParcelas.data ?? [])
     .map((t) => {
       const o = oferecidos.get(t.codigo as string);
+      // veículos: a reduzida leva a quantidade de parcelas reduzidas do grupo (Reduzida 24) ou AC, até a contemplação
+      const sufixo = t.rotulo && o ? ` ${o.fase1_parcelas ?? "AC"}` : "";
       return {
         codigo: t.codigo as string,
-        descricao: t.descricao as string,
+        descricao: `${t.descricao as string}${sufixo}`,
         pct: Number(t.pct),
-        rotulo: (t.rotulo as string | null) ?? null,
+        rotulo: t.rotulo ? `${t.rotulo as string}${sufixo}` : null,
         disponivel: oferecidos.has(t.codigo as string),
         /** plano em duas fases: % do crédito da fase 1 e quantidade de parcelas de cada fase */
         fase1Pct: o?.fase1_pct != null ? Number(o.fase1_pct) : null,
