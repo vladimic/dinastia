@@ -376,7 +376,7 @@ function Tipos() {
                   checked={on}
                   aria-label={`${t.descricao}: oferecido no grupo`}
                   disabled={!!t.rotulo}
-                  title={t.rotulo ? "Plano em duas fases: vem da importação do PDF" : undefined}
+                  title={t.rotulo ? "Reduzida de veículos: vem da importação do PDF" : undefined}
                   onChange={(e) => alternar(t.codigo, e.target.checked)}
                   className="h-4 w-4 shrink-0 cursor-pointer accent-[#1d5b2c]"
                 />

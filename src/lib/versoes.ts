@@ -2,6 +2,14 @@
 // Regra: a cada mudança entregue, acrescentar uma entrada NO TOPO.
 export const VERSOES: { numero: string; data: string; itens: string[] }[] = [
   {
+    numero: "0132",
+    data: "03/11/2026",
+    itens: [
+      "Veículos: Plano 40, Plano 50, Plano 75, Clearance e Reduzida 50% viram um tipo só, Reduzida. O que diferencia é a quantidade de parcelas reduzidas (6, 12, 18 ou 24) ou AC (até a contemplação), que já estavam em cada grupo. O nome comercial do plano não é mais guardado. Banco migrado (89 grupos, conferido contra a leitura dos 130 PDFs: nenhuma diferença), leitor de PDFs (versão 7: os PDFs serão lidos de novo), simulador, filtros, Tabela Resumo e backup.",
+      "Tabela Resumo de veículos: todo grupo com parcela reduzida passa a ter a cor verde no número (antes só o Plano 50).",
+    ],
+  },
+  {
     numero: "0131",
     data: "02/11/2026",
     itens: [

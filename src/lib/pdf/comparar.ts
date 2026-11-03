@@ -21,7 +21,7 @@ export type GrupoBase = {
 };
 
 /** Plano reduzido em duas fases de uma versão (veículos). */
-export type PlanoFaseBase = { tipo: string; fase1_pct: number; fase1_parcelas: number; fase2_parcelas: number };
+export type PlanoFaseBase = { tipo: string; fase1_pct: number; fase1_parcelas: number | null; fase2_parcelas: number | null };
 
 export type VersaoBase = {
   assembleia_numero: number;
@@ -61,16 +61,14 @@ export function classificar(l: Leitura, e: EstadoGrupo): Classificacao {
   return { tipo: "anterior", base: null };
 }
 
-// veículos: linear (NORMAL) e, quando há, o plano reduzido pelo nome (Plano 50, Clearance…); imóveis: um tipo por % de parcela
+// veículos: linear (NORMAL) e, quando há, a reduzida (RED); imóveis: um tipo por % de parcela
 export const tiposParcelaDe = (l: Leitura): string[] =>
   l.plano_reduzido !== undefined ? ["NORMAL", ...(l.plano_reduzido ? [l.plano_reduzido.tipo] : [])] : l.planos.DILUIDA.map((p) => TIPO_PARCELA[p]).filter(Boolean);
 
 /** Planos em duas fases da leitura (veículos), no formato da base. */
 export const planosFaseDe = (l: Leitura): PlanoFaseBase[] => {
   const p = l.plano_reduzido;
-  return p && p.fase1_pct !== null && p.fase1_parcelas !== null && p.fase2_parcelas !== null
-    ? [{ tipo: p.tipo, fase1_pct: p.fase1_pct, fase1_parcelas: p.fase1_parcelas, fase2_parcelas: p.fase2_parcelas }]
-    : [];
+  return p && p.fase1_pct !== null ? [{ tipo: p.tipo, fase1_pct: p.fase1_pct, fase1_parcelas: p.fase1_parcelas, fase2_parcelas: p.fase2_parcelas }] : [];
 };
 
 const n = (v: unknown) => (v === null || v === undefined || v === "" ? null : Number(v));
@@ -148,7 +146,7 @@ export function comparar(l: Leitura, e: EstadoGrupo, c: Classificacao): Diferenc
   if (l.plano_reduzido !== undefined) {
     const pNovos = planosFaseDe(l);
     const pAtuais = [...v.planos_fase].sort((x, y) => x.tipo.localeCompare(y.tipo));
-    if (canon(pAtuais) !== canon(pNovos)) d.push({ escopo: "tipos_parcela", chave: "", campo: "planos_fase", rotulo: "Plano reduzido em duas fases", valor_atual: pAtuais, valor_novo: pNovos });
+    if (canon(pAtuais) !== canon(pNovos)) d.push({ escopo: "tipos_parcela", chave: "", campo: "planos_fase", rotulo: "Parcela reduzida", valor_atual: pAtuais, valor_novo: pNovos });
   }
 
   for (const t of new Set([...Object.keys(v.modalidades), ...Object.keys(l.modalidades)])) {

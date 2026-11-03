@@ -93,33 +93,32 @@ export function interpretarVeiculo(linhas: Linha[], arquivo: string, hash: strin
   if (iRef < 0) throw new ErroLeitura("cabeçalho da tabela de créditos não encontrado");
   const cab = linhas.slice(0, iRef).map((l) => l.texto).join(" ");
   const nSeguro = (cab.match(/com seguro/g) ?? []).length;
-  let tipoPlano: string | null = null;
+  // um só tipo de reduzida (RED): em duas fases (Plano 40/50/75, Clearance: o nome do plano não é guardado) ou até a contemplação (AC)
+  let tipoPlano: "RED" | null = null;
+  let duasFases = false;
+  let pctAc: number | null = null;
   const mPlano = cab.match(/REDUZIDO\s*-\s*PLANO\s*(\d+)/i);
   const mRed = cab.match(/PLANO\s+REDUZIDO\s+(\d+)%/i);
-  if (mPlano) tipoPlano = `PLANO_${mPlano[1]}`;
-  else if (/REDUZIDO\s*-\s*CLEARANCE/i.test(cab)) tipoPlano = "CLEARANCE";
-  else if (mRed) {
+  if (mPlano || /REDUZIDO\s*-\s*CLEARANCE/i.test(cab)) {
+    tipoPlano = "RED";
+    duasFases = true;
+  } else if (mRed) {
     if (!CODIGOS_RED.has(Number(mRed[1]))) erros.push(`plano reduzido ${mRed[1]}% desconhecido`);
-    tipoPlano = `RED_${mRed[1]}`;
+    tipoPlano = "RED";
+    pctAc = Number(mRed[1]);
   } else if (/REDUZID/i.test(cab)) erros.push("plano reduzido não reconhecido no cabeçalho");
-  const duasFases = !!tipoPlano && !tipoPlano.startsWith("RED_");
   const colunas = !tipoPlano ? 1 : duasFases ? 3 : 2;
   if (nSeguro !== colunas) erros.push(`colunas de plano: ${nSeguro} "com seguro" no cabeçalho, esperava ${colunas}`);
 
   let reduzido: PlanoReduzidoLido | null = null;
   if (tipoPlano) {
-    reduzido = { tipo: tipoPlano, fase1_pct: null, fase1_parcelas: null, fase2_parcelas: null };
+    reduzido = { tipo: tipoPlano, fase1_pct: pctAc, fase1_parcelas: null, fase2_parcelas: null };
     if (duasFases) {
       const frase = plano.match(/Plano Reduzido: ([\d,]+)% por (\d+) [Pp]arcelas?.*?([\d,]+)% por (\d+) [Pp]arcelas?/);
       if (!frase) erros.push("frase do plano reduzido (“X% por N parcelas … Y% por M parcelas”) não encontrada");
       else {
         const [a, n1, b, n2] = [num(frase[1]), Number(frase[2]), num(frase[3]), Number(frase[4])];
         const f1 = arred(a / fator, 4);
-        // REGRA: o tipo do plano é o do título do PDF. Se os números parecem de outro plano, só avisa.
-        const pelaPct: Record<string, string> = { "0.5": "PLANO_40", "0.6": "PLANO_50", "0.85": "PLANO_75" };
-        const parecido = pelaPct[String(f1)];
-        if (parecido && tipoPlano.startsWith("PLANO_") && parecido !== tipoPlano)
-          avisos.push(`o título do PDF diz “Plano ${tipoPlano.slice(6)}” (valendo o título), mas a fase 1 (${f1}%) é a do Plano ${parecido.slice(6)}`);
         reduzido = { tipo: tipoPlano, fase1_pct: f1, fase1_parcelas: n1, fase2_parcelas: n2 };
         // a fase 2 fecha os 100%: (100 − f1×N1) ÷ N2, vezes (1 + taxa + fundo)
         const f2 = ((100 - f1 * n1) / n2) * fator;
@@ -136,7 +135,7 @@ export function interpretarVeiculo(linhas: Linha[], arquivo: string, hash: strin
   // ---------------- tabela de créditos ----------------
   const creditos: LinhaCredito[] = [];
   const nValores = 1 + 2 * colunas;
-  const tipoPct = reduzido ? (reduzido.tipo.startsWith("RED_") ? Number(reduzido.tipo.slice(4)) : Number(reduzido.tipo.slice(6)) || 99) : 100;
+  const tipoPct = reduzido ? (duasFases ? 99 : (pctAc ?? 99)) : 100;
   for (const l of linhas.slice(iRef + 1)) {
     if (l.texto.includes("Taxa de Administração")) break;
     const toks = l.texto.split(/\s+/);
@@ -283,9 +282,9 @@ export function interpretarVeiculo(linhas: Linha[], arquivo: string, hash: strin
       const f2 = (100 - reduzido.fase1_pct * reduzido.fase1_parcelas) / reduzido.fase2_parcelas;
       confere(c.cod, "parcela da fase 1", c.parcelas[1].primeira, ((c.credito * reduzido.fase1_pct) / 100) * fator);
       confere(c.cod, "parcela da fase 2", c.parcelas[1].demais, ((c.credito * f2) / 100) * fator);
-    } else if (reduzido) {
-      const p = Number(reduzido.tipo.slice(4)) / 100;
-      confere(c.cod, `parcela reduzida ${reduzido.tipo.slice(4)}%`, c.parcelas[1].primeira, (c.credito * (p + fator - 1)) / prazoCota);
+    } else if (reduzido && pctAc !== null) {
+      const p = pctAc / 100;
+      confere(c.cod, `parcela reduzida ${pctAc}%`, c.parcelas[1].primeira, (c.credito * (p + fator - 1)) / prazoCota);
     }
   }
 

@@ -84,10 +84,10 @@ export const DICIONARIO: TabelaDic[] = [
     descricao: "Tipos de parcela (forma de pagamento): normal e reduzidas. Tela: Cadastros › Tipos de Parcela.",
     colunas: [
       t("familia", "texto", true, "Família do produto (imoveis, veiculos, servicos, outros_bens). O mesmo tipo em duas famílias existe duas vezes, uma por família.", "PK"),
-      t("codigo", "texto", true, "Código do tipo (NORMAL, RED_85, RED_70, RED_55, RED_50 e, em veículos, PLANO_40, PLANO_50, PLANO_75, CLEARANCE).", "PK"),
+      t("codigo", "texto", true, "Código do tipo. Imóveis: NORMAL, RED_85, RED_70, RED_55, RED_50. Veículos: só NORMAL e RED (reduzida; o que a diferencia fica na versão do grupo).", "PK"),
       t("descricao", "texto", true, "Descrição exibida nas telas."),
-      t("pct", "número decimal", true, "Percentual da parcela cheia que o tipo representa (100 = normal; 50 = reduzida a 50%). Nos planos de veículos em duas fases é só o número do nome (Plano 50 = 50; Clearance = 99)."),
-      t("rotulo", "texto", false, "Texto curto exibido no lugar de “N%” (ex.: Plano 50, Clearance). Vazio = mostra o percentual."),
+      t("pct", "número decimal", true, "Percentual da parcela cheia que o tipo representa (100 = normal; 50 = reduzida a 50%). Em veículos, RED guarda 50 só como valor de referência: o que vale está na versão do grupo (fase1_pct)."),
+      t("rotulo", "texto", false, "Texto curto exibido no lugar de “N%” (veículos: Reduzida). Vazio = mostra o percentual."),
     ],
   },
   {
@@ -150,9 +150,9 @@ export const DICIONARIO: TabelaDic[] = [
       t("grupo_assembleia_id", "número", true, "Versão do grupo.", "PK · FK→grupo_assembleia.id"),
       t("familia", "texto", true, "Família do grupo, preenchida sozinha a partir do grupo (liga à família do cadastro).", "FK→tipo_parcela (familia, codigo)"),
       t("tipo_parcela", "texto", true, "Tipo de parcela oferecido.", "PK · FK→tipo_parcela (familia, codigo)"),
-      t("fase1_pct", "número decimal", false, "Plano reduzido em duas fases (veículos): % do crédito pago por mês na fase 1, sem taxa e fundo (ex.: 0,60 no Plano 50). A fase 2 é o que falta para fechar 100%."),
-      t("fase1_parcelas", "inteiro", false, "Plano em duas fases: quantidade de parcelas da fase 1 (ex.: 24)."),
-      t("fase2_parcelas", "inteiro", false, "Plano em duas fases: quantidade de parcelas da fase 2 (ex.: 66). Fase 1 + fase 2 = prazo do plano."),
+      t("fase1_pct", "número decimal", false, "Reduzida de veículos. Em duas fases (fase1_parcelas preenchida): % do crédito pago por mês na fase 1, sem taxa e fundo (ex.: 0,60); a fase 2 é o que falta para fechar 100%. Até a contemplação, AC (fase1_parcelas vazia): % da parcela linear (50 = metade)."),
+      t("fase1_parcelas", "inteiro", false, "Reduzida em duas fases: quantidade de parcelas da fase 1 (6, 12, 18 ou 24). Vazia na reduzida até a contemplação (AC)."),
+      t("fase2_parcelas", "inteiro", false, "Reduzida em duas fases: quantidade de parcelas da fase 2 (ex.: 66). Fase 1 + fase 2 = prazo do plano. Vazia na AC."),
     ],
   },
   {

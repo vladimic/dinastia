@@ -414,12 +414,13 @@ export function Simulador({ hoje, padroes }: { hoje: string; padroes: PadroesSim
   const mudarQtd = (tipo: TipoLance) => (v: string) => setQtds((q) => ({ ...q, [tipo]: v === "" ? "" : String(limitar(tipo, Number(v))) }));
 
   const tipo = tipos.find((t) => t.codigo === tipoSel);
-  // plano reduzido em duas fases (veículos); sem os dados da importação, o plano não pode ser simulado
+  // reduzida de veículos: em duas fases (6, 12, 18, 24 parcelas reduzidas) ou até a contemplação (AC, só o %); sem os dados da importação não pode ser simulada
   const plano: PlanoFases | null =
-    veiculo && tipo && tipo.rotulo && tipo.fase1Pct !== null && tipo.fase1Parcelas !== null && tipo.fase2Parcelas !== null
+    veiculo && tipo && tipo.fase1Pct !== null && tipo.fase1Parcelas !== null && tipo.fase2Parcelas !== null
       ? { fase1Pct: tipo.fase1Pct, fase1Parcelas: tipo.fase1Parcelas, fase2Parcelas: tipo.fase2Parcelas }
       : null;
-  const planoSemDados = veiculo && !!tipo?.rotulo && !plano;
+  const pctAc = veiculo && tipo && tipo.fase1Parcelas === null && tipo.fase1Pct !== null ? tipo.fase1Pct : null;
+  const planoSemDados = veiculo && !!tipo?.rotulo && !plano && pctAc === null;
   // veículos não têm furo: o linear usa o prazo da cota e o plano reduzido, as duas fases
   const mesesContemplacao = Number(meses) || 0;
   const creditoContratado = creditoSel === null ? null : creditoSel * cotas;
@@ -431,7 +432,7 @@ export function Simulador({ hoje, padroes }: { hoje: string; padroes: PadroesSim
       ? calcularBase({
           credito: creditoContratado,
           taxaAdmPct: taxaCalc,
-          pctParcela: plano ? 100 : tipo.pct,
+          pctParcela: plano ? 100 : (pctAc ?? tipo.pct),
           prazoGrupo,
           mesesFaltam: faltam,
           furo: veiculo ? false : furo,
