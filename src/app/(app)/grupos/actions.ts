@@ -162,6 +162,8 @@ export type LinhaLote = {
   max: number | null;
   participantes: number | null;
   furo: boolean;
+  /** a versão vigente tem a modalidade Fidelidade */
+  fidelidade: boolean;
   /** quantidade de parcelas reduzidas (fase 1) dos planos em duas fases */
   fases: number[];
   /** códigos dos tipos de parcela oferecidos */
@@ -184,11 +186,11 @@ export async function carregarLote(familia: string): Promise<{ ok: true; dados: 
   if (atuais.error || tipos.error) return { ok: false, erro: "Não foi possível carregar os grupos." };
   const ids = (atuais.data ?? []).map((g) => g.grupo_assembleia_id as number);
   const versoes = ids.length
-    ? await supabase.from("grupo_assembleia").select("id, pagamento_com_furo, grupo_assembleia_tipo_parcela(tipo_parcela, fase1_parcelas)").in("id", ids)
+    ? await supabase.from("grupo_assembleia").select("id, pagamento_com_furo, grupo_modalidade(tipo), grupo_assembleia_tipo_parcela(tipo_parcela, fase1_parcelas)").in("id", ids)
     : { data: [], error: null };
   if (versoes.error) return { ok: false, erro: "Não foi possível carregar os grupos." };
   const porId = new Map(
-    ((versoes.data ?? []) as unknown as { id: number; pagamento_com_furo: boolean; grupo_assembleia_tipo_parcela: { tipo_parcela: string; fase1_parcelas: number | null }[] }[]).map((v) => [v.id, v]),
+    ((versoes.data ?? []) as unknown as { id: number; pagamento_com_furo: boolean; grupo_modalidade: { tipo: string }[]; grupo_assembleia_tipo_parcela: { tipo_parcela: string; fase1_parcelas: number | null }[] }[]).map((v) => [v.id, v]),
   );
   const linhas: LinhaLote[] = (atuais.data ?? []).map((g) => {
     const v = porId.get(g.grupo_assembleia_id as number);
@@ -203,6 +205,7 @@ export async function carregarLote(familia: string): Promise<{ ok: true; dados: 
       max: cr.length ? Math.max(...cr) : null,
       participantes: (g.participantes as number | null) ?? null,
       furo: v?.pagamento_com_furo === true,
+      fidelidade: (v?.grupo_modalidade ?? []).some((m) => m.tipo === "FID"),
       tipos: (v?.grupo_assembleia_tipo_parcela ?? []).map((t) => t.tipo_parcela),
       fases: [...new Set((v?.grupo_assembleia_tipo_parcela ?? []).flatMap((t) => (t.fase1_parcelas ? [t.fase1_parcelas] : [])))],
     };

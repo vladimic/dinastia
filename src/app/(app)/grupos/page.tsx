@@ -68,6 +68,7 @@ async function Conteudo({ searchParams }: { searchParams: PageProps<"/grupos">["
         furo: g.furo,
         reduzidas: g.reduzidas,
         fases: g.fases ?? [],
+        fidelidade: g.fidelidade ?? false,
         seq: g.seq,
       }))}
     />

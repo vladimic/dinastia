@@ -54,6 +54,8 @@ export type GrupoResumo = {
   reduzidas: number[];
   /** quantidade de parcelas reduzidas (fase 1) dos planos em duas fases, ex.: 12, 18, 24 (veículos) */
   fases: number[];
+  /** a versão vigente tem a modalidade Fidelidade */
+  fidelidade: boolean;
 };
 
 const TAMANHO_POPUP = 20;
@@ -70,12 +72,12 @@ export async function listarGrupos(familia: string): Promise<GrupoResumo[]> {
   // sequência da versão vigente de cada grupo, numa consulta só
   const ids = (data ?? []).map((g) => g.grupo_assembleia_id as number);
   const seqPorVersao = new Map<number, string[]>();
-  const marcasPorVersao = new Map<number, { furo: boolean; reduzidas: number[]; fases: number[] }>();
+  const marcasPorVersao = new Map<number, { furo: boolean; reduzidas: number[]; fases: number[]; fidelidade: boolean }>();
   if (ids.length) {
     const { data: versoes, error: e2 } = await supabase
       .from("grupo_assembleia")
       .select(
-        "id, fidelidade_meses, pagamento_com_furo, grupo_assembleia_tipo_parcela(fase1_parcelas, tipo_parcela(pct)), grupo_sequencia_faixa(assembleia_de, assembleia_ate, demais_tipo, demais_tipo_2, grupo_sequencia(ordem, quantidade, tipo))",
+        "id, fidelidade_meses, pagamento_com_furo, grupo_modalidade(tipo), grupo_assembleia_tipo_parcela(fase1_parcelas, tipo_parcela(pct)), grupo_sequencia_faixa(assembleia_de, assembleia_ate, demais_tipo, demais_tipo_2, grupo_sequencia(ordem, quantidade, tipo))",
       )
       .in("id", ids);
     if (e2) throw e2;
@@ -106,6 +108,7 @@ export async function listarGrupos(familia: string): Promise<GrupoResumo[]> {
       const pcts = tps.map((t) => Number(t.tipo_parcela?.pct));
       marcasPorVersao.set(ver.id as number, {
         furo: ver.pagamento_com_furo === true,
+        fidelidade: ((ver.grupo_modalidade ?? []) as unknown as { tipo: string }[]).some((m) => m.tipo === "FID"),
         reduzidas: [...new Set(pcts.filter((p) => Number.isFinite(p) && p < 100))].sort((a, b) => a - b),
         fases: [...new Set(tps.flatMap((t) => (t.fase1_parcelas ? [t.fase1_parcelas] : [])))].sort((a, b) => a - b),
       });
@@ -127,6 +130,7 @@ export async function listarGrupos(familia: string): Promise<GrupoResumo[]> {
       furo: marcasPorVersao.get(g.grupo_assembleia_id as number)?.furo ?? false,
       reduzidas: marcasPorVersao.get(g.grupo_assembleia_id as number)?.reduzidas ?? [],
       fases: marcasPorVersao.get(g.grupo_assembleia_id as number)?.fases ?? [],
+      fidelidade: marcasPorVersao.get(g.grupo_assembleia_id as number)?.fidelidade ?? false,
     };
   });
 }
