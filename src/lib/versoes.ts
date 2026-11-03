@@ -2,6 +2,13 @@
 // Regra: a cada mudança entregue, acrescentar uma entrada NO TOPO.
 export const VERSOES: { numero: string; data: string; itens: string[] }[] = [
   {
+    numero: "0140",
+    data: "03/11/2026",
+    itens: [
+      "Simulador de veículos, parcela mínima: quando o saldo rateado ficaria abaixo da parcela mínima, o programa não paga mais o mínimo por um número arredondado de meses (o que deixava vários lances com o mesmo valor). Agora divide o saldo pela parcela mínima, trunca para o número inteiro de parcelas e recalcula a parcela sobre esse número: ela fica igual ou acima do mínimo e quita o saldo exato.",
+    ],
+  },
+  {
     numero: "0139",
     data: "03/11/2026",
     itens: [

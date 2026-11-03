@@ -198,10 +198,11 @@ function montarColuna(base: Base, credito: number, totalLance: number, recursoCa
   const saldo = Math.max(0, saldoAntes - totalLance);
   let parcelaApos: number | null = base.prazoRestante > 0 ? saldo / base.prazoRestante : null;
   let prazoRestante = base.prazoRestante;
-  // parcela mínima (veículos): se o rateio ficar abaixo dela, paga-se o mínimo e o saldo quita antes do prazo
+  // parcela mínima (veículos): se o rateio ficar abaixo dela, o saldo é dividido pelo número INTEIRO de parcelas que cabe no mínimo
+  // (saldo ÷ mínima, truncado) e a parcela é recalculada sobre esse número: fica sempre igual ou acima do mínimo e quita o saldo exato
   if (parcelaApos !== null && base.parcelaMinima !== null && parcelaApos < base.parcelaMinima && saldo > 0) {
-    parcelaApos = base.parcelaMinima;
-    prazoRestante = Math.min(base.prazoRestante, Math.ceil(saldo / base.parcelaMinima));
+    prazoRestante = Math.min(base.prazoRestante, Math.max(1, Math.floor(saldo / base.parcelaMinima + 1e-9)));
+    parcelaApos = saldo / prazoRestante;
   }
   const creditoMenosProprio = creditoDisponivel - recursoProprio;
   // o custo compara o que se recebe de fato (já descontadas as parcelas pagas até a contemplação) com as parcelas que restam
