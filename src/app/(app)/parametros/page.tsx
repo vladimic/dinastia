@@ -72,9 +72,6 @@ async function Formulario({ searchParams }: { searchParams: PageProps<"/parametr
               % do crédito ao mês (todos os grupos)
               <input className="campo-sm" name="seguro_padrao_pct" inputMode="decimal" defaultValue={pct(data?.seguro_padrao_pct, 4)} required />
             </label>
-            <p className="text-[11px] leading-snug text-tinta">
-              Usado no cálculo do seguro de todos os grupos, imóveis e veículos. Ex.: 0,0472% de R$ 300.000,00 = R$ 141,60 por mês.
-            </p>
           </Cartao>
 
           <Cartao titulo="Textos sob o prazo restante (simulador)">
@@ -85,9 +82,6 @@ async function Formulario({ searchParams }: { searchParams: PageProps<"/parametr
                 <input className="campo-sm !text-left" name={`rodape_${k}_texto`} defaultValue={pad.rodape[k].texto} maxLength={80} required aria-label={`${NOMES_COLUNA[k]}: texto`} />
               </div>
             ))}
-            <p className="text-[11px] leading-snug text-tinta">
-              Aparecem sob o prazo restante de cada coluna do simulador (em veículos, o Fixo 25% usa o texto do Lance fixo e o Fixo 40% o do Lance limitado).
-            </p>
           </Cartao>
         </div>
 
@@ -96,9 +90,6 @@ async function Formulario({ searchParams }: { searchParams: PageProps<"/parametr
           <Cartao titulo="Imóveis">
             <Campo rotulo="INCC projetado (% ao ano)" nome="incc_pct_ano" valor={pct(pad.incc)} />
             <Contemplacao sufixo="" meses={pad.contemplacaoMeses} prazos={pad.contemplacaoPrazos} />
-            <p className="text-[11px] leading-snug text-tinta">
-              Valores com que o simulador de um grupo de imóveis abre. Na tela do simulador, o INCC, o seguro, a contemplação e os lances podem ser alterados para aquela simulação, sem mudar estes parâmetros.
-            </p>
 
             <h3 className="border-t border-linha pt-3 text-xs font-bold">Lances</h3>
             <Campo rotulo="Parcelas do lance livre" nome="lance_livre_parcelas" valor={String(pad.lanceLivreParcelas)} />
@@ -110,7 +101,6 @@ async function Formulario({ searchParams }: { searchParams: PageProps<"/parametr
             <Campo rotulo="Lance limitado" nome="concorrencia_limitado_pct" valor={pct(pad.concorrencia.LIM)} />
             <Campo rotulo="Lance livre" nome="concorrencia_livre_pct" valor={pct(pad.concorrencia.LIV)} />
             <Campo rotulo="Lance fidelidade" nome="concorrencia_fidelidade_pct" valor={pct(pad.concorrencia.FID)} />
-            <p className="text-[11px] leading-snug text-tinta">Aparece no cabeçalho de cada coluna do simulador de imóveis; só pode ser alterada aqui.</p>
           </Cartao>
         </div>
 
@@ -119,9 +109,6 @@ async function Formulario({ searchParams }: { searchParams: PageProps<"/parametr
           <Cartao titulo="Veículos">
             <Campo rotulo="INPC projetado (% ao ano)" nome="inpc_pct_ano" valor={pct(pad.inpc)} />
             <Contemplacao sufixo="_veic" meses={pad.contemplacaoMesesVeic} prazos={pad.contemplacaoPrazosVeic} />
-            <p className="text-[11px] leading-snug text-tinta">
-              Valores com que o simulador de um grupo de veículos abre. Na tela do simulador, o INPC, o seguro, a contemplação e os lances podem ser alterados para aquela simulação, sem mudar estes parâmetros.
-            </p>
 
             <h3 className="border-t border-linha pt-3 text-xs font-bold">Lances</h3>
             <Campo rotulo="% do lance livre (da categoria)" nome="lance_livre_pct" valor={pct(pad.lanceLivrePct)} />
@@ -136,7 +123,6 @@ async function Formulario({ searchParams }: { searchParams: PageProps<"/parametr
             <Campo rotulo="Lance fixo 40%" nome="concorrencia_veic_fixo40_pct" valor={pct(pad.concorrenciaVeic.F40)} />
             <Campo rotulo="Lance livre" nome="concorrencia_veic_livre_pct" valor={pct(pad.concorrenciaVeic.LIV)} />
             <Campo rotulo="Lance fidelidade" nome="concorrencia_veic_fidelidade_pct" valor={pct(pad.concorrenciaVeic.FID)} />
-            <p className="text-[11px] leading-snug text-tinta">Aparece no cabeçalho de cada coluna do simulador de veículos; só pode ser alterada aqui.</p>
           </Cartao>
         </div>
       </div>
@@ -209,9 +195,6 @@ function Contemplacao({ sufixo, meses, prazos }: { sufixo: "" | "_veic"; meses: 
             <input key={i} className="campo-sm !w-[3.3rem]" name={`contemplacao_prazo${sufixo}_${i + 1}`} inputMode="numeric" defaultValue={String(m)} required aria-label={`Prazo ${i + 1} de 7`} />
           ))}
         </div>
-        <p className="text-[11px] leading-snug text-tinta">
-          Os 7 atalhos do campo Contemplação em do simulador. Informe 7 prazos diferentes, de 1 a 999; eles são gravados em ordem crescente.
-        </p>
       </div>
     </>
   );

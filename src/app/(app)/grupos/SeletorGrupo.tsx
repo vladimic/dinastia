@@ -21,6 +21,8 @@ export type ItemGrupo = {
   reduzidas: number[];
   /** quantidade de parcelas reduzidas dos planos em duas fases (veículos) */
   fases?: number[];
+  /** o grupo tem a modalidade Fidelidade */
+  fidelidade?: boolean;
   /** códigos das 20 primeiras contemplações (desenhadas no pop-up) */
   seq: string[];
 };

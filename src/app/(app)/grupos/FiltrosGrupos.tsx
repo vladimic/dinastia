@@ -14,7 +14,7 @@ export const tem70 = (g: Pick<ItemGrupo, "reduzidas">) => g.reduzidas.includes(7
 
 /** Estado dos filtros + a barra desenhada (`barra`) + os grupos que passam (`visiveis`, em ordem de número). */
 export function useFiltrosGrupos(grupos: ItemGrupo[], familia: string) {
-  const [filtros, setFiltros] = useState({ furo: false, r70: false, r55: false, red: false });
+  const [filtros, setFiltros] = useState({ furo: false, r70: false, r55: false, red: false, fid: false });
   // quantidades de parcelas reduzidas marcadas (veículos; vazio = todas)
   const [fasesMarcadas, setFasesMarcadas] = useState<(number | "AC")[]>([]);
   const veic = familia === "veiculos";
@@ -28,7 +28,7 @@ export function useFiltrosGrupos(grupos: ItemGrupo[], familia: string) {
     setFaixa(null);
     setMarcados([]);
     setFasesMarcadas([]);
-    setFiltros({ furo: false, r70: false, r55: false, red: false });
+    setFiltros({ furo: false, r70: false, r55: false, red: false, fid: false });
   }
 
   // do menor ao maior crédito de todos os grupos da família (em múltiplos de R$ 1.000)
@@ -56,15 +56,16 @@ export function useFiltrosGrupos(grupos: ItemGrupo[], familia: string) {
         (!marcados.length || (g.participantes !== null && marcados.includes(g.participantes))) &&
         (!fasesMarcadas.length || (g.fases ?? []).some((x) => fasesMarcadas.includes(x)) || (temAC(g) && fasesMarcadas.includes("AC"))) &&
         (!filtros.red || g.reduzidas.length > 0) &&
+        (!filtros.fid || g.fidelidade === true) &&
         (!filtros.furo || g.furo) &&
         (!filtros.r70 || tem70(g)) &&
         (!filtros.r55 || temAte55(g)),
     )
     .sort((a, b) => a.numero - b.numero);
 
-  const temFiltro = filtraCredito || marcados.length > 0 || fasesMarcadas.length > 0 || filtros.red || filtros.furo || filtros.r70 || filtros.r55;
+  const temFiltro = filtraCredito || marcados.length > 0 || fasesMarcadas.length > 0 || filtros.red || filtros.fid || filtros.furo || filtros.r70 || filtros.r55;
   const limparTudo = () => {
-    setFiltros({ furo: false, r70: false, r55: false, red: false });
+    setFiltros({ furo: false, r70: false, r55: false, red: false, fid: false });
     setFaixa(null);
     setMarcados([]);
     setFasesMarcadas([]);
@@ -76,6 +77,9 @@ export function useFiltrosGrupos(grupos: ItemGrupo[], familia: string) {
   const barra = (
     <>
     <div className="flex shrink-0 flex-wrap gap-1.5" role="group" aria-label="Filtros">
+      <button type="button" aria-pressed={filtros.fid} onClick={() => setFiltros((f) => ({ ...f, fid: !f.fid }))} className={chip(filtros.fid)}>
+        <i aria-hidden="true" className="h-2 w-2 rounded-full bg-navy" /> Fidelidade
+      </button>
       {veic ? (
         <button type="button" aria-pressed={filtros.red} onClick={() => setFiltros((f) => ({ ...f, red: !f.red }))} className={chip(filtros.red)}>
           <i aria-hidden="true" className="h-2 w-2 rounded-full bg-reduzida" /> Parcela reduzida
