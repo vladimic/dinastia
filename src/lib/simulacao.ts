@@ -68,7 +68,9 @@ export function calcularBase(e: Entrada): Base {
     const parcela2 = ((e.credito * fase2Pct) / 100) * fator;
     const prazoPlano = n1 + n2;
     const noPlano = Math.min(m, prazoPlano);
-    const totalPago = Math.min(noPlano, n1) * parcela1 + Math.max(0, noPlano - n1) * parcela2;
+    // plano mais longo que a cota: sem contemplar na fase 1, depois dela a parcela é o saldo (categoria − fase 1 paga) rateado nos meses que faltam, e não a da fase 2
+    const recalculada = prazoPlano > e.mesesFaltam && e.mesesFaltam > n1 ? { parcelas: e.mesesFaltam - n1, valor: (categoria - n1 * parcela1) / (e.mesesFaltam - n1) } : null;
+    const totalPago = Math.min(noPlano, n1) * parcela1 + Math.max(0, noPlano - n1) * (recalculada ? recalculada.valor : parcela2);
     // o reduzido pode valer por mais meses que a cota tem (as parcelas a mais são o "furo", diluído na contemplação): o saldo se rateia no prazo que resta da cota
     const prazoRestante = Math.min(prazoPlano, e.mesesFaltam) - m;
     return {
@@ -86,7 +88,7 @@ export function calcularBase(e: Entrada): Base {
         parcela2,
         parcelas1: n1,
         parcelas2: n2,
-        recalculada: prazoPlano > e.mesesFaltam && e.mesesFaltam > n1 ? { parcelas: e.mesesFaltam - n1, valor: (categoria - n1 * parcela1) / (e.mesesFaltam - n1) } : null,
+        recalculada,
       },
     };
   }

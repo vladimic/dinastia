@@ -2,6 +2,13 @@
 // Regra: a cada mudança entregue, acrescentar uma entrada NO TOPO.
 export const VERSOES: { numero: string; data: string; itens: string[] }[] = [
   {
+    numero: "0139",
+    data: "03/11/2026",
+    itens: [
+      "Simulador de veículos, reduzida em duas fases mais longa que a cota (ex.: 1667): contemplando depois da fase 1 (ex.: 36 meses), o que já foi pago entre a 25ª parcela e a contemplação passa a contar pela parcela recalculada (R$ 4.383,14 no 1667 com R$ 252.900), e não pela da fase 2 (R$ 3.402,70). A parcela após o sorteio no mês 36 caiu de R$ 4.633,47 para R$ 4.383,14, igual à linha \"Sem contemplar até a 24ª\". Planos que cabem na cota não mudam.",
+    ],
+  },
+  {
     numero: "0138",
     data: "03/11/2026",
     itens: [
