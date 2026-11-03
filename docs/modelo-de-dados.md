@@ -48,6 +48,8 @@ erDiagram
     decimal concorrencia_veic_fidelidade_pct
     json rodape_textos
     array contemplacao_prazos
+    int contemplacao_meses_veic
+    array contemplacao_prazos_veic
     string pasta_pdf_imoveis
     string pasta_pdf_veiculos
     string pasta_pdf_servicos
@@ -233,7 +235,7 @@ Parâmetros globais do sistema. Tem sempre uma única linha (id = 1). Tela: Cada
 | `atualizado_em` | data e hora | sim |  | Última alteração da linha (automático). |
 | `incc_pct_ano` | número decimal | sim |  | INCC projetado (imóveis), em % ao ano, com que o simulador abre (o simulador pode alterar na tela, sem mudar o parâmetro). |
 | `inpc_pct_ano` | número decimal | sim |  | INPC projetado (veículos), em % ao ano, com que o simulador abre (padrão 5). |
-| `contemplacao_meses` | inteiro | sim |  | Mês de contemplação com que o simulador abre (imóveis e veículos). |
+| `contemplacao_meses` | inteiro | sim |  | Imóveis: mês de contemplação com que o simulador abre. |
 | `lance_livre_parcelas` | inteiro | sim |  | Imóveis: parcelas do lance livre com que o simulador abre. |
 | `lance_fidelidade_parcelas` | inteiro | sim |  | Imóveis: parcelas do lance fidelidade com que o simulador abre. |
 | `parcela_minima_padrao_pct` | número decimal | sim |  | Veículos: parcela mínima após a contemplação por lance (% da categoria: crédito + taxas) usada nos grupos cujo PDF não informa a sua (padrão 0,7). |
@@ -248,7 +250,9 @@ Parâmetros globais do sistema. Tem sempre uma única linha (id = 1). Tela: Cada
 | `concorrencia_veic_livre_pct` | número decimal | sim |  | Veículos: % de concorrência do Lance Livre. |
 | `concorrencia_veic_fidelidade_pct` | número decimal | sim |  | Veículos: % de concorrência do Lance Fidelidade. |
 | `rodape_textos` | JSON | sim |  | Título e texto sob o prazo restante de cada coluna do simulador, por tipo (SOR, FIX, LIM, LIV, FID). |
-| `contemplacao_prazos` | lista de números | sim |  | Os 7 prazos (em meses) que aparecem como atalhos no campo “Contemplação em” do simulador. |
+| `contemplacao_prazos` | lista de números | sim |  | Imóveis: os 7 prazos (em meses) que aparecem como atalhos no campo “Contemplação em” do simulador. |
+| `contemplacao_meses_veic` | inteiro | sim |  | Veículos: mês de contemplação com que o simulador abre. |
+| `contemplacao_prazos_veic` | lista de números | sim |  | Veículos: os 7 prazos (em meses) que aparecem como atalhos no campo “Contemplação em” do simulador. |
 | `pasta_pdf_imoveis` | texto | não |  | Pasta padrão dos PDFs das tabelas de Imóveis (referência para a importação). |
 | `pasta_pdf_veiculos` | texto | não |  | Pasta padrão dos PDFs das tabelas de Veículos. |
 | `pasta_pdf_servicos` | texto | não |  | Pasta padrão dos PDFs das tabelas de Serviços. |

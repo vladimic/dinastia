@@ -236,9 +236,13 @@ export type PadroesSimulador = {
   incc: number;
   /** INPC projetado, % ao ano (veículos) */
   inpc: number;
+  /** imóveis: mês de contemplação com que o simulador abre */
   contemplacaoMeses: number;
-  /** os 7 prazos (meses) que aparecem como atalhos em "Contemplação em" */
+  /** imóveis: os 7 prazos (meses) que aparecem como atalhos em "Contemplação em" */
   contemplacaoPrazos: number[];
+  /** veículos: o mesmo, separado dos imóveis */
+  contemplacaoMesesVeic: number;
+  contemplacaoPrazosVeic: number[];
   /** seguro, % do crédito ao mês (o mesmo parâmetro de todos os grupos) */
   seguroPct: number;
   lanceLivreParcelas: number;
@@ -274,13 +278,17 @@ export function padroesDeLinha(l: Record<string, unknown> | null | undefined): P
   const rodape = { ...RODAPE_PADRAO };
   for (const k of Object.keys(RODAPE_PADRAO) as TipoColuna[]) rodape[k] = { ...RODAPE_PADRAO[k], ...(r[k] ?? {}) };
   // 7 prazos válidos (inteiros de 1 a 999); qualquer outra coisa volta aos valores de fábrica
-  const bruto = Array.isArray(l?.contemplacao_prazos) ? (l.contemplacao_prazos as unknown[]).map(Number) : [];
-  const prazos = bruto.length === 7 && bruto.every((v) => Number.isInteger(v) && v >= 1 && v <= 999) ? bruto : PRAZOS_CONTEMPLACAO_PADRAO;
+  const prazosDe = (valor: unknown) => {
+    const bruto = Array.isArray(valor) ? (valor as unknown[]).map(Number) : [];
+    return bruto.length === 7 && bruto.every((v) => Number.isInteger(v) && v >= 1 && v <= 999) ? bruto : PRAZOS_CONTEMPLACAO_PADRAO;
+  };
   return {
     incc: n(l?.incc_pct_ano, 6),
     inpc: n(l?.inpc_pct_ano, 5),
     contemplacaoMeses: n(l?.contemplacao_meses, 1),
-    contemplacaoPrazos: prazos,
+    contemplacaoPrazos: prazosDe(l?.contemplacao_prazos),
+    contemplacaoMesesVeic: n(l?.contemplacao_meses_veic, 1),
+    contemplacaoPrazosVeic: prazosDe(l?.contemplacao_prazos_veic),
     seguroPct: n(l?.seguro_padrao_pct, 0),
     lanceLivreParcelas: n(l?.lance_livre_parcelas, 150),
     lanceFidelidadeParcelas: n(l?.lance_fidelidade_parcelas, 130),

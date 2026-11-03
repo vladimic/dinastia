@@ -599,8 +599,8 @@ export function Simulador({ hoje, padroes }: { hoje: string; padroes: PadroesSim
               className="h-5 w-full cursor-pointer accent-[#ff751f]"
             />
             <div className="flex gap-1" role="group" aria-label="Atalhos de meses">
-              {/* os 7 prazos vêm do parâmetro global (Parâmetros globais › Simulador) */}
-              {padroes.contemplacaoPrazos.filter((m) => m <= maxMeses).map((m) => (
+              {/* os 7 prazos vêm do parâmetro global (Parâmetros globais › Imóveis e Veículos) */}
+              {(veiculo ? padroes.contemplacaoPrazosVeic : padroes.contemplacaoPrazos).filter((m) => m <= maxMeses).map((m) => (
                 <button
                   key={m}
                   type="button"

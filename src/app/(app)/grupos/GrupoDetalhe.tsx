@@ -95,7 +95,7 @@ function Conteudo({ grupo: g, familiaNome, indices, hoje, padroes, abaInicial, p
   const [creditos, setCreditos] = useState(g.creditos);
   const [disponiveis, setDisponiveis] = useState(() => new Set(g.tiposParcela.filter((t) => t.disponivel).map((t) => t.codigo)));
   const [cotas, setCotas] = useState(1);
-  const [meses, setMeses] = useState(String(padroes.contemplacaoMeses));
+  const [meses, setMeses] = useState(String(g.familia === "veiculos" ? padroes.contemplacaoMesesVeic : padroes.contemplacaoMeses));
 
   // a tabela vigente é da próxima assembleia enquanto a data dela não passou
   const realizadas = g.data_assembleia && g.data_assembleia >= hoje ? g.assembleia - 1 : g.assembleia;

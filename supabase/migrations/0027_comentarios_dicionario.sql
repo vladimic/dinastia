@@ -5,7 +5,7 @@ comment on column public.parametros_gerais.seguro_padrao_pct is 'Seguro prestami
 comment on column public.parametros_gerais.atualizado_em is 'Última alteração da linha (automático).';
 comment on column public.parametros_gerais.incc_pct_ano is 'INCC projetado (imóveis), em % ao ano, com que o simulador abre (o simulador pode alterar na tela, sem mudar o parâmetro).';
 comment on column public.parametros_gerais.inpc_pct_ano is 'INPC projetado (veículos), em % ao ano, com que o simulador abre (padrão 5).';
-comment on column public.parametros_gerais.contemplacao_meses is 'Mês de contemplação com que o simulador abre (imóveis e veículos).';
+comment on column public.parametros_gerais.contemplacao_meses is 'Imóveis: mês de contemplação com que o simulador abre.';
 comment on column public.parametros_gerais.lance_livre_parcelas is 'Imóveis: parcelas do lance livre com que o simulador abre.';
 comment on column public.parametros_gerais.lance_fidelidade_parcelas is 'Imóveis: parcelas do lance fidelidade com que o simulador abre.';
 comment on column public.parametros_gerais.parcela_minima_padrao_pct is 'Veículos: parcela mínima após a contemplação por lance (% da categoria: crédito + taxas) usada nos grupos cujo PDF não informa a sua (padrão 0,7).';
@@ -20,7 +20,9 @@ comment on column public.parametros_gerais.concorrencia_veic_fixo40_pct is 'Veí
 comment on column public.parametros_gerais.concorrencia_veic_livre_pct is 'Veículos: % de concorrência do Lance Livre.';
 comment on column public.parametros_gerais.concorrencia_veic_fidelidade_pct is 'Veículos: % de concorrência do Lance Fidelidade.';
 comment on column public.parametros_gerais.rodape_textos is 'Título e texto sob o prazo restante de cada coluna do simulador, por tipo (SOR, FIX, LIM, LIV, FID).';
-comment on column public.parametros_gerais.contemplacao_prazos is 'Os 7 prazos (em meses) que aparecem como atalhos no campo “Contemplação em” do simulador.';
+comment on column public.parametros_gerais.contemplacao_prazos is 'Imóveis: os 7 prazos (em meses) que aparecem como atalhos no campo “Contemplação em” do simulador.';
+comment on column public.parametros_gerais.contemplacao_meses_veic is 'Veículos: mês de contemplação com que o simulador abre.';
+comment on column public.parametros_gerais.contemplacao_prazos_veic is 'Veículos: os 7 prazos (em meses) que aparecem como atalhos no campo “Contemplação em” do simulador.';
 comment on column public.parametros_gerais.pasta_pdf_imoveis is 'Pasta padrão dos PDFs das tabelas de Imóveis (referência para a importação).';
 comment on column public.parametros_gerais.pasta_pdf_veiculos is 'Pasta padrão dos PDFs das tabelas de Veículos.';
 comment on column public.parametros_gerais.pasta_pdf_servicos is 'Pasta padrão dos PDFs das tabelas de Serviços.';

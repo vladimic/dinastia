@@ -20,12 +20,16 @@ export async function salvarParametros(formData: FormData) {
   if (incc === null || incc < 0 || incc > 100) redirect("/parametros?erro=2");
   const inpc = lerPct(formData.get("inpc_pct_ano"));
   if (inpc === null || inpc < 0 || inpc > 100) redirect("/parametros?erro=2");
-  const contemplacao = inteiro(formData.get("contemplacao_meses"));
-  if (!(contemplacao >= 1 && contemplacao <= 999)) redirect("/parametros?erro=3");
-  // 7 prazos de atalho de "Contemplação em": inteiros de 1 a 999, sem repetir; gravados em ordem crescente
-  const prazos = [1, 2, 3, 4, 5, 6, 7].map((i) => inteiro(formData.get(`contemplacao_prazo_${i}`)));
-  if (prazos.some((v) => !(v >= 1 && v <= 999)) || new Set(prazos).size !== 7) redirect("/parametros?erro=7");
-  prazos.sort((a, b) => a - b);
+  // contemplação em X meses e os 7 prazos de atalho, de imóveis ("") e de veículos ("_veic"): inteiros de 1 a 999, prazos sem repetir e em ordem crescente
+  const contemplacaoDe = (sufixo: string) => {
+    const meses = inteiro(formData.get(`contemplacao_meses${sufixo}`));
+    if (!(meses >= 1 && meses <= 999)) redirect("/parametros?erro=3");
+    const prazos = [1, 2, 3, 4, 5, 6, 7].map((i) => inteiro(formData.get(`contemplacao_prazo${sufixo}_${i}`)));
+    if (prazos.some((v) => !(v >= 1 && v <= 999)) || new Set(prazos).size !== 7) redirect("/parametros?erro=7");
+    return { meses, prazos: prazos.sort((a, b) => a - b) };
+  };
+  const contImoveis = contemplacaoDe("");
+  const contVeiculos = contemplacaoDe("_veic");
   const livre = inteiro(formData.get("lance_livre_parcelas"));
   const fidelidade = inteiro(formData.get("lance_fidelidade_parcelas"));
   if (!(livre >= 1 && livre <= 999) || !(fidelidade >= 1 && fidelidade <= 999)) redirect("/parametros?erro=4");
@@ -73,8 +77,10 @@ export async function salvarParametros(formData: FormData) {
       seguro_padrao_pct: seguro,
       incc_pct_ano: incc,
       inpc_pct_ano: inpc,
-      contemplacao_meses: contemplacao,
-      contemplacao_prazos: prazos,
+      contemplacao_meses: contImoveis.meses,
+      contemplacao_prazos: contImoveis.prazos,
+      contemplacao_meses_veic: contVeiculos.meses,
+      contemplacao_prazos_veic: contVeiculos.prazos,
       lance_livre_parcelas: livre,
       lance_fidelidade_parcelas: fidelidade,
       parcela_minima_padrao_pct: minimaPct,
