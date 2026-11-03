@@ -2,6 +2,13 @@
 // Regra: a cada mudança entregue, acrescentar uma entrada NO TOPO.
 export const VERSOES: { numero: string; data: string; itens: string[] }[] = [
   {
+    numero: "0137",
+    data: "03/11/2026",
+    itens: [
+      "Simulador de veículos, parcela reduzida em duas fases: quando o plano é mais longo que a cota (ex.: grupo 1667, 24× + 76× em 83 meses que faltam), aparece embaixo de \"24× … depois 76× …\" a linha \"Sem contemplar até a 24ª: 59× R$ 4.382,…\". É o saldo (crédito + taxas − as 24 parcelas reduzidas pagas) dividido nos meses que realmente faltam depois delas.",
+    ],
+  },
+  {
     numero: "0136",
     data: "03/11/2026",
     itens: [
