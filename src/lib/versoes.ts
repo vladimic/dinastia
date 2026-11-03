@@ -2,6 +2,13 @@
 // Regra: a cada mudança entregue, acrescentar uma entrada NO TOPO.
 export const VERSOES: { numero: string; data: string; itens: string[] }[] = [
   {
+    numero: "0134",
+    data: "03/11/2026",
+    itens: [
+      "Menu lateral: ao voltar a uma tela pelo menu (ex.: Grupos e Tabelas depois de passar por Parâmetros globais), o programa volta para o mesmo endereço em que ela estava (mesma família, grupo e aba), e o Next mantém o que já estava preenchido nela (simulação, crédito, meses, tipo de parcela, filtros, rolagem). Vale para todas as telas. Limite do Next: guarda as 3 últimas telas visitadas; a quarta, mais antiga, reinicia. Avisos de gravação (\"salvo\", \"erro\") não voltam junto.",
+    ],
+  },
+  {
     numero: "0133",
     data: "03/11/2026",
     itens: [
