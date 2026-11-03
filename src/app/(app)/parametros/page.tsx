@@ -77,28 +77,6 @@ async function Formulario({ searchParams }: { searchParams: PageProps<"/parametr
             </p>
           </Cartao>
 
-          <Cartao titulo="Simulador (imóveis e veículos)">
-            <Campo rotulo="INCC projetado, imóveis (% ao ano)" nome="incc_pct_ano" valor={pct(pad.incc)} />
-            <Campo rotulo="INPC projetado, veículos (% ao ano)" nome="inpc_pct_ano" valor={pct(pad.inpc)} />
-            <Campo rotulo="Contemplação em (meses)" nome="contemplacao_meses" valor={String(pad.contemplacaoMeses)} />
-            <div className="flex flex-col gap-1.5">
-              <span id="rotulo-prazos" className="text-xs font-semibold text-tinta">
-                Prazos de contemplação (meses)
-              </span>
-              <div role="group" aria-labelledby="rotulo-prazos" className="flex flex-wrap gap-1.5">
-                {pad.contemplacaoPrazos.map((m, i) => (
-                  <input key={i} className="campo-sm !w-[3.3rem]" name={`contemplacao_prazo_${i + 1}`} inputMode="numeric" defaultValue={String(m)} required aria-label={`Prazo ${i + 1} de 7`} />
-                ))}
-              </div>
-              <p className="text-[11px] leading-snug text-tinta">
-                Os 7 atalhos do campo Contemplação em do simulador. Informe 7 prazos diferentes, de 1 a 999; eles são gravados em ordem crescente.
-              </p>
-            </div>
-            <p className="text-[11px] leading-snug text-tinta">
-              Valores com que o simulador de cada grupo abre. Na tela do simulador, o índice (INCC ou INPC), o seguro, a contemplação e os lances livre e fidelidade podem ser alterados para aquela simulação, sem mudar estes parâmetros.
-            </p>
-          </Cartao>
-
           <Cartao titulo="Textos sob o prazo restante (simulador)">
             {(Object.keys(NOMES_COLUNA) as TipoColuna[]).map((k) => (
               <div key={k} className="flex flex-col gap-1.5">
@@ -116,6 +94,13 @@ async function Formulario({ searchParams }: { searchParams: PageProps<"/parametr
         {/* 2ª coluna: imóveis */}
         <div className="flex w-[26rem] max-w-full flex-col gap-4">
           <Cartao titulo="Imóveis">
+            <Campo rotulo="INCC projetado (% ao ano)" nome="incc_pct_ano" valor={pct(pad.incc)} />
+            <Contemplacao sufixo="" meses={pad.contemplacaoMeses} prazos={pad.contemplacaoPrazos} />
+            <p className="text-[11px] leading-snug text-tinta">
+              Valores com que o simulador de um grupo de imóveis abre. Na tela do simulador, o INCC, o seguro, a contemplação e os lances podem ser alterados para aquela simulação, sem mudar estes parâmetros.
+            </p>
+
+            <h3 className="border-t border-linha pt-3 text-xs font-bold">Lances</h3>
             <Campo rotulo="Parcelas do lance livre" nome="lance_livre_parcelas" valor={String(pad.lanceLivreParcelas)} />
             <Campo rotulo="Parcelas do lance fidelidade" nome="lance_fidelidade_parcelas" valor={String(pad.lanceFidelidadeParcelas)} />
             <p className="text-[11px] leading-snug text-tinta">Parcelas com que o simulador de um grupo de imóveis abre os lances livre e fidelidade.</p>
@@ -132,6 +117,13 @@ async function Formulario({ searchParams }: { searchParams: PageProps<"/parametr
         {/* 3ª coluna: veículos */}
         <div className="flex w-[26rem] max-w-full flex-col gap-4">
           <Cartao titulo="Veículos">
+            <Campo rotulo="INPC projetado (% ao ano)" nome="inpc_pct_ano" valor={pct(pad.inpc)} />
+            <Contemplacao sufixo="_veic" meses={pad.contemplacaoMesesVeic} prazos={pad.contemplacaoPrazosVeic} />
+            <p className="text-[11px] leading-snug text-tinta">
+              Valores com que o simulador de um grupo de veículos abre. Na tela do simulador, o INPC, o seguro, a contemplação e os lances podem ser alterados para aquela simulação, sem mudar estes parâmetros.
+            </p>
+
+            <h3 className="border-t border-linha pt-3 text-xs font-bold">Lances</h3>
             <Campo rotulo="% do lance livre (da categoria)" nome="lance_livre_pct" valor={pct(pad.lanceLivrePct)} />
             <Campo rotulo="% do lance fidelidade (da categoria)" nome="lance_fidelidade_pct" valor={pct(pad.lanceFidelidadePct)} />
             <Campo rotulo="Parcela mínima padrão (% da categoria)" nome="parcela_minima_padrao_pct" valor={pct(pad.parcelaMinimaPadraoPct)} />
@@ -199,5 +191,28 @@ function Campo({ rotulo, nome, valor }: { rotulo: string; nome: string; valor: s
       {rotulo}
       <input className="campo-sm" name={nome} inputMode="decimal" defaultValue={valor} required />
     </label>
+  );
+}
+
+/** Contemplação em (meses) e os 7 prazos de atalho do simulador; `sufixo` separa imóveis ("") de veículos ("_veic"). */
+function Contemplacao({ sufixo, meses, prazos }: { sufixo: "" | "_veic"; meses: number; prazos: number[] }) {
+  const id = `rotulo-prazos${sufixo}`;
+  return (
+    <>
+      <Campo rotulo="Contemplação em (meses)" nome={`contemplacao_meses${sufixo}`} valor={String(meses)} />
+      <div className="flex flex-col gap-1.5">
+        <span id={id} className="text-xs font-semibold text-tinta">
+          Prazos de contemplação (meses)
+        </span>
+        <div role="group" aria-labelledby={id} className="flex flex-wrap gap-1.5">
+          {prazos.map((m, i) => (
+            <input key={i} className="campo-sm !w-[3.3rem]" name={`contemplacao_prazo${sufixo}_${i + 1}`} inputMode="numeric" defaultValue={String(m)} required aria-label={`Prazo ${i + 1} de 7`} />
+          ))}
+        </div>
+        <p className="text-[11px] leading-snug text-tinta">
+          Os 7 atalhos do campo Contemplação em do simulador. Informe 7 prazos diferentes, de 1 a 999; eles são gravados em ordem crescente.
+        </p>
+      </div>
+    </>
   );
 }

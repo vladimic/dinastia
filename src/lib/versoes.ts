@@ -2,6 +2,13 @@
 // Regra: a cada mudança entregue, acrescentar uma entrada NO TOPO.
 export const VERSOES: { numero: string; data: string; itens: string[] }[] = [
   {
+    numero: "0133",
+    data: "03/11/2026",
+    itens: [
+      "Parâmetros globais: o INCC foi para o quadro Imóveis e o INPC para o quadro Veículos. Contemplação em (meses) e os 7 prazos de atalho agora existem separados para imóveis e para veículos (os valores atuais foram copiados para veículos). O quadro \"Simulador (imóveis e veículos)\" deixou de existir.",
+    ],
+  },
+  {
     numero: "0132",
     data: "03/11/2026",
     itens: [
