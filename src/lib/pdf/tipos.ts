@@ -23,7 +23,7 @@ export type Modalidade = {
   emb_base?: "lance" | "categoria";
 };
 
-/** Plano reduzido lido do PDF de veículos (tipo = código de tipo_parcela). Em duas fases: Plano 40/50/75 e Clearance; RED_nn = reduzido até a contemplação. */
+/** Reduzida lida do PDF de veículos (tipo = RED, o único código de reduzida). Em duas fases: fase1_pct, fase1_parcelas e fase2_parcelas preenchidos. Até a contemplação (AC): só fase1_pct, que é o % da parcela linear (50 = metade). */
 export type PlanoReduzidoLido = {
   tipo: string;
   /** % do crédito pago por mês na fase 1, sem taxas (ex.: 0,6 no Plano 50) */
@@ -35,7 +35,7 @@ export type PlanoReduzidoLido = {
 export type Faixa = { de: number; ate: number; itens: { qtd: number; tipo: string }[]; demais: string | null; demais2?: string | null };
 
 /** Versão do leitor de PDFs: sobe quando uma correção muda o que é lido (PDFs lidos antes com versão menor são lidos de novo). */
-export const LEITOR = 6;
+export const LEITOR = 7;
 
 export type Leitura = {
   leitor: number;

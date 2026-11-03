@@ -397,14 +397,14 @@ function Lista({
         </ul>
       )}
 
-      {pop && <Popup {...pop} hoje={hoje} cores={cores} />}
+      {pop && <Popup {...pop} familia={familia} hoje={hoje} cores={cores} />}
     </div>
   );
 }
 
 // Pop-up com os detalhes do grupo (o mesmo da versão antiga da tela): crédito, participantes, reduzidas,
 // assembleias, realizadas/faltam e a sequência de contemplação em quadradinhos coloridos.
-function Popup({ g, x, y, acima, hoje, cores }: { g: ItemGrupo; x: number; y: number; acima: boolean; hoje: string; cores: Record<string, string> }) {
+function Popup({ familia, g, x, y, acima, hoje, cores }: { familia: string; g: ItemGrupo; x: number; y: number; acima: boolean; hoje: string; cores: Record<string, string> }) {
   // a tabela vigente é da próxima assembleia enquanto a data dela não passou
   const realizadas = g.data && g.data >= hoje ? g.assembleia - 1 : g.assembleia;
   const faltam = Math.max(0, g.prazo - realizadas);
@@ -430,7 +430,10 @@ function Popup({ g, x, y, acima, hoje, cores }: { g: ItemGrupo; x: number; y: nu
       {g.reduzidas.length > 0 && (
         <div className={linha}>
           <span>Reduzidas</span>
-          <span className="font-semibold text-white tabular-nums">{g.reduzidas.join(" · ")}</span>
+          <span className="font-semibold text-white tabular-nums">
+            {/* veículos: quantidade de parcelas reduzidas (ou AC, até a contemplação); imóveis: % da parcela */}
+            {familia === "veiculos" ? ((g.fases ?? []).length ? (g.fases ?? []).join(" · ") : "AC") : g.reduzidas.join(" · ")}
+          </span>
         </div>
       )}
       <div className={linha}>

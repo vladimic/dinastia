@@ -27,6 +27,9 @@ function modalidadeDoBackup(m: Linha) {
   };
 }
 
+/** Tipos de parcela reduzida de veículos que deixaram de existir: hoje é tudo "RED". */
+const TIPOS_REDUZIDA_ANTIGOS = new Set(["PLANO_40", "PLANO_50", "PLANO_75", "CLEARANCE", "RED_50"]);
+
 async function todas(supabase: SupabaseClient, tabela: string, select = "*", ordem?: string) {
   const out: Linha[] = [];
   for (let de = 0; ; de += 1000) {
@@ -129,7 +132,12 @@ export async function restaurarBackup(supabase: SupabaseClient, b: Backup, email
     ["tipo_contemplacao", d.tiposContemplacao, "familia,codigo"],
     ["tipo_parcela", d.tiposParcela, "familia,codigo"],
   ] as const) {
-    const semCan = tabela === "tipo_contemplacao" ? (linhas ?? []).filter((l) => l.codigo !== "CAN") : linhas; // o Sorteio Cancelada não existe mais
+    const semCan =
+      tabela === "tipo_contemplacao"
+        ? (linhas ?? []).filter((l) => l.codigo !== "CAN") // o Sorteio Cancelada não existe mais
+        : tabela === "tipo_parcela"
+          ? (linhas ?? []).filter((l) => !((l.familia === "veiculos" || l.familia === undefined) && TIPOS_REDUZIDA_ANTIGOS.has(String(l.codigo)))) // as reduzidas de veículos viraram um tipo só (RED)
+          : linhas;
     // backups antigos não têm família: eram todos de imóveis
     const lista = tabela === "tipo_contemplacao" || tabela === "tipo_parcela" ? semCan?.map((l) => ({ familia: "imoveis", ...l })) : semCan;
     if (!lista?.length) continue;
@@ -182,10 +190,16 @@ export async function restaurarBackup(supabase: SupabaseClient, b: Backup, email
         observacoes: v.observacoes,
         pagamento_com_furo: v.pagamento_com_furo === true,
         creditos: ((v.creditos as unknown[]) ?? []).map(num),
-        tipos_parcela: ((v.tipos_parcela as Linha[]) ?? []).map((t) => t.tipo_parcela),
+        // backups antigos têm Plano 40/50/75, Clearance e Reduzida 50% de veículos: hoje é tudo "RED"
+        tipos_parcela: [...new Set(((v.tipos_parcela as Linha[]) ?? []).map((t) => (g.familia === "veiculos" && TIPOS_REDUZIDA_ANTIGOS.has(String(t.tipo_parcela)) ? "RED" : t.tipo_parcela)))],
         planos_fase: ((v.tipos_parcela as Linha[]) ?? [])
           .filter((t) => t.fase1_pct !== null && t.fase1_pct !== undefined)
-          .map((t) => ({ tipo: t.tipo_parcela, fase1_pct: num(t.fase1_pct), fase1_parcelas: t.fase1_parcelas, fase2_parcelas: t.fase2_parcelas })),
+          .map((t) => ({
+            tipo: "RED",
+            fase1_pct: t.tipo_parcela === "RED_50" && t.fase1_parcelas == null ? 50 : num(t.fase1_pct),
+            fase1_parcelas: t.fase1_parcelas,
+            fase2_parcelas: t.fase2_parcelas,
+          })),
         modalidades: ((v.modalidades as Linha[]) ?? []).filter((m) => m.tipo !== "CAN").map(modalidadeDoBackup),
         faixas: ((v.faixas as Linha[]) ?? []).map((f) => ({
           de: f.assembleia_de,

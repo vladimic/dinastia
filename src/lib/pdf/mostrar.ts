@@ -22,13 +22,19 @@ function modalidade(m: Modalidade) {
   return partes.join(" · ");
 }
 
-const NOME_PLANO = (t: string) => (t === "CLEARANCE" ? "Clearance" : t.startsWith("PLANO_") ? `Plano ${t.slice(6)}` : t);
-
 export function textoDoValor(escopo: string, campo: string, v: unknown): string {
   if (v === null || v === undefined) return "—";
   if (escopo === "tipos_parcela" && campo === "planos_fase") {
-    const l = v as { tipo: string; fase1_pct: number; fase1_parcelas: number; fase2_parcelas: number }[];
-    return l.length ? l.map((p) => `${NOME_PLANO(p.tipo)}: ${String(p.fase1_pct).replace(".", ",")}% × ${p.fase1_parcelas} parcelas, depois ${p.fase2_parcelas}`).join("; ") : "sem plano reduzido em fases";
+    const l = v as { tipo: string; fase1_pct: number; fase1_parcelas: number | null; fase2_parcelas: number | null }[];
+    return l.length
+      ? l
+          .map((p) =>
+            p.fase1_parcelas === null
+              ? `Reduzida até a contemplação (${String(p.fase1_pct).replace(".", ",")}% da parcela)`
+              : `Reduzida: ${String(p.fase1_pct).replace(".", ",")}% × ${p.fase1_parcelas} parcelas, depois ${p.fase2_parcelas}`,
+          )
+          .join("; ")
+      : "sem parcela reduzida";
   }
   if (escopo === "sequencia" && campo === "*") return faixa(v as Faixa);
   if (escopo === "modalidade" && campo === "*") return modalidade(v as Modalidade);

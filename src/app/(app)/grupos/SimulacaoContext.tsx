@@ -7,9 +7,9 @@ export type TipoSim = {
   codigo: string;
   descricao: string;
   pct: number;
-  /** texto curto no lugar de “N%” (planos de veículos: Plano 50, Clearance) */
+  /** texto curto no lugar de “N%” (veículos: Reduzida) */
   rotulo: string | null;
-  /** plano em duas fases (veículos) */
+  /** reduzida de veículos: em duas fases (os três campos) ou até a contemplação (só fase1Pct = % da parcela linear) */
   fase1Pct: number | null;
   fase1Parcelas: number | null;
   fase2Parcelas: number | null;
