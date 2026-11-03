@@ -1,8 +1,41 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
-import type { ReactNode } from "react";
+import { usePathname, useSearchParams } from "next/navigation";
+import { Suspense, useCallback, useEffect, useSyncExternalStore, type ReactNode } from "react";
+
+// Voltar a uma tela pelo menu leva de volta ao que estava aberto nela (grupo, aba, filtros), e não à tela em branco.
+// O Next guarda o estado de cada tela pelo endereço completo (com o ?grupo=…); por isso o menu lembra o último endereço de cada tela.
+const CHAVE_ULTIMAS = "dinastia:ultimas-telas";
+const PARAMETROS_PASSAGEIROS = ["salvo", "erro"]; // avisos de uma gravação: não voltam junto
+
+const EVENTO_ULTIMAS = "dinastia:ultimas-telas";
+const assinar = (aviso: () => void) => {
+  window.addEventListener(EVENTO_ULTIMAS, aviso);
+  return () => window.removeEventListener(EVENTO_ULTIMAS, aviso);
+};
+const instantaneo = () => {
+  try {
+    return sessionStorage.getItem(CHAVE_ULTIMAS) ?? "{}";
+  } catch {
+    return "{}";
+  }
+};
+const instantaneoServidor = () => "{}";
+
+/** Anota o endereço completo da tela atual (sem os avisos de gravação). Não desenha nada. */
+function Rastreador({ aoMudar }: { aoMudar: (caminho: string, endereco: string) => void }) {
+  const caminho = usePathname();
+  const busca = useSearchParams();
+  const texto = busca.toString();
+  useEffect(() => {
+    const q = new URLSearchParams(texto);
+    for (const k of PARAMETROS_PASSAGEIROS) q.delete(k);
+    const resto = q.toString();
+    aoMudar(caminho, resto ? `${caminho}?${resto}` : caminho);
+  }, [caminho, texto, aoMudar]);
+  return null;
+}
 
 type Item = { href: string; label: string; pronto?: boolean; admin?: boolean };
 
@@ -40,12 +73,27 @@ const GRUPOS: { titulo?: string; itens: Item[] }[] = [
 
 export function Sidebar({ rodape, admin = false }: { rodape: ReactNode; admin?: boolean }) {
   const path = usePathname();
+  const ultimas = JSON.parse(useSyncExternalStore(assinar, instantaneo, instantaneoServidor)) as Record<string, string>;
+  const lembrar = useCallback((caminho: string, endereco: string) => {
+    const base = "/" + caminho.split("/")[1];
+    const atuais = JSON.parse(instantaneo()) as Record<string, string>;
+    if (atuais[base] === endereco) return;
+    try {
+      sessionStorage.setItem(CHAVE_ULTIMAS, JSON.stringify({ ...atuais, [base]: endereco }));
+    } catch {
+      return;
+    }
+    window.dispatchEvent(new Event(EVENTO_ULTIMAS));
+  }, []);
 
   return (
     <nav
       aria-label="Menu principal"
       className="flex max-w-full flex-[1_1_248px] flex-col gap-6 bg-navy px-[18px] py-7 text-[#e9e6f5] lg:max-w-[260px]"
     >
+      <Suspense fallback={null}>
+        <Rastreador aoMudar={lembrar} />
+      </Suspense>
       <div className="flex flex-col gap-1 px-2.5">
         <div className="font-display text-[34px] font-bold leading-none tracking-wide text-ouro">Dinastia</div>
         <div className="text-[11px] uppercase tracking-[0.14em] text-[#b9b3d6]">Estruturação de Patrimônio</div>
@@ -73,7 +121,7 @@ export function Sidebar({ rodape, admin = false }: { rodape: ReactNode; admin?: 
             return (
               <Link
                 key={item.href}
-                href={item.href}
+                href={ultimas[item.href] ?? item.href}
                 aria-current={ativo ? "page" : undefined}
                 className={
                   "rounded-lg px-3 py-2 text-sm " +
