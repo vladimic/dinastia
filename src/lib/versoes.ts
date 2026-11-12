@@ -2,6 +2,13 @@
 // Regra: a cada mudança entregue, acrescentar uma entrada NO TOPO.
 export const VERSOES: { numero: string; data: string; itens: string[] }[] = [
   {
+    numero: "0142",
+    data: "12/11/2026",
+    itens: [
+      "Grupos e Tabelas: a escolha da família (Imóveis, Veículos, Serviços, Outros Bens) foi para o cabeçalho principal, ao lado do título. Na lista de grupos, os filtros agora começam na margem esquerda, com mais espaço na linha.",
+    ],
+  },
+  {
     numero: "0141",
     data: "12/11/2026",
     itens: [

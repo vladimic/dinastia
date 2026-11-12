@@ -37,7 +37,6 @@ const dataBR = (iso: string) => iso.slice(0, 10).split("-").reverse().join("/");
 type Props = {
   familias: readonly Familia[];
   familia: string;
-  contagem: Record<string, number>;
   grupos: ItemGrupo[];
   atual: { numero: number; familiaNome: string; atualizadoEm?: string | null; arquivo?: string | null } | null;
   hoje: string;
@@ -45,7 +44,7 @@ type Props = {
   cores: Record<string, string>;
 };
 
-export function SeletorGrupo({ familias, familia, contagem, grupos, atual, hoje, cores }: Props) {
+export function SeletorGrupo({ familias, familia, grupos, atual, hoje, cores }: Props) {
   const sp = useSearchParams();
   const aba = sp.get("aba") ?? undefined;
   const pediuLista = sp.get("lista") === "1";
@@ -137,15 +136,12 @@ export function SeletorGrupo({ familias, familia, contagem, grupos, atual, hoje,
 
   const lista = (
     <Lista
-      familias={familias}
       familia={familia}
-      contagem={contagem}
       grupos={grupos}
       ativo={atual?.numero}
       hoje={hoje}
       cores={cores}
       linkGrupo={linkGrupo}
-      linkFamilia={(slug) => href({ familia: slug, grupo: atual?.numero, aba, lista: atual ? 1 : undefined })}
       aoEscolher={() => setAberto(false)}
       navegar={navegar}
     />
@@ -262,28 +258,22 @@ export function SeletorGrupo({ familias, familia, contagem, grupos, atual, hoje,
 }
 
 function Lista({
-  familias,
   familia,
-  contagem,
   grupos,
   ativo,
   hoje,
   cores,
   linkGrupo,
   navegar,
-  linkFamilia,
   aoEscolher,
 }: {
-  familias: readonly Familia[];
   familia: string;
-  contagem: Record<string, number>;
   grupos: ItemGrupo[];
   ativo?: number;
   hoje: string;
   cores: Record<string, string>;
   linkGrupo: (n: number) => string;
   navegar: (url: string) => void;
-  linkFamilia: (slug: string) => string;
   aoEscolher: () => void;
 }) {
   // pop-up de detalhes do grupo sob o mouse (ou com o foco do teclado)
@@ -302,23 +292,8 @@ function Lista({
 
   return (
     <div className="@container flex flex-col gap-3">
-      {/* cabeçalho da lista numa linha só: família, busca e filtros */}
+      {/* filtros numa linha só (a escolha da família fica no cabeçalho principal) */}
       <div className="flex flex-nowrap items-center gap-x-2 overflow-x-auto">
-        <nav aria-label="Família de produto" className="flex shrink-0 flex-nowrap gap-1 rounded-xl border border-borda bg-linha p-1">
-          {familias.map((f) => {
-            const on = f.slug === familia;
-            return (
-              <Link
-                key={f.slug}
-                href={linkFamilia(f.slug)}
-                aria-current={on ? "true" : undefined}
-                className={"flex min-h-8 items-center rounded-lg px-2.5 text-[13px] font-bold " + (on ? "bg-white text-navy shadow ring-1 ring-laranja" : "text-tinta hover:text-navy")}
-              >
-                {f.nome} <span className="ml-1 font-semibold opacity-70">{contagem[f.slug] ?? 0}</span>
-              </Link>
-            );
-          })}
-        </nav>
         {barra}
       </div>
 
