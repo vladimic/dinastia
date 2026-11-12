@@ -20,9 +20,11 @@ type Props = {
   passo?: number;
   /** largura dos dois campos digitáveis */
   larguraCampo?: string;
+  /** texto de referência ao lado do nome (ex.: o prazo em anos) */
+  referencia?: string;
 };
 
-export function FiltroCredito({ minimo, maximo, de, ate, aoMudar, className = "", rotulo = "Crédito", passo = 1000, larguraCampo = "w-[3.9rem]" }: Props) {
+export function FiltroCredito({ minimo, maximo, de, ate, aoMudar, className = "", rotulo = "Crédito", passo = 1000, larguraCampo = "w-[5.3rem]", referencia }: Props) {
   const [rascunho, setRascunho] = useState<{ campo: "de" | "ate"; texto: string } | null>(null);
   const extensao = Math.max(1, maximo - minimo);
   const pa = (de - minimo) / extensao;
@@ -56,7 +58,7 @@ export function FiltroCredito({ minimo, maximo, de, ate, aoMudar, className = ""
             e.currentTarget.blur();
           }
         }}
-        className="h-[22px] w-full rounded-full border border-borda-campo bg-white px-1.5 text-right text-[11px] font-semibold tabular-nums text-navy outline-none focus:border-laranja"
+        className="h-[22px] w-full rounded-full border border-borda-campo bg-white px-2 text-right text-[12px] font-semibold tabular-nums text-navy outline-none focus:border-laranja"
       />
     </span>
   );
@@ -64,7 +66,10 @@ export function FiltroCredito({ minimo, maximo, de, ate, aoMudar, className = ""
   return (
     <div role="group" aria-label={`Filtro de ${rotulo.toLowerCase()}`} className={"flex h-[42px] w-fit shrink-0 flex-col justify-center gap-[2px] " + className}>
       <div className="flex items-center gap-1.5">
-        <span className="mr-auto text-[10px] leading-none font-extrabold tracking-wider whitespace-nowrap text-tinta uppercase">{rotulo}</span>
+        <span className="mr-auto text-[10px] leading-none font-extrabold tracking-wider whitespace-nowrap text-tinta uppercase">
+          {rotulo}
+          {referencia && <span className="ml-1 font-semibold tracking-normal normal-case">{referencia}</span>}
+        </span>
         {campo("de", de, `${rotulo} mínimo`)}
         <span className="text-[11px] text-tinta">até</span>
         {campo("ate", ate, `${rotulo} máximo`)}

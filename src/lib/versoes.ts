@@ -2,6 +2,13 @@
 // Regra: a cada mudança entregue, acrescentar uma entrada NO TOPO.
 export const VERSOES: { numero: string; data: string; itens: string[] }[] = [
   {
+    numero: "0143",
+    data: "12/11/2026",
+    itens: [
+      "Filtros da lista de grupos: voltaram os nomes Fidelidade, Parcela 70 e Parcela 50 / 55 e o tamanho antigo dos campos do filtro de Crédito. O filtro Prazo segue em meses e mostra ao lado do nome o intervalo escolhido em anos, com uma casa decimal (ex.: 6,7–20,0 anos).",
+    ],
+  },
+  {
     numero: "0142",
     data: "12/11/2026",
     itens: [
