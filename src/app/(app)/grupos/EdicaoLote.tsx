@@ -147,7 +147,7 @@ function Tabela({ familia, dados, mudarPendentes, aviso }: { familia: string; da
   // fotografia da lista ao abrir: é ela que os filtros enxergam
   const [fotos] = useState(() => dados.linhas.map((l) => paraItem(l, dados.tipos)));
   const [hoje] = useState(() => new Date().toISOString().slice(0, 10));
-  const { visiveis, barra } = useFiltrosGrupos(fotos, familia, hoje);
+  const { visiveis, barra } = useFiltrosGrupos(fotos, familia, hoje, "lote");
   const semFuro = familia === "veiculos"; // veículos não trabalham com furo
   const mostrar = new Set(visiveis.map((g) => g.numero));
   const lista = linhas.filter((l) => mostrar.has(l.numero));
