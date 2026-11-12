@@ -5,6 +5,7 @@ import { listaDaFamilia } from "@/lib/listaGrupos";
 import { padroesDeLinha } from "@/lib/simulacao";
 import { ehAdministrador } from "@/lib/usuario";
 import { Cabecalho } from "./Cabecalho";
+import { SeletorFamilia } from "./SeletorFamilia";
 import { GrupoDetalhe } from "./GrupoDetalhe";
 import { SeletorGrupo } from "./SeletorGrupo";
 
@@ -45,7 +46,6 @@ async function Conteudo({ searchParams }: { searchParams: PageProps<"/grupos">["
       cores={cores}
       familias={FAMILIAS}
       familia={familia.slug}
-      contagem={contagem}
       hoje={hoje}
       atual={
         detalhe
@@ -77,7 +77,14 @@ async function Conteudo({ searchParams }: { searchParams: PageProps<"/grupos">["
   // com um grupo aberto, o seletor fica no cabeçalho principal; sem grupo, a lista aparece aberta no corpo da página
   return (
     <>
-      <Cabecalho familia={familia.slug === "veiculos" ? "veiculos" : "imoveis"} seletor={detalhe ? seletor : undefined} lote={admin ? { familia: familia.slug, familias: [...FAMILIAS] } : undefined} />
+      <Cabecalho
+        familia={familia.slug === "veiculos" ? "veiculos" : "imoveis"}
+        familias={
+          <Suspense fallback={null}>
+            <SeletorFamilia familias={FAMILIAS} familia={familia.slug} contagem={contagem} />
+          </Suspense>
+        }
+        seletor={detalhe ? seletor : undefined} lote={admin ? { familia: familia.slug, familias: [...FAMILIAS] } : undefined} />
       <div className="flex flex-col gap-4 px-8 pt-4 pb-10 max-sm:px-4">
         {detalhe ? (
           <GrupoDetalhe
