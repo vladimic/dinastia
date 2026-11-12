@@ -84,7 +84,7 @@ export function FiltroCredito({ minimo, maximo, de, ate, aoMudar, className = ""
           ×
         </button>
       </div>
-      <div className="faixa" style={{ "--pa": pa, "--pb": pb } as CSSProperties}>
+      <div className="faixa relative -top-[3px]" style={{ "--pa": pa, "--pb": pb } as CSSProperties}>
         <span className="faixa-trilho" />
         <span className="faixa-preenchido" />
         <input

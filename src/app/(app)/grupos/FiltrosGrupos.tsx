@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { FiltroCredito } from "./FiltroCredito";
 import type { ItemGrupo } from "./SeletorGrupo";
 
@@ -20,25 +20,43 @@ const anos = (meses: number) => (meses / 12).toLocaleString("pt-BR", { minimumFr
 export const prazoRestante = (g: Pick<ItemGrupo, "data" | "assembleia" | "prazo">, hoje: string) =>
   Math.max(0, g.prazo - (g.data && g.data >= hoje ? g.assembleia - 1 : g.assembleia));
 
-export function useFiltrosGrupos(grupos: ItemGrupo[], familia: string, hoje: string) {
-  const [filtros, setFiltros] = useState({ furo: false, r70: false, r55: false, red: false, fid: false });
+type Faixa = { de: number; ate: number } | null;
+type Fotografia = {
+  filtros: { furo: boolean; r70: boolean; r55: boolean; red: boolean; fid: boolean };
+  fases: (number | "AC")[];
+  faixa: Faixa;
+  faixaPrazo: Faixa;
+  marcados: number[];
+};
+const SEM_FILTRO: Fotografia = { filtros: { furo: false, r70: false, r55: false, red: false, fid: false }, fases: [], faixa: null, faixaPrazo: null, marcados: [] };
+// O que estava filtrado em cada família fica guardado: ao trocar de família e voltar (ou ao reabrir a lista), os filtros voltam como estavam.
+const memoria = new Map<string, Fotografia>();
+
+export function useFiltrosGrupos(grupos: ItemGrupo[], familia: string, hoje: string, escopo = "lista") {
+  const chave = (fam: string) => `${escopo}:${fam}`;
+  const inicial = memoria.get(chave(familia)) ?? SEM_FILTRO;
+  const [filtros, setFiltros] = useState(inicial.filtros);
   // quantidades de parcelas reduzidas marcadas (veículos; vazio = todas)
-  const [fasesMarcadas, setFasesMarcadas] = useState<(number | "AC")[]>([]);
+  const [fasesMarcadas, setFasesMarcadas] = useState<(number | "AC")[]>(inicial.fases);
   const veic = familia === "veiculos";
   // faixa de crédito escolhida (null = toda a faixa da família) e participantes marcados (vazio = todos)
-  const [faixa, setFaixa] = useState<{ de: number; ate: number } | null>(null);
-  const [faixaPrazo, setFaixaPrazo] = useState<{ de: number; ate: number } | null>(null);
-  const [marcados, setMarcados] = useState<number[]>([]);
-  // trocou de família: os limites e os valores mudam, então os dois filtros voltam ao início
+  const [faixa, setFaixa] = useState<Faixa>(inicial.faixa);
+  const [faixaPrazo, setFaixaPrazo] = useState<Faixa>(inicial.faixaPrazo);
+  const [marcados, setMarcados] = useState<number[]>(inicial.marcados);
+  // trocou de família: entram os filtros que ela tinha (ou nenhum, se ainda não foi filtrada)
   const [familiaDoFiltro, setFamiliaDoFiltro] = useState(familia);
   if (familiaDoFiltro !== familia) {
+    const guardado = memoria.get(chave(familia)) ?? SEM_FILTRO;
     setFamiliaDoFiltro(familia);
-    setFaixa(null);
-    setFaixaPrazo(null);
-    setMarcados([]);
-    setFasesMarcadas([]);
-    setFiltros({ furo: false, r70: false, r55: false, red: false, fid: false });
+    setFaixa(guardado.faixa);
+    setFaixaPrazo(guardado.faixaPrazo);
+    setMarcados(guardado.marcados);
+    setFasesMarcadas(guardado.fases);
+    setFiltros(guardado.filtros);
   }
+  useEffect(() => {
+    if (familiaDoFiltro === familia) memoria.set(chave(familia), { filtros, fases: fasesMarcadas, faixa, faixaPrazo, marcados });
+  });
 
   // do menor ao maior crédito de todos os grupos da família (em múltiplos de R$ 1.000)
   const limites = useMemo(() => {

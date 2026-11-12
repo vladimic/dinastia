@@ -2,6 +2,14 @@
 // Regra: a cada mudança entregue, acrescentar uma entrada NO TOPO.
 export const VERSOES: { numero: string; data: string; itens: string[] }[] = [
   {
+    numero: "0144",
+    data: "12/11/2026",
+    itens: [
+      "Seleção de grupos e edição em lote: ao trocar de família (ex.: Imóveis ↔ Veículos) e voltar, os filtros de cada família voltam como estavam (chips, crédito, prazo, participantes e parcelas reduzidas), em vez de reiniciar. A lista e a edição em lote guardam os seus filtros separadamente.",
+      "Filtros de Crédito e Prazo: a barra laranja foi um pouco para cima e a linha ganhou folga embaixo, porque a parte de baixo estava sendo cortada.",
+    ],
+  },
+  {
     numero: "0143",
     data: "12/11/2026",
     itens: [

@@ -293,7 +293,7 @@ function Lista({
   return (
     <div className="@container flex flex-col gap-3">
       {/* filtros numa linha só (a escolha da família fica no cabeçalho principal) */}
-      <div className="flex flex-nowrap items-center gap-x-2 overflow-x-auto">
+      <div className="flex flex-nowrap items-center gap-x-2 overflow-x-auto pb-1">
         {barra}
       </div>
 
