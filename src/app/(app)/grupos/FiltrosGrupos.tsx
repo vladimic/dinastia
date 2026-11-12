@@ -14,6 +14,9 @@ export const tem70 = (g: Pick<ItemGrupo, "reduzidas">) => g.reduzidas.includes(7
 
 /** Estado dos filtros + a barra desenhada (`barra`) + os grupos que passam (`visiveis`, em ordem de número). */
 /** meses que faltam para o grupo terminar (a tabela vigente é da próxima assembleia enquanto a data dela não passou) */
+/** meses em anos, com uma casa decimal (84 → "7,0") */
+const anos = (meses: number) => (meses / 12).toLocaleString("pt-BR", { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+
 export const prazoRestante = (g: Pick<ItemGrupo, "data" | "assembleia" | "prazo">, hoje: string) =>
   Math.max(0, g.prazo - (g.data && g.data >= hoje ? g.assembleia - 1 : g.assembleia));
 
@@ -89,13 +92,13 @@ export function useFiltrosGrupos(grupos: ItemGrupo[], familia: string, hoje: str
   };
 
   const chip = (on: boolean) =>
-    "flex min-h-8 items-center gap-1 rounded-full border px-2.5 text-[12px] font-bold whitespace-nowrap " + (on ? "border-tinta bg-lavanda text-navy" : "border-borda-campo bg-white text-tinta hover:border-navy");
+    "flex min-h-8 items-center gap-1.5 rounded-full border px-3 text-[12px] font-bold whitespace-nowrap " + (on ? "border-tinta bg-lavanda text-navy" : "border-borda-campo bg-white text-tinta hover:border-navy");
 
   const barra = (
     <>
     <div className="flex shrink-0 flex-wrap gap-1.5" role="group" aria-label="Filtros">
       <button type="button" aria-pressed={filtros.fid} onClick={() => setFiltros((f) => ({ ...f, fid: !f.fid }))} className={chip(filtros.fid)}>
-        <i aria-hidden="true" className="h-2 w-2 rounded-full bg-navy" /> Fidel.
+        <i aria-hidden="true" className="h-2 w-2 rounded-full bg-navy" /> Fidelidade
       </button>
       {veic ? (
         <button type="button" aria-pressed={filtros.red} onClick={() => setFiltros((f) => ({ ...f, red: !f.red }))} className={chip(filtros.red)}>
@@ -107,10 +110,10 @@ export function useFiltrosGrupos(grupos: ItemGrupo[], familia: string, hoje: str
             <i aria-hidden="true" className="h-2 w-2 rounded-full bg-furo" /> Furo
           </button>
           <button type="button" aria-pressed={filtros.r70} onClick={() => setFiltros((f) => ({ ...f, r70: !f.r70 }))} className={chip(filtros.r70)}>
-            <i aria-hidden="true" className="h-2 w-2 rounded-full bg-setenta" /> Parc70
+            <i aria-hidden="true" className="h-2 w-2 rounded-full bg-setenta" /> Parcela 70
           </button>
           <button type="button" aria-pressed={filtros.r55} onClick={() => setFiltros((f) => ({ ...f, r55: !f.r55 }))} className={chip(filtros.r55)}>
-            <i aria-hidden="true" className="h-2 w-2 rounded-full bg-reduzida" /> Parc50/55
+            <i aria-hidden="true" className="h-2 w-2 rounded-full bg-reduzida" /> Parcela 50 / 55
           </button>
         </>
       )}
@@ -150,7 +153,8 @@ export function useFiltrosGrupos(grupos: ItemGrupo[], familia: string, hoje: str
       <FiltroCredito
         rotulo="Prazo"
         passo={1}
-        larguraCampo="w-[2.3rem]"
+        larguraCampo="w-[2.6rem]"
+        referencia={`(${anos(dePrazo)}–${anos(atePrazo)} anos)`}
         minimo={limitesPrazo.minimo}
         maximo={limitesPrazo.maximo}
         de={dePrazo}
