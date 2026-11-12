@@ -146,7 +146,8 @@ function Tabela({ familia, dados, mudarPendentes, aviso }: { familia: string; da
   const [linhas, setLinhas] = useState(dados.linhas);
   // fotografia da lista ao abrir: é ela que os filtros enxergam
   const [fotos] = useState(() => dados.linhas.map((l) => paraItem(l, dados.tipos)));
-  const { visiveis, barra } = useFiltrosGrupos(fotos, familia);
+  const [hoje] = useState(() => new Date().toISOString().slice(0, 10));
+  const { visiveis, barra } = useFiltrosGrupos(fotos, familia, hoje);
   const semFuro = familia === "veiculos"; // veículos não trabalham com furo
   const mostrar = new Set(visiveis.map((g) => g.numero));
   const lista = linhas.filter((l) => mostrar.has(l.numero));
@@ -185,7 +186,7 @@ function Tabela({ familia, dados, mudarPendentes, aviso }: { familia: string; da
 
   return (
     <>
-      <div className="flex flex-wrap items-center gap-x-2 gap-y-2 border-b border-borda bg-white px-6 py-3">{barra}</div>
+      <div className="flex flex-nowrap items-center gap-x-2 overflow-x-auto border-b border-borda bg-white px-6 py-3">{barra}</div>
       <div className="min-h-0 flex-1 overflow-auto px-6 pb-4">
         <table className="border-separate border-spacing-0 text-[13px]">
           <caption className="sr-only">Grupos, tipos de parcela e furo</caption>
