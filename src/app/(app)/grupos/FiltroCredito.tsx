@@ -2,10 +2,9 @@
 
 import { useState, type CSSProperties } from "react";
 
-// Filtro de valor do crédito da lista de grupos: slider duplo (mínimo e máximo) em duas linhas, com os dois valores também digitáveis.
+// Filtro de faixa (valor do crédito ou prazo restante) da lista de grupos: slider duplo (mínimo e máximo) em duas linhas, com os dois valores também digitáveis.
 // O valor digitado só é aplicado ao sair do campo ou com Enter; fora do intervalo é corrigido para o limite, e o mínimo nunca passa do máximo.
 
-const PASSO = 1000;
 const reais = (n: number) => n.toLocaleString("pt-BR");
 const limitar = (v: number, a: number, b: number) => Math.min(Math.max(v, a), b);
 
@@ -16,9 +15,14 @@ type Props = {
   ate: number;
   aoMudar: (de: number, ate: number) => void;
   className?: string;
+  /** nome do filtro (padrão: Crédito) e passo do slider (padrão: R$ 1.000) */
+  rotulo?: string;
+  passo?: number;
+  /** largura dos dois campos digitáveis */
+  larguraCampo?: string;
 };
 
-export function FiltroCredito({ minimo, maximo, de, ate, aoMudar, className = "" }: Props) {
+export function FiltroCredito({ minimo, maximo, de, ate, aoMudar, className = "", rotulo = "Crédito", passo = 1000, larguraCampo = "w-[3.9rem]" }: Props) {
   const [rascunho, setRascunho] = useState<{ campo: "de" | "ate"; texto: string } | null>(null);
   const extensao = Math.max(1, maximo - minimo);
   const pa = (de - minimo) / extensao;
@@ -34,7 +38,7 @@ export function FiltroCredito({ minimo, maximo, de, ate, aoMudar, className = ""
   };
 
   const campo = (c: "de" | "ate", valor: number, rotulo: string) => (
-    <span className="block w-[5.3rem]">
+    <span className={"block " + larguraCampo}>
       <input
         inputMode="numeric"
         aria-label={rotulo}
@@ -52,21 +56,21 @@ export function FiltroCredito({ minimo, maximo, de, ate, aoMudar, className = ""
             e.currentTarget.blur();
           }
         }}
-        className="h-[22px] w-full rounded-full border border-borda-campo bg-white px-2 text-right text-[12px] font-semibold tabular-nums text-navy outline-none focus:border-laranja"
+        className="h-[22px] w-full rounded-full border border-borda-campo bg-white px-1.5 text-right text-[11px] font-semibold tabular-nums text-navy outline-none focus:border-laranja"
       />
     </span>
   );
 
   return (
-    <div role="group" aria-label="Valor do crédito" className={"flex h-[42px] w-fit shrink-0 flex-col justify-center gap-[2px] " + className}>
+    <div role="group" aria-label={`Filtro de ${rotulo.toLowerCase()}`} className={"flex h-[42px] w-fit shrink-0 flex-col justify-center gap-[2px] " + className}>
       <div className="flex items-center gap-1.5">
-        <span className="mr-auto text-[10px] leading-none font-extrabold tracking-wider whitespace-nowrap text-tinta uppercase">Crédito</span>
-        {campo("de", de, "Crédito mínimo")}
+        <span className="mr-auto text-[10px] leading-none font-extrabold tracking-wider whitespace-nowrap text-tinta uppercase">{rotulo}</span>
+        {campo("de", de, `${rotulo} mínimo`)}
         <span className="text-[11px] text-tinta">até</span>
-        {campo("ate", ate, "Crédito máximo")}
+        {campo("ate", ate, `${rotulo} máximo`)}
         <button
           type="button"
-          aria-label="Limpar filtro de crédito"
+          aria-label={`Limpar filtro de ${rotulo.toLowerCase()}`}
           aria-hidden={!ativo}
           tabIndex={ativo ? 0 : -1}
           onClick={() => aoMudar(minimo, maximo)}
@@ -80,20 +84,20 @@ export function FiltroCredito({ minimo, maximo, de, ate, aoMudar, className = ""
         <span className="faixa-preenchido" />
         <input
           type="range"
-          aria-label="Crédito mínimo"
+          aria-label={`${rotulo} mínimo`}
           min={minimo}
           max={maximo}
-          step={PASSO}
+          step={passo}
           value={de}
           onChange={(e) => aoMudar(Math.min(Number(e.target.value), ate), ate)}
           style={{ zIndex: pa > 0.5 ? 4 : 2 }}
         />
         <input
           type="range"
-          aria-label="Crédito máximo"
+          aria-label={`${rotulo} máximo`}
           min={minimo}
           max={maximo}
-          step={PASSO}
+          step={passo}
           value={ate}
           onChange={(e) => aoMudar(de, Math.max(Number(e.target.value), de))}
           style={{ zIndex: 3 }}

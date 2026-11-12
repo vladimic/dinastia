@@ -295,7 +295,7 @@ function Lista({
     const acima = r.bottom + 210 > window.innerHeight; // o pop-up tem ~195 px de altura: sem espaço embaixo, abre acima
     setPop({ g, x, y: acima ? r.top - 6 : r.bottom + 6, acima });
   }
-  const { visiveis, barra } = useFiltrosGrupos(grupos, familia);
+  const { visiveis, barra } = useFiltrosGrupos(grupos, familia, hoje);
 
   const realizadas = (g: ItemGrupo) => (g.data && g.data >= hoje ? g.assembleia - 1 : g.assembleia);
   const faltam = (g: ItemGrupo) => Math.max(0, g.prazo - realizadas(g));
@@ -303,8 +303,8 @@ function Lista({
   return (
     <div className="@container flex flex-col gap-3">
       {/* cabeçalho da lista numa linha só: família, busca e filtros */}
-      <div className="flex flex-wrap items-center gap-x-2 gap-y-2">
-        <nav aria-label="Família de produto" className="flex shrink-0 flex-wrap gap-1 rounded-xl border border-borda bg-linha p-1">
+      <div className="flex flex-nowrap items-center gap-x-2 overflow-x-auto">
+        <nav aria-label="Família de produto" className="flex shrink-0 flex-nowrap gap-1 rounded-xl border border-borda bg-linha p-1">
           {familias.map((f) => {
             const on = f.slug === familia;
             return (
@@ -312,7 +312,7 @@ function Lista({
                 key={f.slug}
                 href={linkFamilia(f.slug)}
                 aria-current={on ? "true" : undefined}
-                className={"flex min-h-8 items-center rounded-lg px-3 text-[13px] font-bold " + (on ? "bg-white text-navy shadow ring-1 ring-laranja" : "text-tinta hover:text-navy")}
+                className={"flex min-h-8 items-center rounded-lg px-2.5 text-[13px] font-bold " + (on ? "bg-white text-navy shadow ring-1 ring-laranja" : "text-tinta hover:text-navy")}
               >
                 {f.nome} <span className="ml-1 font-semibold opacity-70">{contagem[f.slug] ?? 0}</span>
               </Link>

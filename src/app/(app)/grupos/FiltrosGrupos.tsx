@@ -13,19 +13,25 @@ export const temAC = (g: Pick<ItemGrupo, "reduzidas" | "fases">) => g.reduzidas.
 export const tem70 = (g: Pick<ItemGrupo, "reduzidas">) => g.reduzidas.includes(70);
 
 /** Estado dos filtros + a barra desenhada (`barra`) + os grupos que passam (`visiveis`, em ordem de número). */
-export function useFiltrosGrupos(grupos: ItemGrupo[], familia: string) {
+/** meses que faltam para o grupo terminar (a tabela vigente é da próxima assembleia enquanto a data dela não passou) */
+export const prazoRestante = (g: Pick<ItemGrupo, "data" | "assembleia" | "prazo">, hoje: string) =>
+  Math.max(0, g.prazo - (g.data && g.data >= hoje ? g.assembleia - 1 : g.assembleia));
+
+export function useFiltrosGrupos(grupos: ItemGrupo[], familia: string, hoje: string) {
   const [filtros, setFiltros] = useState({ furo: false, r70: false, r55: false, red: false, fid: false });
   // quantidades de parcelas reduzidas marcadas (veículos; vazio = todas)
   const [fasesMarcadas, setFasesMarcadas] = useState<(number | "AC")[]>([]);
   const veic = familia === "veiculos";
   // faixa de crédito escolhida (null = toda a faixa da família) e participantes marcados (vazio = todos)
   const [faixa, setFaixa] = useState<{ de: number; ate: number } | null>(null);
+  const [faixaPrazo, setFaixaPrazo] = useState<{ de: number; ate: number } | null>(null);
   const [marcados, setMarcados] = useState<number[]>([]);
   // trocou de família: os limites e os valores mudam, então os dois filtros voltam ao início
   const [familiaDoFiltro, setFamiliaDoFiltro] = useState(familia);
   if (familiaDoFiltro !== familia) {
     setFamiliaDoFiltro(familia);
     setFaixa(null);
+    setFaixaPrazo(null);
     setMarcados([]);
     setFasesMarcadas([]);
     setFiltros({ furo: false, r70: false, r55: false, red: false, fid: false });
@@ -38,6 +44,15 @@ export function useFiltrosGrupos(grupos: ItemGrupo[], familia: string) {
     if (!mins.length) return null;
     return { minimo: Math.floor(Math.min(...mins) / 1000) * 1000, maximo: Math.ceil(Math.max(...maxs) / 1000) * 1000 };
   }, [grupos]);
+  // do menor ao maior prazo restante entre os grupos da família
+  const limitesPrazo = useMemo(() => {
+    const v = grupos.map((g) => prazoRestante(g, hoje));
+    return v.length ? { minimo: Math.min(...v), maximo: Math.max(...v) } : null;
+  }, [grupos, hoje]);
+  const dePrazo = limitesPrazo ? Math.max(limitesPrazo.minimo, Math.min(faixaPrazo?.de ?? limitesPrazo.minimo, limitesPrazo.maximo)) : 0;
+  const atePrazo = limitesPrazo ? Math.max(dePrazo, Math.min(faixaPrazo?.ate ?? limitesPrazo.maximo, limitesPrazo.maximo)) : 0;
+  const filtraPrazo = limitesPrazo !== null && (dePrazo > limitesPrazo.minimo || atePrazo < limitesPrazo.maximo);
+  const noPrazo = (g: ItemGrupo) => !filtraPrazo || (prazoRestante(g, hoje) >= dePrazo && prazoRestante(g, hoje) <= atePrazo);
   const valoresFases = useMemo<(number | "AC")[]>(() => {
     const nums = [...new Set(grupos.flatMap((g) => g.fases ?? []))].sort((a, b) => a - b);
     return grupos.some(temAC) ? [...nums, "AC"] : nums;
@@ -53,6 +68,7 @@ export function useFiltrosGrupos(grupos: ItemGrupo[], familia: string) {
     .filter(
       (g) =>
         noCredito(g) &&
+        noPrazo(g) &&
         (!marcados.length || (g.participantes !== null && marcados.includes(g.participantes))) &&
         (!fasesMarcadas.length || (g.fases ?? []).some((x) => fasesMarcadas.includes(x)) || (temAC(g) && fasesMarcadas.includes("AC"))) &&
         (!filtros.red || g.reduzidas.length > 0) &&
@@ -63,22 +79,23 @@ export function useFiltrosGrupos(grupos: ItemGrupo[], familia: string) {
     )
     .sort((a, b) => a.numero - b.numero);
 
-  const temFiltro = filtraCredito || marcados.length > 0 || fasesMarcadas.length > 0 || filtros.red || filtros.fid || filtros.furo || filtros.r70 || filtros.r55;
+  const temFiltro = filtraCredito || filtraPrazo || marcados.length > 0 || fasesMarcadas.length > 0 || filtros.red || filtros.fid || filtros.furo || filtros.r70 || filtros.r55;
   const limparTudo = () => {
     setFiltros({ furo: false, r70: false, r55: false, red: false, fid: false });
     setFaixa(null);
+    setFaixaPrazo(null);
     setMarcados([]);
     setFasesMarcadas([]);
   };
 
   const chip = (on: boolean) =>
-    "flex min-h-8 items-center gap-1.5 rounded-full border px-3 text-[12px] font-bold " + (on ? "border-tinta bg-lavanda text-navy" : "border-borda-campo bg-white text-tinta hover:border-navy");
+    "flex min-h-8 items-center gap-1 rounded-full border px-2.5 text-[12px] font-bold whitespace-nowrap " + (on ? "border-tinta bg-lavanda text-navy" : "border-borda-campo bg-white text-tinta hover:border-navy");
 
   const barra = (
     <>
     <div className="flex shrink-0 flex-wrap gap-1.5" role="group" aria-label="Filtros">
       <button type="button" aria-pressed={filtros.fid} onClick={() => setFiltros((f) => ({ ...f, fid: !f.fid }))} className={chip(filtros.fid)}>
-        <i aria-hidden="true" className="h-2 w-2 rounded-full bg-navy" /> Fidelidade
+        <i aria-hidden="true" className="h-2 w-2 rounded-full bg-navy" /> Fidel.
       </button>
       {veic ? (
         <button type="button" aria-pressed={filtros.red} onClick={() => setFiltros((f) => ({ ...f, red: !f.red }))} className={chip(filtros.red)}>
@@ -90,10 +107,10 @@ export function useFiltrosGrupos(grupos: ItemGrupo[], familia: string) {
             <i aria-hidden="true" className="h-2 w-2 rounded-full bg-furo" /> Furo
           </button>
           <button type="button" aria-pressed={filtros.r70} onClick={() => setFiltros((f) => ({ ...f, r70: !f.r70 }))} className={chip(filtros.r70)}>
-            <i aria-hidden="true" className="h-2 w-2 rounded-full bg-setenta" /> Parcela 70
+            <i aria-hidden="true" className="h-2 w-2 rounded-full bg-setenta" /> Parc70
           </button>
           <button type="button" aria-pressed={filtros.r55} onClick={() => setFiltros((f) => ({ ...f, r55: !f.r55 }))} className={chip(filtros.r55)}>
-            <i aria-hidden="true" className="h-2 w-2 rounded-full bg-reduzida" /> Parcela 50 / 55
+            <i aria-hidden="true" className="h-2 w-2 rounded-full bg-reduzida" /> Parc50/55
           </button>
         </>
       )}
@@ -128,6 +145,18 @@ export function useFiltrosGrupos(grupos: ItemGrupo[], familia: string) {
     )}
     {limites && (
       <FiltroCredito minimo={limites.minimo} maximo={limites.maximo} de={de} ate={ate} aoMudar={(a, b) => setFaixa({ de: a, ate: b })} />
+    )}
+    {limitesPrazo && limitesPrazo.minimo < limitesPrazo.maximo && (
+      <FiltroCredito
+        rotulo="Prazo"
+        passo={1}
+        larguraCampo="w-[2.3rem]"
+        minimo={limitesPrazo.minimo}
+        maximo={limitesPrazo.maximo}
+        de={dePrazo}
+        ate={atePrazo}
+        aoMudar={(a, b) => setFaixaPrazo({ de: a, ate: b })}
+      />
     )}
     {valoresParticipantes.length > 0 && (
       <div role="group" aria-labelledby="rotulo-participantes" className="flex h-[42px] shrink-0 flex-col justify-center gap-[3px]">
