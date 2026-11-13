@@ -2,6 +2,14 @@
 // Regra: a cada mudança entregue, acrescentar uma entrada NO TOPO.
 export const VERSOES: { numero: string; data: string; itens: string[] }[] = [
   {
+    numero: "0145",
+    data: "13/11/2026",
+    itens: [
+      "Dados do grupo, Modo Edição: o quadro Modalidades de contemplação agora é editável. Imóveis: quantidade de parcelas do lance e % do embutido. Veículos: teto do lance (Livre e Fidelidade), % do embutido e a base do embutido (% categoria ou % lance). O lance fixo 25% e 40% não se altera. \"Próprio\" é calculado na hora. Cada campo grava ao sair. A próxima importação do PDF do grupo substitui esses valores.",
+      "Novo campo Observação no grupo (texto livre de até 2.000 caracteres), logo abaixo da Sequência de contemplação. Só se escreve com o Modo Edição ligado; a importação de PDFs não o altera.",
+    ],
+  },
+  {
     numero: "0144",
     data: "12/11/2026",
     itens: [

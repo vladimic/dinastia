@@ -108,6 +108,7 @@ export const DICIONARIO: TabelaDic[] = [
       t("primeira_correcao", "data", false, "Data da primeira correção, quando o PDF informa."),
       t("dia_vencimento", "inteiro", false, "Dia do mês do vencimento das parcelas (1 a 31)."),
       t("parcela_minima_pct", "número decimal", false, "Veículos: parcela mínima mensal após a contemplação por lance, em % da categoria (crédito + taxas; ex.: 0,70). Vazio em imóveis, que não têm essa regra."),
+      t("observacao", "texto", false, "Observação livre digitada pelo usuário (Dados do grupo, abaixo da sequência de contemplação; até 2.000 caracteres). Não vem do PDF e a importação não a altera."),
       criado,
       atualizado,
     ],

@@ -54,6 +54,7 @@ comment on column public.grupo.mes_reajuste is 'Mês do reajuste anual (1 a 12).
 comment on column public.grupo.primeira_correcao is 'Data da primeira correção, quando o PDF informa.';
 comment on column public.grupo.dia_vencimento is 'Dia do mês do vencimento das parcelas (1 a 31).';
 comment on column public.grupo.parcela_minima_pct is 'Veículos: parcela mínima mensal após a contemplação por lance, em % da categoria (crédito + taxas; ex.: 0,70). Vazio em imóveis, que não têm essa regra.';
+comment on column public.grupo.observacao is 'Observação livre digitada pelo usuário (Dados do grupo, abaixo da sequência de contemplação; até 2.000 caracteres). Não vem do PDF e a importação não a altera.';
 comment on column public.grupo.criado_em is 'Quando a linha foi criada (automático).';
 comment on column public.grupo.atualizado_em is 'Última alteração da linha (automático).';
 comment on table public.arquivo_importado is 'Registro de cada PDF (ou carga) que originou uma versão de grupo, com o resumo do que foi lido. Serve de auditoria.';

@@ -8,7 +8,7 @@ import { lerInt, lerPct } from "@/lib/formato";
 import { gerarFaixas, validarEdicao, type Edicao } from "@/lib/sequencia";
 
 // Salva um campo do grupo assim que ele é alterado (dados estáveis; créditos, parcelas e regras vêm do PDF).
-const CAMPOS_GRUPO = ["participantes", "taxa_adm_total", "fundo_reserva", "indice", "mes_reajuste", "dia_vencimento"] as const;
+const CAMPOS_GRUPO = ["participantes", "taxa_adm_total", "fundo_reserva", "indice", "mes_reajuste", "dia_vencimento", "observacao"] as const;
 export type CampoGrupo = (typeof CAMPOS_GRUPO)[number];
 
 const NEGADO = { ok: false, erro: "Apenas administradores podem alterar os dados dos grupos." } as const;
@@ -38,6 +38,10 @@ export async function salvarCampoGrupo(numero: number, campo: CampoGrupo, valor:
       novo = bruto ? Number(bruto) : null;
       if (novo !== null && !(Number.isInteger(novo) && novo >= 1 && novo <= 12)) return { ok: false, erro: "Mês inválido." };
       break;
+    case "observacao":
+      // texto livre, como foi digitado (só as pontas são aparadas)
+      novo = String(valor ?? "").trim().slice(0, 2000) || null;
+      break;
     case "dia_vencimento":
       novo = bruto ? lerInt(bruto) : null;
       if (novo !== null && (novo < 1 || novo > 31)) return { ok: false, erro: "Dia de vencimento de 1 a 31." };
@@ -48,6 +52,42 @@ export async function salvarCampoGrupo(numero: number, campo: CampoGrupo, valor:
   const { error } = await supabase.from("grupo").update({ [campo]: novo }).eq("numero", numero);
   if (error) return { ok: false, erro: "Não foi possível salvar. Tente de novo." };
   await refazerListaDoGrupo(supabase, numero);
+  revalidatePath("/grupos");
+  return { ok: true };
+}
+
+// Altera a regra de uma modalidade de contemplação da versão vigente (quadro "Modalidades de contemplação", em Modo Edição).
+// Campos: qtd de parcelas do lance (imóveis), % do embutido e sua base, teto do lance em % da categoria (veículos). Nulo = em branco.
+export type CamposModalidade = { max_parcelas_lance?: number | null; embutido_pct?: number | null; embutido_base?: "lance" | "categoria"; max_lance_pct?: number | null };
+
+export async function salvarModalidadeGrupo(versaoId: number, tipo: string, campos: CamposModalidade): Promise<{ ok: true } | { ok: false; erro: string }> {
+  if (!(await ehAdministrador())) return NEGADO;
+  if (!Number.isInteger(versaoId) || !tipo) return { ok: false, erro: "Modalidade inválida." };
+  const mudar: Record<string, number | string | null> = {};
+  if ("max_parcelas_lance" in campos) {
+    const v = campos.max_parcelas_lance;
+    if (v !== null && v !== undefined && !(Number.isInteger(v) && v >= 1 && v <= 999)) return { ok: false, erro: "Quantidade de parcelas: número inteiro de 1 a 999 (em branco = qualquer quantidade)." };
+    mudar.max_parcelas_lance = v ?? null;
+  }
+  if ("embutido_pct" in campos) {
+    const v = campos.embutido_pct;
+    if (v !== null && v !== undefined && !(v >= 0 && v <= 100)) return { ok: false, erro: "Embutido: percentual de 0 a 100 (em branco = sem embutido)." };
+    mudar.embutido_pct = v ?? null;
+  }
+  if ("embutido_base" in campos) {
+    if (campos.embutido_base !== "lance" && campos.embutido_base !== "categoria") return { ok: false, erro: "Base do embutido inválida." };
+    mudar.embutido_base = campos.embutido_base;
+  }
+  if ("max_lance_pct" in campos) {
+    const v = campos.max_lance_pct;
+    if (v !== null && v !== undefined && !(v > 0 && v <= 100)) return { ok: false, erro: "Teto do lance: percentual maior que 0 e até 100 (em branco = sem teto)." };
+    mudar.max_lance_pct = v ?? null;
+  }
+  if (!Object.keys(mudar).length) return { ok: true };
+  const supabase = await createClient();
+  const { error } = await supabase.from("grupo_modalidade").update(mudar).eq("grupo_assembleia_id", versaoId).eq("tipo", tipo);
+  if (error) return { ok: false, erro: "Não foi possível salvar. Tente de novo." };
+  await refazerListaDaVersao(supabase, versaoId);
   revalidatePath("/grupos");
   return { ok: true };
 }

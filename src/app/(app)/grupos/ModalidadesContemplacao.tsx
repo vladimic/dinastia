@@ -11,15 +11,15 @@ type Props = {
 };
 
 // colunas fixas, nesta ordem
-const COLUNAS = ["FIX", "LIM", "FID", "LIV"];
-const COLUNAS_VEICULO = ["F25", "F40", "FID", "LIV"];
+export const COLUNAS = ["FIX", "LIM", "FID", "LIV"];
+export const COLUNAS_VEICULO = ["F25", "F40", "FID", "LIV"];
 
 const DICA_ASTERISCO = "Qualquer quantidade de parcelas até o limite do plano";
 const DICA_EMBUTIDO =
   "% do lance ofertado que pode ser embutido (descontado do crédito). Com lance abaixo do máximo, o embutido pode representar mais.";
 
 // % do lance que pode ser embutido, calculado no lance máximo; sem limite de parcelas usa o prazo do grupo
-function pctEmbutido(m: Modalidade, prazo: number): number {
+export function pctEmbutido(m: Modalidade, prazo: number): number {
   if (m.embutido_pct === null && m.embutido_max_parcelas === null) return 0;
   const porPct = m.embutido_pct === null ? 100 : Number(m.embutido_pct);
   const porParcelas = m.embutido_max_parcelas === null ? 100 : (100 * m.embutido_max_parcelas) / (m.max_parcelas_lance ?? prazo); // "aprox. 50 parcelas" de 99 = 50%
@@ -27,7 +27,7 @@ function pctEmbutido(m: Modalidade, prazo: number): number {
 }
 
 // veículos: lance em % da categoria. Lance = fixo (25/40) ou "até" o teto; embutido = % da categoria; próprio = lance − embutido.
-function celulaVeiculo(m: Modalidade, teto: number | null) {
+export function celulaVeiculo(m: Modalidade, teto: number | null) {
   const lance = m.lance_pct !== null ? Number(m.lance_pct) : null;
   const max = lance ?? teto;
   const qtd = lance !== null ? `${lance}%` : teto !== null ? `até ${teto}%` : "*";
