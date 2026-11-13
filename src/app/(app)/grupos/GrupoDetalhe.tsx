@@ -85,6 +85,7 @@ function Conteudo({ grupo: g, familiaNome, indices, hoje, padroes, abaInicial, p
     indice: g.indice ?? "",
     mes_reajuste: g.mes_reajuste ? String(g.mes_reajuste) : "",
     dia_vencimento: g.dia_vencimento ? String(g.dia_vencimento) : "",
+    observacao: g.observacao ?? "",
   };
   const [info, setInfo] = useState<Info>(inicial);
   const [gravada, setGravada] = useState<Info>(inicial);

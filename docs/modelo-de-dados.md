@@ -85,6 +85,7 @@ erDiagram
     datetime primeira_correcao
     int dia_vencimento
     decimal parcela_minima_pct
+    string observacao
     datetime criado_em
     datetime atualizado_em
   }
@@ -310,6 +311,7 @@ Dados estáveis de cada grupo de consórcio (uma linha por grupo). O que muda a 
 | `primeira_correcao` | data | não |  | Data da primeira correção, quando o PDF informa. |
 | `dia_vencimento` | inteiro | não |  | Dia do mês do vencimento das parcelas (1 a 31). |
 | `parcela_minima_pct` | número decimal | não |  | Veículos: parcela mínima mensal após a contemplação por lance, em % da categoria (crédito + taxas; ex.: 0,70). Vazio em imóveis, que não têm essa regra. |
+| `observacao` | texto | não |  | Observação livre digitada pelo usuário (Dados do grupo, abaixo da sequência de contemplação; até 2.000 caracteres). Não vem do PDF e a importação não a altera. |
 | `criado_em` | data e hora | sim |  | Quando a linha foi criada (automático). |
 | `atualizado_em` | data e hora | sim |  | Última alteração da linha (automático). |
 

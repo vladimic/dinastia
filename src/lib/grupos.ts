@@ -184,6 +184,8 @@ export async function carregarGrupo(numero: number) {
   const { data: g, error } = await supabase.from("grupo_atual").select("*").eq("numero", numero).maybeSingle();
   if (error) throw error;
   if (!g) return null;
+  // a observação é da tabela grupo (a visão grupo_atual não a traz)
+  const { data: obs } = await supabase.from("grupo").select("observacao").eq("numero", numero).maybeSingle();
 
   const [versao, contagem, cadastroParcelas, cadastroTipos] = await Promise.all([
     supabase
@@ -290,6 +292,7 @@ export async function carregarGrupo(numero: number) {
     primeira_correcao: g.primeira_correcao as string | null,
     dia_vencimento: g.dia_vencimento as number | null,
     parcela_minima_pct: g.parcela_minima_pct != null ? Number(g.parcela_minima_pct) : null,
+    observacao: (obs?.observacao as string | null) ?? null,
     grupo_assembleia_id: v.id as number,
     pagamento_com_furo: Boolean(v.pagamento_com_furo),
     fidelidade_meses: v.fidelidade_meses as number | null,

@@ -6,6 +6,7 @@ import { FIDELIDADE, SORTEIO, notaFidelidade, notaSorteios, parcelaFidelidade } 
 import { alternarTipoParcela, definirPagamentoComFuro, salvarCreditos, type CampoGrupo } from "./actions";
 import { useSimulacao } from "./SimulacaoContext";
 import { ModalidadesContemplacao } from "./ModalidadesContemplacao";
+import { ModalidadesEdicao } from "./ModalidadesEdicao";
 import { SequenciaContemplacao } from "./SequenciaContemplacao";
 import { useDados, type Estado } from "./GrupoDetalhe";
 
@@ -42,13 +43,49 @@ export function DadosGrupo() {
         <Informacoes />
         <Creditos key={`cred-${editando}`} />
         <Tipos />
-        {/* só leitura (vem da tabela importada): o mesmo box da versão 1, esticado à largura da coluna */}
+        {/* leitura: o mesmo box da versão 1, esticado à largura da coluna; em Modo Edição, o quadro com campos */}
+        {editando ? (
+          <ModalidadesEdicao key={`mod-${g.grupo_assembleia_id}`} />
+        ) : (
         <div className="[&>section]:h-full [&>section]:w-full [&>section]:p-4 [&_table]:flex-1 [&_tbody_tr]:h-[32%] [&_td]:py-2.5! [&_td]:text-[13px]! [&_th]:text-[13px]! [&_td]:text-center! [&_td]:align-middle! [&_th]:text-center! [&_th]:align-middle! [&_td:first-child]:text-left! [&_th:first-child]:text-left!">
           <ModalidadesContemplacao modalidades={g.modalidades} tipos={g.tiposContemplacao} prazoGrupo={g.prazo_grupo_meses} veiculo={g.familia === "veiculos"} />
         </div>
+        )}
       </div>
       <Sequencia />
+      <Observacao />
     </div>
+  );
+}
+
+/* ---------------- observação ---------------- */
+
+// Texto livre do usuário sobre o grupo (não vem do PDF). Em Modo Edição grava ao sair do campo.
+function Observacao() {
+  const { editando, info, estadoInfo, mudarInfo, gravarInfo } = useDados();
+  return (
+    <section className={caixa(editando)} aria-label="Observação">
+      <div className="flex items-baseline justify-between gap-2">
+        <h3 className="text-sm font-bold">Observação</h3>
+        {editando && <Status estado={estadoInfo} />}
+      </div>
+      {editando ? (
+        <textarea
+          rows={4}
+          maxLength={2000}
+          value={info.observacao}
+          onChange={(e) => mudarInfo("observacao", e.target.value)}
+          onBlur={(e) => gravarInfo("observacao", e.target.value)}
+          placeholder="Escreva aqui o que quiser lembrar sobre este grupo"
+          aria-label="Observação do grupo"
+          className="w-full resize-y rounded-lg border border-borda-campo bg-white p-2 text-[13px] leading-snug outline-none focus:border-laranja"
+        />
+      ) : info.observacao.trim() ? (
+        <p className="m-0 text-[13px] leading-snug whitespace-pre-wrap">{info.observacao}</p>
+      ) : (
+        <p className="m-0 text-[13px] text-tinta">Sem observação. Ligue o Modo Edição para escrever.</p>
+      )}
+    </section>
   );
 }
 
