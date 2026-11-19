@@ -2,6 +2,13 @@
 // Regra: a cada mudança entregue, acrescentar uma entrada NO TOPO.
 export const VERSOES: { numero: string; data: string; itens: string[] }[] = [
   {
+    numero: "0147",
+    data: "19/11/2026",
+    itens: [
+      "Importar tabelas: o \"Decidir em bloco\" voltou à lista de antes. O filtro de cima (A decidir, Prontos para aplicar, Com erro de leitura) ganhou um chip para cada tipo de diferença (ex.: Grupo · Créditos). Clicar mostra só os PDFs com diferenças pendentes daquele tipo; clicar de novo tira o filtro.",
+    ],
+  },
+  {
     numero: "0146",
     data: "19/11/2026",
     itens: [
