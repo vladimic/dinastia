@@ -33,6 +33,7 @@ export function PainelDecisoes({
   agregados,
   itens,
   filtro,
+  tipoSel,
   pagina,
   totalPaginas,
   idsProntos,
@@ -41,6 +42,8 @@ export function PainelDecisoes({
   agregados: Agregado[];
   itens: ItemTela[];
   filtro: Filtro;
+  /** tipo de diferença escolhido no filtro ("escopo|campo"), ou nulo */
+  tipoSel: string | null;
   pagina: number;
   totalPaginas: number;
   idsProntos: number[];
@@ -157,6 +160,7 @@ export function PainelDecisoes({
     });
   }
 
+  const sufixoTipo = tipoSel ? `&t=${encodeURIComponent(tipoSel)}` : "";
   const vazio = contagens.pendentes + contagens.aplicados + contagens.sem_mudanca + contagens.erros + contagens.ignorados === 0;
 
   return (
@@ -193,17 +197,16 @@ export function PainelDecisoes({
       {agregados.length > 0 && (
         <div className="flex flex-col gap-2 rounded-2xl border border-borda bg-white p-4">
           <h3 className="text-sm font-bold">Decidir em bloco (todas as pendentes de cada tipo)</h3>
-          {/* um bloco por tipo, lado a lado (quebra de linha só quando falta espaço) */}
-          <ul className="flex flex-wrap gap-2">
+          <ul className="flex flex-col gap-1.5">
             {agregados.map((a) => (
-              <li key={`${a.escopo}|${a.campo}`} className="flex items-center gap-2 rounded-xl border border-borda-campo bg-linha/40 py-1.5 pr-1.5 pl-3 text-[13px]">
-                <span className="whitespace-nowrap">
+              <li key={`${a.escopo}|${a.campo}`} className="flex flex-wrap items-center gap-2 text-[13px]">
+                <span className="min-w-[16rem] flex-1">
                   <strong>{ESCOPO[a.escopo] ?? a.escopo}</strong> · {ROTULO_CAMPO[a.campo] ?? a.campo} <span className="text-tinta">({a.total})</span>
                 </span>
-                <button type="button" disabled={ocupado} title="Aceitar todas as diferenças deste tipo" className={BTN + " bg-ok text-white hover:brightness-110"} onClick={() => rodar(() => decidirPorCampo(a.escopo, a.campo, "aceita"), "Diferenças aceitas.")}>
+                <button type="button" disabled={ocupado} className={BTN + " bg-ok text-white hover:brightness-110"} onClick={() => rodar(() => decidirPorCampo(a.escopo, a.campo, "aceita"), "Diferenças aceitas.")}>
                   Aceitar todas
                 </button>
-                <button type="button" disabled={ocupado} title="Rejeitar todas as diferenças deste tipo" className={BTN + " border border-borda-campo bg-white text-tinta hover:bg-linha"} onClick={() => rodar(() => decidirPorCampo(a.escopo, a.campo, "rejeitada"), "Diferenças rejeitadas.")}>
+                <button type="button" disabled={ocupado} className={BTN + " border border-borda-campo text-tinta hover:bg-linha"} onClick={() => rodar(() => decidirPorCampo(a.escopo, a.campo, "rejeitada"), "Diferenças rejeitadas.")}>
                   Rejeitar todas
                 </button>
               </li>
@@ -226,6 +229,27 @@ export function PainelDecisoes({
             </Link>
           );
         })}
+        {/* tipos de diferença: clicar mostra só os PDFs com diferenças daquele tipo; clicar de novo tira o filtro */}
+        {filtro === "pendentes" && agregados.length > 0 && (
+          <>
+            <span aria-hidden="true" className="mx-1 h-5 w-px bg-borda-campo" />
+            {agregados.map((a) => {
+              const chave = `${a.escopo}|${a.campo}`;
+              const on = chave === tipoSel;
+              return (
+                <Link
+                  key={chave}
+                  href={on ? "/importar?v=pendentes" : `/importar?v=pendentes&t=${encodeURIComponent(chave)}`}
+                  scroll={false}
+                  aria-pressed={on}
+                  className={"rounded-full px-3 py-1 text-xs font-bold ring-1 " + (on ? "bg-laranja text-navy ring-laranja" : "bg-white text-tinta ring-borda-campo hover:bg-linha")}
+                >
+                  {ESCOPO[a.escopo] ?? a.escopo} · {ROTULO_CAMPO[a.campo] ?? a.campo} ({a.total})
+                </Link>
+              );
+            })}
+          </>
+        )}
         {filtro === "erros" && contagens.erros > 0 && (
           <button
             type="button"
@@ -255,9 +279,9 @@ export function PainelDecisoes({
 
       {totalPaginas > 1 && (
         <nav aria-label="Páginas" className="flex items-center justify-center gap-3 text-sm">
-          {pagina > 1 && <Link href={`/importar?v=${filtro}&p=${pagina - 1}`} className="font-semibold text-navy underline">‹ Anterior</Link>}
+          {pagina > 1 && <Link href={`/importar?v=${filtro}${sufixoTipo}&p=${pagina - 1}`} className="font-semibold text-navy underline">‹ Anterior</Link>}
           <span className="text-tinta">Página {pagina} de {totalPaginas}</span>
-          {pagina < totalPaginas && <Link href={`/importar?v=${filtro}&p=${pagina + 1}`} className="font-semibold text-navy underline">Próxima ›</Link>}
+          {pagina < totalPaginas && <Link href={`/importar?v=${filtro}${sufixoTipo}&p=${pagina + 1}`} className="font-semibold text-navy underline">Próxima ›</Link>}
         </nav>
       )}
     </section>

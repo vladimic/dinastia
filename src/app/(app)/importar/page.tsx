@@ -47,6 +47,7 @@ async function Conteudo({ searchParams }: { searchParams: PageProps<"/importar">
   const sp = await searchParams;
   const filtro = (FILTROS as readonly string[]).includes(String(sp.v)) ? (sp.v as Filtro) : "pendentes";
   const pagina = Math.max(1, Number(sp.p) || 1);
+  const tipoPedido = typeof sp.t === "string" && sp.t.includes("|") ? sp.t : null;
   const supabase = await createClient();
 
   const [{ data: parametros, error }, itens, pendentesDif] = await Promise.all([
@@ -76,8 +77,11 @@ async function Conteudo({ searchParams }: { searchParams: PageProps<"/importar">
   }
   const agregados = [...mapa.values()].sort((a, b) => b.total - a.total);
 
+  // tipo de diferença escolhido: só os itens com diferença pendente daquele tipo (vale na lista "A decidir")
+  const tipoSel = filtro === "pendentes" && tipoPedido && mapa.has(tipoPedido) ? tipoPedido : null;
+  const comTipo = new Set(pendentesDif.filter((d) => `${d.escopo}|${d.campo}` === tipoSel).map((d) => d.item_id));
   const idsFiltro: number[] =
-    filtro === "pendentes" ? pendentes.map((i) => i.id)
+    filtro === "pendentes" ? pendentes.filter((i) => !tipoSel || comTipo.has(i.id)).map((i) => i.id)
     : filtro === "prontos" ? prontos.map((i) => i.id)
     : itens.filter((i) => i.situacao === "erro").map((i) => i.id);
   const totalPaginas = Math.max(1, Math.ceil(idsFiltro.length / POR_PAGINA));
@@ -102,7 +106,7 @@ async function Conteudo({ searchParams }: { searchParams: PageProps<"/importar">
       {faltantes.map((f) => (
         <PainelFaltantes key={f.familia} familiaNome={nomeFamilia(f.familia)} dataRef={f.dataRef as string} pdfsNaData={f.pdfsNaData} faltantes={f.faltantes} />
       ))}
-      <PainelDecisoes contagens={contagens} agregados={agregados} itens={lista} filtro={filtro} pagina={Math.min(pagina, totalPaginas)} totalPaginas={totalPaginas} idsProntos={prontos.map((i) => i.id)} />
+      <PainelDecisoes contagens={contagens} agregados={agregados} itens={lista} filtro={filtro} tipoSel={tipoSel} pagina={Math.min(pagina, totalPaginas)} totalPaginas={totalPaginas} idsProntos={prontos.map((i) => i.id)} />
     </div>
   );
 }
