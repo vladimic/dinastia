@@ -193,16 +193,17 @@ export function PainelDecisoes({
       {agregados.length > 0 && (
         <div className="flex flex-col gap-2 rounded-2xl border border-borda bg-white p-4">
           <h3 className="text-sm font-bold">Decidir em bloco (todas as pendentes de cada tipo)</h3>
-          <ul className="flex flex-col gap-1.5">
+          {/* um bloco por tipo, lado a lado (quebra de linha só quando falta espaço) */}
+          <ul className="flex flex-wrap gap-2">
             {agregados.map((a) => (
-              <li key={`${a.escopo}|${a.campo}`} className="flex flex-wrap items-center gap-2 text-[13px]">
-                <span className="min-w-[16rem] flex-1">
+              <li key={`${a.escopo}|${a.campo}`} className="flex items-center gap-2 rounded-xl border border-borda-campo bg-linha/40 py-1.5 pr-1.5 pl-3 text-[13px]">
+                <span className="whitespace-nowrap">
                   <strong>{ESCOPO[a.escopo] ?? a.escopo}</strong> · {ROTULO_CAMPO[a.campo] ?? a.campo} <span className="text-tinta">({a.total})</span>
                 </span>
-                <button type="button" disabled={ocupado} className={BTN + " bg-ok text-white hover:brightness-110"} onClick={() => rodar(() => decidirPorCampo(a.escopo, a.campo, "aceita"), "Diferenças aceitas.")}>
+                <button type="button" disabled={ocupado} title="Aceitar todas as diferenças deste tipo" className={BTN + " bg-ok text-white hover:brightness-110"} onClick={() => rodar(() => decidirPorCampo(a.escopo, a.campo, "aceita"), "Diferenças aceitas.")}>
                   Aceitar todas
                 </button>
-                <button type="button" disabled={ocupado} className={BTN + " border border-borda-campo text-tinta hover:bg-linha"} onClick={() => rodar(() => decidirPorCampo(a.escopo, a.campo, "rejeitada"), "Diferenças rejeitadas.")}>
+                <button type="button" disabled={ocupado} title="Rejeitar todas as diferenças deste tipo" className={BTN + " border border-borda-campo bg-white text-tinta hover:bg-linha"} onClick={() => rodar(() => decidirPorCampo(a.escopo, a.campo, "rejeitada"), "Diferenças rejeitadas.")}>
                   Rejeitar todas
                 </button>
               </li>

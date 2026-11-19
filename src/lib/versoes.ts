@@ -2,6 +2,13 @@
 // Regra: a cada mudança entregue, acrescentar uma entrada NO TOPO.
 export const VERSOES: { numero: string; data: string; itens: string[] }[] = [
   {
+    numero: "0146",
+    data: "19/11/2026",
+    itens: [
+      "Importar tabelas, Decidir em bloco: os blocos de cada tipo de diferença (Grupo · Créditos, Modalidade · embutido…) ficam lado a lado, em linha horizontal, cada um com o seu Aceitar todas e Rejeitar todas, em vez de uma lista vertical.",
+    ],
+  },
+  {
     numero: "0145",
     data: "13/11/2026",
     itens: [
