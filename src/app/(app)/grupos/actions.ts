@@ -8,7 +8,7 @@ import { lerInt, lerPct } from "@/lib/formato";
 import { gerarFaixas, validarEdicao, type Edicao } from "@/lib/sequencia";
 
 // Salva um campo do grupo assim que ele é alterado (dados estáveis; créditos, parcelas e regras vêm do PDF).
-const CAMPOS_GRUPO = ["participantes", "taxa_adm_total", "fundo_reserva", "indice", "mes_reajuste", "dia_vencimento", "observacao"] as const;
+const CAMPOS_GRUPO = ["participantes", "taxa_adm_total", "fundo_reserva", "indice", "mes_reajuste", "dia_vencimento", "observacao", "parcela_minima_pct"] as const;
 export type CampoGrupo = (typeof CAMPOS_GRUPO)[number];
 
 const NEGADO = { ok: false, erro: "Apenas administradores podem alterar os dados dos grupos." } as const;
@@ -37,6 +37,11 @@ export async function salvarCampoGrupo(numero: number, campo: CampoGrupo, valor:
     case "mes_reajuste":
       novo = bruto ? Number(bruto) : null;
       if (novo !== null && !(Number.isInteger(novo) && novo >= 1 && novo <= 12)) return { ok: false, erro: "Mês inválido." };
+      break;
+    case "parcela_minima_pct":
+      // veículos: % da categoria; em branco = vale o padrão dos Parâmetros globais
+      novo = lerPct(bruto);
+      if (novo !== null && !(novo > 0 && novo <= 100)) return { ok: false, erro: "Parcela mínima: percentual maior que 0 e até 100, ex.: 0,70" };
       break;
     case "observacao":
       // texto livre, como foi digitado (só as pontas são aparadas)

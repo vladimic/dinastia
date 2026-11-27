@@ -26,6 +26,8 @@ type Ctx = {
   estadoInfo: Estado;
   mudarInfo: (c: CampoGrupo, v: string) => void;
   gravarInfo: (c: CampoGrupo, v: string) => void;
+  /** parcela mínima padrão dos Parâmetros globais (% da categoria), usada quando o grupo não tem a sua */
+  parcelaMinimaPadrao: number;
   /** taxa de administração total já gravada (o simulador usa esta) */
   taxaAdm: number | null;
   creditos: number[];
@@ -86,6 +88,7 @@ function Conteudo({ grupo: g, familiaNome, indices, hoje, padroes, abaInicial, p
     mes_reajuste: g.mes_reajuste ? String(g.mes_reajuste) : "",
     dia_vencimento: g.dia_vencimento ? String(g.dia_vencimento) : "",
     observacao: g.observacao ?? "",
+    parcela_minima_pct: g.parcela_minima_pct != null ? pct(g.parcela_minima_pct, 3) : "",
   };
   const [info, setInfo] = useState<Info>(inicial);
   const [gravada, setGravada] = useState<Info>(inicial);
@@ -141,6 +144,7 @@ function Conteudo({ grupo: g, familiaNome, indices, hoje, padroes, abaInicial, p
     mudarInfo: (c, v) => setInfo((x) => ({ ...x, [c]: v })),
     gravarInfo,
     taxaAdm: lerPct(gravada.taxa_adm_total),
+    parcelaMinimaPadrao: padroes.parcelaMinimaPadraoPct,
     creditos,
     setCreditos,
     disponiveis,

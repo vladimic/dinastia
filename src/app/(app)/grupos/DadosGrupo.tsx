@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, useState, useTransition } from "react";
-import { MESES } from "@/lib/formato";
+import { MESES, lerPct } from "@/lib/formato";
 import { FIDELIDADE, SORTEIO, notaFidelidade, notaSorteios, parcelaFidelidade } from "@/lib/sequencia";
 import { alternarTipoParcela, definirPagamentoComFuro, salvarCreditos, type CampoGrupo } from "./actions";
 import { useSimulacao } from "./SimulacaoContext";
@@ -14,6 +14,7 @@ import { useDados, type Estado } from "./GrupoDetalhe";
 // ligada, os mesmos blocos viram campos e cada alteração grava na hora.
 
 const numero = new Intl.NumberFormat("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const nf3 = new Intl.NumberFormat("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 3 });
 const CAIXA = "flex min-w-0 flex-col gap-3 rounded-2xl border bg-white p-4";
 const caixa = (editando: boolean) => CAIXA + (editando ? " border-laranja/50 shadow-[0_0_0_3px_var(--color-laranja-claro)]" : " border-borda");
 
@@ -101,7 +102,8 @@ function Campo({ rotulo, children }: { rotulo: string; children: React.ReactNode
 }
 
 function Informacoes() {
-  const { grupo: g, editando, info, estadoInfo, mudarInfo, gravarInfo, indices } = useDados();
+  const { grupo: g, editando, info, estadoInfo, mudarInfo, gravarInfo, indices, parcelaMinimaPadrao } = useDados();
+  const { creditoSel } = useSimulacao();
   const sai = (c: CampoGrupo) => (e: React.FocusEvent<HTMLInputElement>) => gravarInfo(c, e.target.value);
   const muda = (c: CampoGrupo) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => mudarInfo(c, e.target.value);
   const escolhe = (c: CampoGrupo) => (e: React.ChangeEvent<HTMLSelectElement>) => {
@@ -194,6 +196,36 @@ function Informacoes() {
           {g.primeira_correcao ? <span className="capitalize">{`${MESES[Number(g.primeira_correcao.slice(5, 7)) - 1]}/${g.primeira_correcao.slice(0, 4)}`}</span> : "—"}
         </Campo>
         <Campo rotulo="Fidelidade libera">{g.fidelidade_meses ? `parcela ${parcelaFidelidade(g.fidelidade_meses)}` : "sem fidelidade"}</Campo>
+        {/* veículos: parcela mínima depois da contemplação por lance, em % da categoria (o PDF informa; sem ele vale o padrão dos Parâmetros globais) */}
+        {g.familia === "veiculos" && (
+          <Campo rotulo="Parcela mínima">
+            {editando ? (
+              <input
+                className={campo}
+                inputMode="decimal"
+                placeholder={`padrão ${nf3.format(parcelaMinimaPadrao)}%`}
+                aria-label="Parcela mínima (% da categoria)"
+                title="% da categoria (crédito + taxas). Em branco = padrão dos Parâmetros globais"
+                value={info.parcela_minima_pct}
+                onChange={muda("parcela_minima_pct")}
+                onBlur={sai("parcela_minima_pct")}
+                onKeyDown={enter}
+              />
+            ) : (
+              (() => {
+                const pctMin = info.parcela_minima_pct ? lerPct(info.parcela_minima_pct) : null;
+                const efetiva = pctMin ?? parcelaMinimaPadrao;
+                const categoria = creditoSel !== null && g.taxa_adm_total !== null ? creditoSel * (1 + (Number(g.taxa_adm_total) + Number(g.fundo_reserva ?? 0)) / 100) : null;
+                return (
+                  <span title="% da categoria (crédito + taxas)">
+                    {pctMin !== null ? info.parcela_minima_pct : <span className="text-tinta">{nf3.format(parcelaMinimaPadrao)}% (padrão)</span>}
+                    {categoria !== null && <span className="ml-2 text-[12px] font-semibold text-tinta">≈ {numero.format((categoria * efetiva) / 100)}</span>}
+                  </span>
+                );
+              })()
+            )}
+          </Campo>
+        )}
       </dl>
     </section>
   );
