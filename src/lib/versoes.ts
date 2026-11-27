@@ -2,6 +2,13 @@
 // Regra: a cada mudança entregue, acrescentar uma entrada NO TOPO.
 export const VERSOES: { numero: string; data: string; itens: string[] }[] = [
   {
+    numero: "0149",
+    data: "27/11/2026",
+    itens: [
+      "Dados do grupo (veículos): novo campo Parcela mínima, abaixo da 1ª correção. Mostra o % da categoria que vale para o grupo (o do PDF; sem ele, o padrão dos Parâmetros globais, marcado como padrão) e, ao lado, o valor aproximado em reais para o crédito escolhido. Em Modo Edição o percentual pode ser corrigido (em branco = padrão).",
+    ],
+  },
+  {
     numero: "0148",
     data: "27/11/2026",
     itens: [
