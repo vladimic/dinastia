@@ -314,7 +314,7 @@ const GRANDE = "text-[28px] leading-none font-extrabold tracking-tight tabular-n
 function Bloco({ titulo, children, id, junto, compacto }: { titulo: React.ReactNode; children: React.ReactNode; id?: string; junto?: boolean; compacto?: boolean }) {
   // junto = sem a linha e sem o espaço de baixo (o bloco seguinte "cola" neste); compacto = menos espaço entre os itens
   return (
-    <div className={(compacto ? "flex flex-col gap-1 " : "flex flex-col gap-1.5 ") + (junto ? "-mb-1" : "border-b border-linha pb-4 last:border-b-0 last:pb-0")}>
+    <div className={(compacto ? "flex flex-col gap-1 " : "flex flex-col gap-1.5 ") + (junto ? "-mb-1" : "border-b border-linha pb-2.5 last:border-b-0 last:pb-0")}>
       <h3 id={id} className="text-[10px] font-bold tracking-[0.1em] text-ouro-texto uppercase">
         {titulo}
       </h3>
@@ -479,7 +479,7 @@ export function Simulador({ hoje, padroes }: { hoje: string; padroes: PadroesSim
 
   return (
     <section aria-label={`Simulador do grupo ${g.numero}`} className="grid items-start gap-4 lg:grid-cols-[19rem_minmax(0,1fr)]">
-      <aside aria-label="Parâmetros da simulação" className="flex flex-col gap-4 rounded-2xl border border-borda bg-white p-4 lg:sticky lg:top-[7.5rem]">
+      <aside aria-label="Parâmetros da simulação" className="flex flex-col gap-2.5 rounded-2xl border border-borda bg-white p-4 lg:sticky lg:top-[7.5rem]">
         {/* crédito, cotas e tipo de parcela são escolhidos no cabeçalho do grupo */}
         <Bloco titulo="Crédito contratado" junto>
           <div className={GRANDE + " text-right text-ouro-texto"}>{creditoContratado === null ? "—" : reais2(creditoContratado)}</div>

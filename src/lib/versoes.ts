@@ -2,6 +2,13 @@
 // Regra: a cada mudança entregue, acrescentar uma entrada NO TOPO.
 export const VERSOES: { numero: string; data: string; itens: string[] }[] = [
   {
+    numero: "0150",
+    data: "27/11/2026",
+    itens: [
+      "Simulador: menos espaço entre os blocos da coluna da esquerda (Parcela antes da contemplação, Contemplação em, Informações complementares e Proposta): de 32 para 20 px entre a última linha de um bloco e o título do próximo.",
+    ],
+  },
+  {
     numero: "0149",
     data: "27/11/2026",
     itens: [
