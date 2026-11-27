@@ -156,7 +156,7 @@ function Conteudo({ grupo: g, familiaNome, indices, hoje, padroes, abaInicial, p
   return (
     <DadosCtx.Provider value={ctx}>
       {/* some enquanto a lista de grupos está aberta (ver SeletorGrupo e globals.css); o estado do simulador é mantido */}
-      <div data-oculta-com-lista className="flex flex-col gap-4">
+      <div data-oculta-com-lista className="flex flex-col gap-2">
         <Resumo />
 
         <div className="flex flex-wrap items-end justify-between gap-3 border-b border-borda">
@@ -176,7 +176,7 @@ function Conteudo({ grupo: g, familiaNome, indices, hoje, padroes, abaInicial, p
                 aria-controls={`painel-${k}`}
                 onClick={() => trocarAba(k)}
                 className={
-                  "border-b-[3px] px-4 py-2.5 text-sm font-bold " +
+                  "border-b-[3px] px-4 py-1.5 text-sm font-bold " +
                   (aba === k ? "border-laranja text-navy" : "border-transparent text-tinta hover:text-navy")
                 }
               >

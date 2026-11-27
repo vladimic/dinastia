@@ -85,7 +85,7 @@ async function Conteudo({ searchParams }: { searchParams: PageProps<"/grupos">["
           </Suspense>
         }
         seletor={detalhe ? seletor : undefined} lote={admin ? { familia: familia.slug, familias: [...FAMILIAS] } : undefined} />
-      <div className="flex flex-col gap-4 px-8 pt-4 pb-10 max-sm:px-4">
+      <div className="flex flex-col gap-4 px-8 pt-2 pb-10 max-sm:px-4">
         {detalhe ? (
           <GrupoDetalhe
             key={detalhe.grupo_assembleia_id}

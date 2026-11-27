@@ -4,7 +4,7 @@ import { ExportarResumo } from "./ExportarResumo";
 // Cabeçalho principal de Grupos e Tabelas: título, a escolha da família, o seletor de grupo (quando há um grupo aberto) e as ações.
 export function Cabecalho({ seletor, familias, lote, familia }: { seletor?: React.ReactNode; familias?: React.ReactNode; lote?: { familia: string; familias: { slug: string; nome: string }[] }; familia?: "imoveis" | "veiculos" }) {
   return (
-    <header className="flex flex-wrap items-center justify-between gap-x-4 gap-y-3 border-b border-borda bg-white px-8 py-3">
+    <header className="flex flex-wrap items-center justify-between gap-x-4 gap-y-3 border-b border-borda bg-white px-8 py-2">
       <div className="flex flex-wrap items-center gap-x-5 gap-y-2">
         <div className="flex flex-col">
           <div className="text-[11px] text-tinta">Cadastros</div>
