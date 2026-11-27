@@ -576,21 +576,20 @@ export function Simulador({ hoje, padroes }: { hoje: string; padroes: PadroesSim
         <Bloco
           compacto
           titulo={
-            <label htmlFor="meses-grupo" className="flex items-baseline gap-2">
-              Contemplação em
-            </label>
+            // o campo de meses fica na mesma linha do título
+            <span className="flex items-baseline gap-3">
+              <label htmlFor="meses-grupo">Contemplação em</label>
+              <input
+                id="meses-grupo"
+                inputMode="numeric"
+                value={meses}
+                onChange={(e) => setMeses(e.target.value.replace(/\D/g, "").slice(0, 3))}
+                className={"w-[3.5ch] border-b-2 border-borda-campo bg-transparent text-laranja tracking-tight normal-case outline-none focus:border-laranja " + GRANDE}
+              />
+              <span className="text-[15px] font-bold tracking-normal text-laranja normal-case">meses</span>
+            </span>
           }
         >
-          <div className="flex items-baseline gap-2">
-            <input
-              id="meses-grupo"
-              inputMode="numeric"
-              value={meses}
-              onChange={(e) => setMeses(e.target.value.replace(/\D/g, "").slice(0, 3))}
-              className={"w-[3.5ch] border-b-2 border-borda-campo bg-transparent text-laranja outline-none focus:border-laranja " + GRANDE}
-            />
-            <span className="text-[15px] font-bold text-laranja">meses</span>
-          </div>
           {/* fim, régua e atalhos colados uns nos outros */}
           <div className="flex flex-col">
             <div className="text-right text-[11px] leading-none font-semibold text-tinta tabular-nums">
